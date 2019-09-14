@@ -4,10 +4,10 @@
 
 class MlsSearch {
   public:
-    MlsSearch(uint8_t n);
+    void generate_new_sequence(std::vector<bool>& sequence, uint32_t start_word, uint8_t n);
+    void generate_mls(const uint8_t n);
 
     static uint32_t reverse_bits(uint32_t v, uint8_t n);
-
 
   private:
 
@@ -17,5 +17,5 @@ class MlsSearch {
     };
 
     std::vector<Word> _words;
-    std::vector<bool> _banned_words;
+    std::vector<uint32_t> _least_visited_words;
 };
