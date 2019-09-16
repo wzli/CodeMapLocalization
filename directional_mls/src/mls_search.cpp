@@ -4,6 +4,10 @@
 #include <iostream>
 #include <bitset>
 
+uint32_t MlsSearch::inverse_bits(uint32_t v, uint8_t n) {
+    return ~(v | (0xFFFFFFFF << n));
+}
+
 uint32_t MlsSearch::reverse_bits(uint32_t v, uint8_t n) {
     v &= ~(0xFFFFFFFF << n);
     unsigned int r = v & 1;
@@ -55,12 +59,17 @@ void MlsSearch::generate_new_sequence(std::vector<bool>& sequence, uint32_t star
     }
     last_visit_id[start_word] = visit_id;
     ++_words[start_word].visit_count;
+    auto is_word_visited = [&] (uint32_t word) {
+        return last_visit_id[word] == visit_id
+                    || last_visit_id[inverse_bits(word, n)] == visit_id
+                    || last_visit_id[reverse_bits(word, n)] == visit_id;
+    };
     auto extend_sequence = [&] (uint32_t word, bool rev) {
         while(true) {
             word = rev ? (word & ~L_BIT) << 1 : word >> 1;
             uint32_t other_word = word | (rev ? 1 : L_BIT);
-            bool word_visited = last_visit_id[word] == visit_id || last_visit_id[reverse_bits(word, n)] == visit_id;
-            bool other_word_visited = last_visit_id[other_word] == visit_id || last_visit_id[reverse_bits(other_word, n)] == visit_id;
+            bool word_visited = is_word_visited(word);
+            bool other_word_visited = is_word_visited(other_word);
             if(other_word_visited) {
                 if(word_visited) {
                     break;

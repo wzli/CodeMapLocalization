@@ -8,6 +8,7 @@ class MlsSearch {
     void generate_mls(const uint8_t n);
 
     static uint32_t reverse_bits(uint32_t v, uint8_t n);
+    static uint32_t inverse_bits(uint32_t v, uint8_t n);
 
   private:
 
