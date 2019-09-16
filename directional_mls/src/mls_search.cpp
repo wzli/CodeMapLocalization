@@ -59,9 +59,6 @@ void MlsSearch::generate_new_sequence(std::vector<bool>& sequence, std::vector<u
     ++visit_id;
     sequence.clear();
     visited_words.clear();
-    for(uint32_t bit_mask = 1; bit_mask <= L_BIT ; bit_mask <<= 1) {
-        sequence.emplace_back(bit_mask & start_word);
-    }
     last_visit_id[start_word] = visit_id;
     visited_words.emplace_back(start_word);
     auto is_word_visited = [&] (uint32_t word) {
@@ -87,6 +84,9 @@ void MlsSearch::generate_new_sequence(std::vector<bool>& sequence, std::vector<u
             visited_words.emplace_back(word);
         }
     };
+    for(uint32_t bit_mask = 1; bit_mask <= L_BIT ; bit_mask <<= 1) {
+        sequence.emplace_back(bit_mask & start_word);
+    }
     extend_sequence(start_word, false);
     std::reverse(sequence.begin(), sequence.end());
     extend_sequence(start_word, true);
