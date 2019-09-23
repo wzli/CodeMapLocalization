@@ -4,6 +4,13 @@
 
 class DmlsGen {
 public:
+
+  struct Node {
+      double explored;
+      uint32_t parent;
+      uint32_t child[2];
+  };
+
   void generate_new_sequence(std::vector<bool> &sequence,
                              std::vector<uint32_t> &visited_words,
                              uint32_t start_word, uint8_t n);

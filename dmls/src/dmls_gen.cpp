@@ -4,11 +4,11 @@
 #include <bitset>
 #include <iostream>
 
-uint32_t MlsSearch::inverse_bits(uint32_t v, uint8_t n) {
+uint32_t DmlsGen::inverse_bits(uint32_t v, uint8_t n) {
   return ~(v | (0xFFFFFFFF << n));
 }
 
-uint32_t MlsSearch::reverse_bits(uint32_t v, uint8_t n) {
+uint32_t DmlsGen::reverse_bits(uint32_t v, uint8_t n) {
   v &= ~(0xFFFFFFFF << n);
   unsigned int r = v & 1;
   for (v >>= 1; v; v >>= 1) {
@@ -19,7 +19,7 @@ uint32_t MlsSearch::reverse_bits(uint32_t v, uint8_t n) {
   return r << (n - 1);
 }
 
-void MlsSearch::generate_mls(uint8_t n) {
+void DmlsGen::generate_mls(uint8_t n) {
   _word_visit_counts.clear();
   _least_visited_words.clear();
   _word_visit_counts.resize(1 << n);
@@ -55,7 +55,7 @@ void MlsSearch::generate_mls(uint8_t n) {
             << " n " << (int16_t)n << std::endl;
 }
 
-void MlsSearch::generate_new_sequence(std::vector<bool> &sequence,
+void DmlsGen::generate_new_sequence(std::vector<bool> &sequence,
                                       std::vector<uint32_t> &visited_words,
                                       uint32_t start_word, uint8_t n) {
   thread_local std::vector<uint32_t> last_visit_id;
