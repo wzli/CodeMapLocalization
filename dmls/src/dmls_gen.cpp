@@ -36,7 +36,7 @@ void DmlsGen::generate_dmls(std::vector<bool> &sequence, uint8_t n) {
     word = (word >> 1) | (bit << (n - 1));
   }
   if (sequence.size() < n) {
-    word >>= sequence.size() - n;
+    word >>= n - sequence.size();
   }
 #if 0
   word_visit_table[start_word] = visit_id;
