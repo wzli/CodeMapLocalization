@@ -87,18 +87,17 @@ double DmlsGen::generate_dmls(std::vector<bool> &sequence, uint8_t word_length,
   _word_visit_table.resize(1 << _word_len, _visit_id);
   ++_visit_id;
   _initial_visit_id = _visit_id;
-  // create root node
-  _deleted_nodes.clear();
-  _nodes.clear();
-  add_node(Node::Index::NONEXISTANT);
   // parse start word
   uint32_t start_word;
   if (!parse_start_word(start_word, sequence)) {
     return 0.0;
   }
+  // create root node
+  _deleted_nodes.clear();
+  _nodes.clear();
+  add_node(Node::Index::NONEXISTANT);
   // keep track of best sequence found
   const uint32_t start_sequence_len = sequence.size();
-  ;
   std::vector<bool> max_length_sequence = sequence;
   // run search
   while (_nodes[0].explored_rate < 1.0 && --iterations) {

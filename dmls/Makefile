@@ -15,7 +15,7 @@ CPPWARNING =  -Wall -Wuninitialized -Wmissing-field-initializers -Werror=pointer
 CPPERROR = -Werror-implicit-function-declaration -Werror=return-type
 CPPOPTIMIZATION = -O2 -fomit-frame-pointer -funroll-loops -ffast-math -fno-finite-math-only
 CPPFLAGS ?= $(INC_FLAGS) -MMD -MP -std=c++17 $(CPPWARNING) $(CPPERROR)
-LDLIBS += -lstdc++
+LDLIBS += -lstdc++ -lpthread
 
 CFLAGS ?= -fPIC -O3 -Wall -Werror -std=c99
 CC ?= gcc
