@@ -1,5 +1,5 @@
-#include <iostream>
 #include "dmls_gen.hpp"
+#include <iostream>
 
 using namespace std;
 int main() {
@@ -7,9 +7,11 @@ int main() {
   DmlsGen dmls_gen;
   std::vector<bool> sequence = {0};
   double explored = dmls_gen.generate_dmls(sequence, 5, 1000);
-  for(bool bit : sequence) {
-      std::cout << (int)bit;
+  for (bool bit : sequence) {
+    std::cout << (int)bit;
   }
-  std::cout << std::endl << "len " << sequence.size() << " explored " << explored << std::endl;
+  std::cout << std::endl
+            << "len " << sequence.size() << " explored " << explored
+            << std::endl;
   return 0;
 }
