@@ -28,7 +28,8 @@ private:
 
   std::vector<Node> _nodes;
   std::vector<uint32_t> _deleted_nodes;
-  std::vector<uint32_t> _word_visit_table;
+  std::vector<uint32_t> _word_visit_counts;
+  std::vector<uint32_t> _word_visit_ids;
   uint16_t _visit_id = 0;
   uint16_t _initial_visit_id;
   uint8_t _word_len;

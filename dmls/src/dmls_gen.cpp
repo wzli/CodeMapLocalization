@@ -18,9 +18,9 @@ uint32_t DmlsGen::reverse_bits(uint32_t v) const {
 }
 
 bool DmlsGen::is_word_visited(uint32_t word) const {
-  uint32_t last_visit_ids[] = {_word_visit_table[word],
-                               _word_visit_table[inverse_bits(word)],
-                               _word_visit_table[reverse_bits(word)]};
+  uint32_t last_visit_ids[] = {_word_visit_ids[word],
+                               _word_visit_ids[inverse_bits(word)],
+                               _word_visit_ids[reverse_bits(word)]};
   for (uint32_t last_visit_id : last_visit_ids) {
     if (last_visit_id == _visit_id || last_visit_id == _initial_visit_id) {
       return true;
@@ -53,7 +53,7 @@ bool DmlsGen::parse_start_word(uint32_t &start_word,
       if (is_word_visited(start_word)) {
         return false;
       }
-      _word_visit_table[start_word] = _visit_id;
+      _word_visit_ids[start_word] = _visit_id;
     }
   }
   // shift first bit of sequence to LSB
@@ -64,7 +64,8 @@ bool DmlsGen::parse_start_word(uint32_t &start_word,
 }
 
 void DmlsGen::propagate_explored_rates(uint32_t node) {
-  for (double explored_rate_increment = 1.0; node != Node::Index::NONEXISTANT;
+  for (double explored_rate_increment = 1.0;
+       node != Node::Index::NONEXISTANT && explored_rate_increment > 0;
        node = _nodes[node].parent) {
     explored_rate_increment *= 0.5;
     _nodes[node].explored_rate += explored_rate_increment;
@@ -84,7 +85,9 @@ double DmlsGen::generate_dmls(std::vector<bool> &sequence, uint8_t word_length,
                               uint32_t iterations) {
   _word_len = word_length;
   // initalize word visit table
-  _word_visit_table.resize(1 << _word_len, _visit_id);
+  _word_visit_counts.clear();
+  _word_visit_counts.resize(1 << _word_len);
+  _word_visit_ids.resize(1 << _word_len, _visit_id);
   ++_visit_id;
   _initial_visit_id = _visit_id;
   // parse start word
@@ -142,12 +145,16 @@ double DmlsGen::generate_dmls(std::vector<bool> &sequence, uint8_t word_length,
         }
       }
       uint8_t next_bit =
-          next_word_explored_rate[0] > next_word_explored_rate[1];
+          next_word_explored_rate[0] == next_word_explored_rate[1]
+              ? _word_visit_counts[next_word[0]] >
+                    _word_visit_counts[next_word[1]]
+              : next_word_explored_rate[0] > next_word_explored_rate[1];
       word = next_word[next_bit];
       node = _nodes[node].child[next_bit];
       sequence.emplace_back(next_bit);
       if (sequence.size() >= _word_len) {
-        _word_visit_table[word] = _visit_id;
+        ++_word_visit_counts[word];
+        _word_visit_ids[word] = _visit_id;
       }
     }
     sequence.pop_back();

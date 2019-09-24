@@ -14,7 +14,8 @@ int main() {
     threads.emplace_back(
         [&sequences, &explored_rates](int idx) {
           DmlsGen dmls_gen;
-          explored_rates[idx] = dmls_gen.generate_dmls(sequences[idx], 5, 1000);
+          explored_rates[idx] =
+              dmls_gen.generate_dmls(sequences[idx], 15, 30000);
         },
         i);
   }
@@ -34,6 +35,6 @@ int main() {
   }
   std::cout << std::endl
             << "len " << sequences[max_len_idx].size() << " explored "
-            << explored_rates[0] << std::endl;
+            << explored_rates[0] / sequences.size() << std::endl;
   return 0;
 }
