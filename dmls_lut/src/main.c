@@ -51,10 +51,9 @@ int main(int argc, char **argv) {
   fprintf(fptr, "#include \"lut.h\"\r\n\r\n");
   fprintf(fptr, "const LutEntry lut[] = {\r\n");
   for(uint16_t i = 0; i < LUT_SIZE; ++i) {
-      fprintf(fptr, "  {%#x, %u},\r\n", lut[i].key, lut[i].value);
+      fprintf(fptr, "  { %#x, %u },\r\n", lut[i].key, lut[i].value);
   }
-  fprintf(fptr, "\r\n};");
-
+  fprintf(fptr, "};\r\n");
   fclose(fptr);
 
   return 0;
