@@ -1,12 +1,13 @@
 #pragma once
 #include <stdint.h>
 
-typedef enum {
-    LUT_SUCCESS = 0,
-    LUT_INSERT_COLLISION
-} LutError;
+#define LUT_KEY_ERROR (0xFFFF)
 
-uint16_t lut_hash(uint8_t len, uint64_t salt, uint32_t key);
-LutError lut_insert(uint16_t* lut, uint8_t hash_len, uint32_t hash_multiplier, uint32_t key, uint16_t value);
-LutError lut_access(const uint16_t* lut, uint8_t hash_len, uint32_t hash_multiplier, uint32_t key, uint16_t* value);
+typedef struct {
+    uint32_t key : 18;
+    uint16_t value : 14;
+} LutEntry;
+
+void lut_sort(LutEntry* lut, uint16_t len);
+uint16_t lut_search(const LutEntry* lut, uint16_t len, uint32_t key);
 
