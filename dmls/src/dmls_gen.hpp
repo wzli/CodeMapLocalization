@@ -15,7 +15,7 @@ public:
   };
 
   double generate_dmls(std::vector<bool> &sequence, uint8_t word_length,
-                       uint32_t iterations);
+                       uint32_t iterations, uint32_t size_limit);
 
 private:
   uint32_t inverse_bits(uint32_t v) const;

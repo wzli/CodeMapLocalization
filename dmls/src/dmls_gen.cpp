@@ -18,9 +18,11 @@ uint32_t DmlsGen::reverse_bits(uint32_t v) const {
 }
 
 bool DmlsGen::is_word_visited(uint32_t word) const {
+  uint32_t rword = reverse_bits(word);
   uint32_t last_visit_ids[] = {_word_visit_ids[word],
+                               _word_visit_ids[rword],
                                _word_visit_ids[inverse_bits(word)],
-                               _word_visit_ids[reverse_bits(word)]};
+                               _word_visit_ids[inverse_bits(rword)]};
   for (uint32_t last_visit_id : last_visit_ids) {
     if (last_visit_id == _visit_id || last_visit_id == _initial_visit_id) {
       return true;
@@ -82,7 +84,7 @@ void DmlsGen::propagate_explored_rates(uint32_t node) {
 }
 
 double DmlsGen::generate_dmls(std::vector<bool> &sequence, uint8_t word_length,
-                              uint32_t iterations) {
+                              uint32_t iterations, uint32_t size_limit) {
   _word_len = word_length;
   // initalize word visit table
   _word_visit_counts.clear();
@@ -103,7 +105,7 @@ double DmlsGen::generate_dmls(std::vector<bool> &sequence, uint8_t word_length,
   const uint32_t start_sequence_len = sequence.size();
   std::vector<bool> max_length_sequence = sequence;
   // run search
-  while (_nodes[0].explored_rate < 1.0 && --iterations) {
+  while (_nodes[0].explored_rate < 1.0 && --iterations && _nodes.size() <= size_limit) {
     uint32_t node = 0;
     uint32_t word = start_word;
     uint32_t next_word[2];
