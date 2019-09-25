@@ -21,6 +21,7 @@ bool DmlsGen::is_word_visited(uint32_t word) const {
 }
 
 void DmlsGen::set_word_visited(uint32_t word) {
+  ++_word_visit_counts[word];
   uint32_t rword = reverse_bits(word);
   _word_visit_ids[word] = _visit_id;
   _word_visit_ids[rword] = _visit_id;
