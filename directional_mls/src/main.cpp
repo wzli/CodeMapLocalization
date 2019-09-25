@@ -1,12 +1,18 @@
+#include "dmls_gen.hpp"
 #include <iostream>
-
-#include "mls_search.hpp"
+#include <cstdlib>
 
 using namespace std;
-int main() 
+int main(int argc, char **argv) 
 {
-  cout << "Starting ..." << std::endl;
-  MlsSearch mls_search;
-  mls_search.generate_mls(16);
+  cout << "Generating ..." << std::endl << std::endl;
+  DmlsGen dmls_gen;
+  std::vector<bool> sequence;
+  dmls_gen.generate_dmls(sequence, atoi(argv[1]), 0, [] (std::vector<bool>& sequence){
+      for (bool bit : sequence) {
+        std::cout << bit;
+      }
+      std::cout << std::endl << "len " << sequence.size() << std::endl << std::endl;
+  });
   return 0;
 }
