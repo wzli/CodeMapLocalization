@@ -50,10 +50,12 @@ int main(int argc, char **argv) {
   std::getline(file, s, '"');
 
   if (s.size() != sequence_length) {
-    std::cout << "WARNING: sequence length doesn't match" << std::endl;
+    std::cout << "WARNING: sequence length doesn't match, actual is "
+              << std::dec << s.size() << std::endl;
   }
   if (std::hash<std::string>{}(s) != sequence_hash) {
-    std::cout << "WARNING: sequence hash doesn't match" << std::endl;
+    std::cout << "WARNING: sequence hash doesn't match, actual is 0x"
+              << std::hex << std::hash<std::string>{}(s) << std::endl;
   }
   std::cout << "Generating Map Codec ..." << std::endl;
 
