@@ -1,4 +1,4 @@
-TARGET_EXEC ?= dmls
+TARGET_EXEC ?= dmls_gen
 
 BUILD_DIR ?= ./build
 SRC_DIRS ?= ./src
@@ -15,7 +15,7 @@ CPPWARNING =  -Wall -Wuninitialized -Wmissing-field-initializers -Werror=pointer
 CPPERROR = -Werror-implicit-function-declaration -Werror=return-type
 CPPOPTIMIZATION = -O2 -fomit-frame-pointer -funroll-loops -ffast-math -fno-finite-math-only
 CPPFLAGS ?= $(INC_FLAGS) -MMD -MP -std=c++17 $(CPPWARNING) $(CPPERROR) $(CPPOPTIMIZATION)
-LDLIBS += -lstdc++ -lpthread
+LDLIBS += -lstdc++ -lm
 
 CFLAGS ?= -fPIC -O3 -Wall -Werror -std=c99
 CC ?= gcc
@@ -33,7 +33,7 @@ $(BUILD_DIR)/%.s.o: %.s
 # c source
 $(BUILD_DIR)/%.c.o: %.c
 	$(MKDIR_P) $(dir $@)
-	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) -c $< -o $@
 
 # c++ source
 $(BUILD_DIR)/%.cpp.o: %.cpp
@@ -49,5 +49,3 @@ clean:
 -include $(DEPS)
 
 MKDIR_P ?= mkdir -p
-
-
