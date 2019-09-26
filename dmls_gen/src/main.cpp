@@ -5,7 +5,7 @@
 #include <sstream>
 
 int main(int argc, char **argv) {
-  std::cout << "Generating ..." << std::endl << std::endl;
+  std::cout << "Generating ...\n" << std::endl;
   DmlsGen dmls_gen;
   std::vector<bool> sequence;
   dmls_gen.generate_dmls(
@@ -20,14 +20,14 @@ int main(int argc, char **argv) {
         file_name << "dmls_" << (int)word_length << "_" << sequence.size()
                   << "_" << std::hex << sequence_hash << ".yaml";
         file.open(file_name.str());
-        file << "word_length: " << (int)word_length << std::endl;
-        file << "sequence_length: " << sequence.size() << std::endl;
-        file << "sequence_hash: 0x" << std::hex << sequence_hash << std::endl;
-        file << "sequence: \"" << sequence_string.str() << "\"" << std::endl;
+        file << "word_length: " << (int)word_length << '\n';
+        file << "sequence_length: " << sequence.size() << '\n';
+        file << "sequence_hash: 0x" << std::hex << sequence_hash << '\n';
+        file << "sequence: \"" << sequence_string.str() << "\"" << '\n';
         file.close();
-        std::cout << sequence_string.str() << std::endl
-                  << "word_length: " << (int)word_length
-                  << " sequence_length: " << sequence.size() << std::endl
+        std::cout << sequence_string.str()
+                  << "\nword_length: " << (int)word_length
+                  << " sequence_length: " << sequence.size() << '\n'
                   << std::endl;
       });
   if (sequence.empty()) {

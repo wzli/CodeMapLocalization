@@ -1,10 +1,10 @@
-#include <cstdlib>
-#include <fstream>
-#include <iostream>
-
 extern "C" {
 #include "lut/lut.h"
 }
+#include "code_map.hpp"
+#include <cstdlib>
+#include <fstream>
+#include <iostream>
 
 uint32_t inverse_bits(uint32_t v, uint32_t n) {
   return ~(v | (0xFFFFFFFF << n));
@@ -106,25 +106,28 @@ int main(int argc, char **argv) {
     std::cout << "Unable to write LUT file" << std::endl;
     return -5;
   }
-  lut_file << "#include \"lut.h\"" << std::endl;
-  lut_file << "const uint8_t LUT_KEY_LENGTH = " << word_length << ";"
-           << std::endl;
-  lut_file << "const uint32_t LUT_SIZE = " << LUT_SIZE << ";" << std::endl;
+  lut_file << "#include \"lut.h\"\n";
+  lut_file << "const uint8_t LUT_KEY_LENGTH = " << word_length << ";\n";
+  lut_file << "const uint32_t LUT_SIZE = " << LUT_SIZE << ";\n";
   lut_file << "const uint64_t LUT_UNIQUE_ID = 0x" << std::hex
-           << std::hash<std::string>{}(s) << ";" << std::endl;
-  lut_file << "const LutEntry __LUT_DATA[] = {" << std::endl;
+           << std::hash<std::string>{}(s) << ";\n";
+  lut_file << "const LutEntry __LUT_DATA[] = {\n";
   for (uint32_t i = 0; i < LUT_SIZE; ++i) {
     lut_file << "  { 0x" << std::hex << lut[i].key << ", " << std::dec
-             << lut[i].value << " }," << std::endl;
+             << lut[i].value << " },\n";
   }
-  lut_file << "};" << std::endl;
-  lut_file << "const LutEntry* LUT_DATA = __LUT_DATA;" << std::endl;
+  lut_file << "};\n";
+  lut_file << "const LutEntry* LUT_DATA = __LUT_DATA;\n";
   lut_file.close();
-
-  std::cout << "LUT file succesfully generated" << std::endl;
+  std::cout << "LookupTable file succesfully generated" << std::endl;
 
   delete lut;
   delete test_lut;
+
+  CodeMap code_map;
+  code_map.generate(s);
+  code_map.save_pbm("code_map.pbm");
+  std::cout << "CodeMap file succesfully generated" << std::endl;
 
   return 0;
 }
