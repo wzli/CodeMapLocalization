@@ -31,7 +31,8 @@ void DmlsGen::set_word_visited(uint32_t word) {
 
 void DmlsGen::generate_dmls(
     std::vector<bool> &sequence, uint8_t word_length, uint32_t iterations,
-    std::function<void(std::vector<bool> &sequence)> new_record_callback) {
+    std::function<void(std::vector<bool> &sequence, uint8_t word_length)>
+        new_record_callback) {
   _word_length = word_length;
   _word_visit_counts.clear();
   _word_visit_counts.resize(1 << _word_length);
@@ -88,7 +89,7 @@ void DmlsGen::generate_dmls(
       sequence.insert(sequence.end(), _l_sequence.rbegin(), _l_sequence.rend());
       sequence.insert(sequence.end(), _r_sequence.begin(), _r_sequence.end());
       if (new_record_callback) {
-        new_record_callback(sequence);
+        new_record_callback(sequence, _word_length);
       }
     }
   }

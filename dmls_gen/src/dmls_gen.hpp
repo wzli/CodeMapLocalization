@@ -6,10 +6,10 @@
 
 class DmlsGen {
 public:
-  void generate_dmls(std::vector<bool> &sequence, uint8_t word_length,
-                     uint32_t iterations,
-                     std::function<void(std::vector<bool> &sequence)>
-                         new_record_callback = nullptr);
+  void generate_dmls(
+      std::vector<bool> &sequence, uint8_t word_length, uint32_t iterations,
+      std::function<void(std::vector<bool> &sequence, uint8_t word_length)>
+          new_record_callback = nullptr);
 
 private:
   uint32_t inverse_bits(uint32_t v) const;
