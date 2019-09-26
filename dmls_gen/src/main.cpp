@@ -17,7 +17,7 @@ int main(int argc, char **argv) {
           sequence_string << bit;
         }
         auto sequence_hash = std::hash<std::string>{}(sequence_string.str());
-        file_name << "dmls_" << (int)word_length << "_" << sequence.size() 
+        file_name << "dmls_" << (int)word_length << "_" << sequence.size()
                   << "_" << std::hex << sequence_hash << ".yaml";
         file.open(file_name.str());
         file << "word_length: " << (int)word_length << std::endl;
@@ -26,12 +26,12 @@ int main(int argc, char **argv) {
         file << "sequence: \"" << sequence_string.str() << "\"" << std::endl;
         file.close();
         std::cout << sequence_string.str() << std::endl
-                  << "word_length: " << (int)word_length << " sequence_length: "
-                  << sequence.size() << std::endl
+                  << "word_length: " << (int)word_length
+                  << " sequence_length: " << sequence.size() << std::endl
                   << std::endl;
       });
-  if(sequence.empty()) {
-      std::cout << "word length must be between 1 to 32" << std::endl;
+  if (sequence.empty()) {
+    std::cout << "word length must be between 1 to 32" << std::endl;
   }
   return 0;
 }
