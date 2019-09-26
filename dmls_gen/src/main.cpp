@@ -4,9 +4,8 @@
 #include <iostream>
 #include <sstream>
 
-using namespace std;
 int main(int argc, char **argv) {
-  cout << "Generating ..." << std::endl << std::endl;
+  std::cout << "Generating ..." << std::endl << std::endl;
   DmlsGen dmls_gen;
   std::vector<bool> sequence;
   dmls_gen.generate_dmls(
@@ -17,16 +16,22 @@ int main(int argc, char **argv) {
         for (bool bit : sequence) {
           sequence_string << bit;
         }
-        file_name << "dmls_" << (int)word_length << "_" << sequence.size()
-                  << "_" << std::hex
-                  << std::hash<std::string>{}(sequence_string.str());
+        auto sequence_hash = std::hash<std::string>{}(sequence_string.str());
+        file_name << "dmls_" << (int)word_length << "_" << sequence.size() 
+                  << "_" << std::hex << sequence_hash << ".yaml";
         file.open(file_name.str());
-        file << sequence_string.str();
+        file << "word_length: " << (int)word_length << std::endl;
+        file << "sequence_length: " << sequence.size() << std::endl;
+        file << "sequence_hash: 0x" << std::hex << sequence_hash << std::endl;
+        file << "sequence: \"" << sequence_string.str() << "\"" << std::endl;
         file.close();
         std::cout << sequence_string.str() << std::endl
-                  << "bits " << (int)word_length << " length "
+                  << "word_length: " << (int)word_length << " sequence_length: "
                   << sequence.size() << std::endl
                   << std::endl;
       });
+  if(sequence.empty()) {
+      std::cout << "word length must be between 1 to 32" << std::endl;
+  }
   return 0;
 }

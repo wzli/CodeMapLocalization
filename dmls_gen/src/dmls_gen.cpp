@@ -33,6 +33,9 @@ void DmlsGen::generate_dmls(
     std::vector<bool> &sequence, uint8_t word_length, uint32_t iterations,
     std::function<void(std::vector<bool> &sequence, uint8_t word_length)>
         new_record_callback) {
+  if(word_length > 32) {
+      return;
+  }
   _word_length = word_length;
   _word_visit_counts.clear();
   _word_visit_counts.resize(1 << _word_length);
