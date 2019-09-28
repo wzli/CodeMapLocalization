@@ -40,10 +40,14 @@ uint32_t extract_column_code(uint32_t *code_block, uint32_t *code_block_mask,
 
 uint32_t code_block[32], code_block_mask[32];
 
+const uint32_t row_entry = 1000;
+const uint32_t column_entry = 2000;
+
 int main() {
   for (int i = 0; i < LUT_KEY_LENGTH; ++i) {
     code_block_mask[i] = (1 << LUT_KEY_LENGTH) - 1;
-    code_block[i] = LUT_DATA[0].key ^ -((LUT_DATA[1].key >> i) & 1);
+    code_block[i] =
+        LUT_DATA[row_entry].key ^ -((LUT_DATA[column_entry].key >> i) & 1);
     print_bits(code_block[i], LUT_KEY_LENGTH);
   }
 
@@ -54,12 +58,14 @@ int main() {
   uint32_t row_code = extract_column_code(code_block, code_block_mask,
                                           LUT_KEY_LENGTH, column_code);
 
-  printf("col code \n");
-  print_bits(LUT_DATA[1].key, LUT_KEY_LENGTH);
+  printf("col code pos %d %d\n", LUT_DATA[column_entry].value,
+         lut_search(LUT_DATA, LUT_SIZE, column_code));
+  print_bits(LUT_DATA[column_entry].key, LUT_KEY_LENGTH);
   print_bits(column_code, LUT_KEY_LENGTH);
 
-  printf("row code \n");
-  print_bits(LUT_DATA[0].key, LUT_KEY_LENGTH);
+  printf("row code pos %d %d\n", LUT_DATA[row_entry].value,
+         lut_search(LUT_DATA, LUT_SIZE, row_code));
+  print_bits(LUT_DATA[row_entry].key, LUT_KEY_LENGTH);
   print_bits(row_code, LUT_KEY_LENGTH);
   return 0;
 }
