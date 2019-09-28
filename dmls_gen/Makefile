@@ -13,10 +13,10 @@ INC_FLAGS := $(addprefix -I,$(INC_DIRS))
 CXXWARNING =  -Wall -Wuninitialized -Wmissing-field-initializers -Werror=pointer-arith
 CXXERROR = -Werror-implicit-function-declaration -Werror=return-type
 CXXOPTIMIZATION = -O2 -fomit-frame-pointer -funroll-loops -ffast-math -fno-finite-math-only
-CXXFLAGS ?= -std=c++17 $(CXXWARNING) $(CXXERROR) $(CXXOPTIMIZATION)
+CXXFLAGS ?= -std=c++11 $(CXXWARNING) $(CXXERROR) $(CXXOPTIMIZATION)
 CXX ?= g++
 
-CFLAGS ?= -MMD -MP -fPIC -O3 -Wall -Werror -std=c99
+CFLAGS ?= -fPIC -O3 -Wall -Werror -std=c99
 CC ?= gcc
 
 CPPFLAGS ?= $(INC_FLAGS) -MMD -MP 
