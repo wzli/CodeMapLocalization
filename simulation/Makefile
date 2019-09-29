@@ -1,4 +1,4 @@
-TARGET_EXEC ?= dmls_gen
+TARGET_LIB ?= libsimulation.so
 
 BUILD_DIR ?= ./build
 SRC_DIRS ?= ./src
@@ -20,10 +20,10 @@ CFLAGS ?= -fPIC -O3 -Wall -Werror -std=c99
 CC ?= gcc
 
 CPPFLAGS ?= $(INC_FLAGS) -MMD -MP 
-LDLIBS += -lstdc++ -lm
+LDLIBS += 
 
-$(BUILD_DIR)/$(TARGET_EXEC): $(OBJS)
-	$(CC) $(OBJS) -o $@ $(LDFLAGS) $(LDLIBS)
+$(BUILD_DIR)/$(TARGET_LIB): $(OBJS)
+	$(CC) $(OBJS) -shared -Wl,-soname,$(TARGET_LIB) -o $@ $(LDFLAGS) $(LDLIBS)
 
 # c source
 $(BUILD_DIR)/%.c.o: %.c
