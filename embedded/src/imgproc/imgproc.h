@@ -2,9 +2,9 @@
 #include <stdint.h>
 
 typedef struct {
-    uint8_t* data;
+    int16_t* data;
     uint16_t width;
     uint16_t height;
-} Image;
+} ImageMatrix;
 
-void convolution(Image* dst, const Image src, const Image kernel);
+void convolution(ImageMatrix* dst, const ImageMatrix src, const ImageMatrix kernel);

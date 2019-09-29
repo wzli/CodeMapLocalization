@@ -118,7 +118,6 @@ int main(int argc, char** argv) {
     delete lut;
     delete test_lut;
 
-    s.resize(1024);
     CodeMap code_map;
     code_map.generate(s);
     code_map.save_pbm("code_map.pbm");
