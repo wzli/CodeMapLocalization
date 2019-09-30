@@ -18,7 +18,7 @@ private:
     std::vector<uint32_t> _word_visit_counts, _word_visit_ids;
     std::vector<bool> _l_sequence, _r_sequence;
     std::random_device _rd;
-    std::default_random_engine _gen;
+    std::mt19937 _gen;
     std::discrete_distribution<uint16_t> _next_word_selector;
     std::uniform_int_distribution<uint32_t> _start_word_selector;
     uint32_t _visit_id = 0;
