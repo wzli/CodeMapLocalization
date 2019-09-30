@@ -25,8 +25,9 @@ class ImageMatrix(ctypes.Structure):
     def to_image(self):
         libsim.normalize_elements(self, 255)
         libsim.convert_int16_to_uint8(self)
-        return Image.frombuffer('L', (self.n_cols, self.n_rows), self.buf,
-                                'raw', 'L', 0, 1)
+        image = Image.frombuffer('L', (self.n_cols, self.n_rows), self.buf,
+                                 'raw', 'L', 0, 1)
+        return image
 
     def print(self):
         libsim.print_matrix(self)
@@ -36,14 +37,10 @@ class ImageMatrix(ctypes.Structure):
             (int(self.n_cols * scale), int(self.n_rows * scale))).show()
 
 
-libsim.convert_int16_to_uint8.restype = None
-libsim.convert_int16_to_uint8.argtypes = [ImageMatrix]
-
-libsim.convert_uint8_to_int16.restype = None
-libsim.convert_uint8_to_int16.argtypes = [ImageMatrix]
-
-libsim.print_matrix.restype = None
-libsim.print_matrix.argtypes = [ImageMatrix]
+libsim.threshold_elements.restype = None
+libsim.threshold_elements.argtypes = [
+    ImageMatrix, ctypes.c_short, ctypes.c_short
+]
 
 libsim.normalize_elements.restype = None
 libsim.normalize_elements.argtypes = [ImageMatrix, ctypes.c_short]
@@ -59,26 +56,38 @@ libsim.hough_line_transform.argtypes = [
     ctypes.POINTER(ImageMatrix), ImageMatrix
 ]
 
+libsim.convert_int16_to_uint8.restype = None
+libsim.convert_int16_to_uint8.argtypes = [ImageMatrix]
+
+libsim.convert_uint8_to_int16.restype = None
+libsim.convert_uint8_to_int16.argtypes = [ImageMatrix]
+
+libsim.print_matrix.restype = None
+libsim.print_matrix.argtypes = [ImageMatrix]
+
 n = 30
 
-code_map = Image.open("code_map.pbm")
-camera_image = code_map.rotate(10).crop((500, 500, 500 + n, 500 + n))
+code_map = Image.open("code_map.pbm").convert('L')
+camera_image = code_map.rotate(30, Image.BILINEAR).crop(
+    (500, 500, 500 + n, 500 + n))
 camera_matrix = ImageMatrix.from_image(camera_image)
 
 edge_matrix = ImageMatrix(n, n)
 libsim.edge_filter(edge_matrix, camera_matrix)
 #edge_matrix.print()
 
-hough_matrix = ImageMatrix(30, 30)
+hough_matrix = ImageMatrix(600, 600)
 libsim.hough_line_transform(hough_matrix, camera_matrix)
 #hough_matrix.print()
 
-edge_hough_matrix = ImageMatrix(30, 30)
+edge_hough_matrix = ImageMatrix(600, 600)
 libsim.normalize_elements(edge_matrix, 255)
+#libsim.threshold_elements(edge_matrix, 200, 255)
 libsim.hough_line_transform(edge_hough_matrix, edge_matrix)
 #edge_hough_matrix.print()
 
 #camera_matrix.show(10)
 #edge_matrix.show(10)
-hough_matrix.show(11)
-edge_hough_matrix.show(10)
+edge_matrix.show(10)
+#hough_matrix.show(1.1)
+edge_hough_matrix.show(1.0)

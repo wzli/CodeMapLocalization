@@ -80,8 +80,8 @@ print(f'{n}, {N}, {np.array(list(reversed(seq)))})')
 
 pool = {}
 for i in range(N):
-    key = S[i].tobytes() if (LUT[S[i] >> 1] &
-                             1) == 0 else np.invert(S[i]).tobytes()
+    key = S[i].tobytes() if (LUT[S[i] >> 1]
+                             & 1) == 0 else np.invert(S[i]).tobytes()
     if key in pool:
         print(f'collide with {pool[key]}')
     pool[key] = i

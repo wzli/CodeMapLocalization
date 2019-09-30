@@ -33,6 +33,26 @@ int32_t count_negative_elements(ImageMatrix mat) {
     return count;
 }
 
+void threshold_elements(ImageMatrix mat, int16_t threshold, int16_t max_val) {
+    FOR_EACH_ELEMENT(
+            mat, ELEMENT(mat, row, col) =
+                         (ELEMENT(mat, row, col) >= threshold) * max_val);
+}
+
+void normalize_elements(ImageMatrix mat, int16_t max_val) {
+    int16_t max_element = 1;
+    FOR_EACH_ELEMENT(
+            mat, max_element = MAX(max_element, ELEMENT(mat, row, col)));
+    FOR_EACH_ELEMENT(
+            mat, ELEMENT(mat, row, col) =
+                         (ELEMENT(mat, row, col) * max_val) / max_element);
+};
+
+void square_elements(ImageMatrix mat) {
+    FOR_EACH_ELEMENT(
+            mat, ELEMENT(mat, row, col) = SQUARE(ELEMENT(mat, row, col)) >> 8);
+};
+
 void convolution(
         ImageMatrix* dst, const ImageMatrix src, const ImageMatrix kernel) {
     dst->n_rows = src.n_rows - ((kernel.n_rows >> 1) << 1);
@@ -78,20 +98,6 @@ void hough_line_transform(ImageMatrix* dst, const ImageMatrix src) {
                                   scale_to_index)) += ELEMENT(src, row, col));
     }
     assert(count_negative_elements(*dst) == 0);
-};
-
-void normalize_elements(ImageMatrix mat, int16_t max_val) {
-    int16_t max_element = 1;
-    FOR_EACH_ELEMENT(
-            mat, max_element = MAX(max_element, ELEMENT(mat, row, col)));
-    FOR_EACH_ELEMENT(
-            mat, ELEMENT(mat, row, col) =
-                         (ELEMENT(mat, row, col) * max_val) / max_element);
-};
-
-void square_elements(ImageMatrix mat) {
-    FOR_EACH_ELEMENT(
-            mat, ELEMENT(mat, row, col) = SQUARE(ELEMENT(mat, row, col)) >> 8);
 };
 
 void convert_uint8_to_int16(ImageMatrix mat) {
