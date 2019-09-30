@@ -3,33 +3,37 @@
 import numpy as np
 from matplotlib import pyplot as plt
 
-def reverseBits(num,bits):
-    return sum(1<<(bits-1-i) for i in range(bits) if num>>i&1)
+
+def reverseBits(num, bits):
+    return sum(1 << (bits - 1 - i) for i in range(bits) if num >> i & 1)
+
 
 taps = {
-    5 : [5, 3],
-    6 : [6, 5],
-    7 : [7, 6],
+    5: [5, 3],
+    6: [6, 5],
+    7: [7, 6],
     15: [15, 14],
     16: [16, 15, 13, 4],
 }
 
-def lfsr(x, n, filter_reversed = False):
+
+def lfsr(x, n, filter_reversed=False):
     bit = 0
     for tap in taps[n]:
-        bit =  bit ^ (x >> (n - tap))
+        bit = bit ^ (x >> (n - tap))
     last_x = x
-    x = (x >> 1) | ((bit & 1) << (n-1))
+    x = (x >> 1) | ((bit & 1) << (n - 1))
     if filter_reversed:
         global non_rev
         rev = reverseBits(x, n)
         if rev in non_rev:
-            x = x ^ (1 << (n-1))
+            x = x ^ (1 << (n - 1))
         if x in non_rev:
             print(f'count {len(non_rev)}')
             input()
         non_rev.add(x)
     return x
+
 
 n = 7
 seed = 1
@@ -69,16 +73,15 @@ for i in range(N - 2):
     rc = LUT[rci] >> 1
 
     #if (rc + 1 == rb and rb + 1 == ra):
-        #print(f'    {ai:0{n}b} {a} {bi:0{n}b} {b} {ci:0{n}b} {c}    {rci:0{n}b} {rc} {rbi:0{n}b} {rb} {rai:0{n}b} {ra}')
-        #print(f'  invaid {rc + 1 == rb} {rb + 1 == ra}')
-
+    #print(f'    {ai:0{n}b} {a} {bi:0{n}b} {b} {ci:0{n}b} {c}    {rci:0{n}b} {rc} {rbi:0{n}b} {rb} {rai:0{n}b} {ra}')
+    #print(f'  invaid {rc + 1 == rb} {rb + 1 == ra}')
 
 print(f'{n}, {N}, {np.array(list(reversed(seq)))})')
 
-
 pool = {}
 for i in range(N):
-    key = S[i].tobytes() if (LUT[S[i] >> 1] & 1) == 0 else np.invert(S[i]).tobytes()
+    key = S[i].tobytes() if (LUT[S[i] >> 1] &
+                             1) == 0 else np.invert(S[i]).tobytes()
     if key in pool:
         print(f'collide with {pool[key]}')
     pool[key] = i
@@ -92,22 +95,49 @@ print(f'LUT {LUT.nbytes} Bytes')
 
 k = 6
 rev = (
-0,
-0, 0, 0, 0, 1,
-0, 0, 1, 0, 1,
-0, 0, 0, 1, 1,
-0, 0, 1, 1, 1,
-0, 1, 0, 1, 1,
-0, 1, 1, 1, 1,
-1,
-
-0,
-0, 0, 0, 0, 1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    0,
+    0,
+    1,
+    0,
+    1,
+    0,
+    0,
+    0,
+    1,
+    1,
+    0,
+    0,
+    1,
+    1,
+    1,
+    0,
+    1,
+    0,
+    1,
+    1,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
 )
 rev_count = 0
 for i in range(len(rev) - k):
-    key = rev[i:i+k]
-    print(key, i);
+    key = rev[i:i + k]
+    print(key, i)
     if key in pool:
         print(f'collide with {pool[key]}')
         rev_count = rev_count + 1
@@ -123,11 +153,11 @@ k = 15
 pool = {}
 rev_count = 0
 for i in range(2**k):
-    print(f'key {i:0{k}b} {i}');
+    print(f'key {i:0{k}b} {i}')
     if i in poel:
         print(f'collide with {pool[i]}')
         rev_count = rev_count + 1
-    elif reverseBits(i,k) in pool:
+    elif reverseBits(i, k) in pool:
         print(f'collide with {pool[reverseBits(i,k)]}')
         rev_count = rev_count + 1
     pool[i] = i
