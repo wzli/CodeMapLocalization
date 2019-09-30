@@ -25,11 +25,12 @@ void transpose32(uint32_t A[32]) {
     }
 }
 
-uint32_t extract_column_code(
-        uint32_t* row_code, const uint32_t* code_block, const uint32_t* code_block_mask, uint32_t n_rows) {
+uint32_t extract_column_code(uint32_t* row_code, const uint32_t* code_block,
+        const uint32_t* code_block_mask, uint32_t n_rows) {
     uint32_t column_code = 0;
     for (uint8_t i = 0; i < n_rows; ++i) {
-        uint8_t row_diff = bit_sum((*row_code ^ code_block[i]) & code_block_mask[i]);
+        uint8_t row_diff =
+                bit_sum((*row_code ^ code_block[i]) & code_block_mask[i]);
         uint32_t inv_bits = -(2 * row_diff > bit_sum(code_block_mask[i]));
         column_code |= (inv_bits & 1) << i;
         *row_code &= ~code_block_mask[i];
@@ -45,21 +46,26 @@ const uint32_t column_entry = 2000;
 int main() {
     for (int i = 0; i < LUT_KEY_LENGTH; ++i) {
         code_block_mask[i] = (1 << LUT_KEY_LENGTH) - 1;
-        code_block[i] = LUT_DATA[row_entry].key ^ -((LUT_DATA[column_entry].key >> i) & 1);
+        code_block[i] = LUT_DATA[row_entry].key ^
+                        -((LUT_DATA[column_entry].key >> i) & 1);
         print_bits(code_block[i], LUT_KEY_LENGTH);
     }
 
     uint32_t row_code = 0;
-    uint32_t column_code = extract_column_code(&row_code, code_block, code_block_mask, LUT_KEY_LENGTH);
+    uint32_t column_code = extract_column_code(
+            &row_code, code_block, code_block_mask, LUT_KEY_LENGTH);
     transpose32(code_block);
     transpose32(code_block_mask);
-    row_code = extract_column_code(&column_code, code_block, code_block_mask, LUT_KEY_LENGTH);
+    row_code = extract_column_code(
+            &column_code, code_block, code_block_mask, LUT_KEY_LENGTH);
 
-    printf("col code pos %d %d\n", LUT_DATA[column_entry].value, lut_search(LUT_DATA, LUT_SIZE, column_code));
+    printf("col code pos %d %d\n", LUT_DATA[column_entry].value,
+            lut_search(LUT_DATA, LUT_SIZE, column_code));
     print_bits(LUT_DATA[column_entry].key, LUT_KEY_LENGTH);
     print_bits(column_code, LUT_KEY_LENGTH);
 
-    printf("row code pos %d %d\n", LUT_DATA[row_entry].value, lut_search(LUT_DATA, LUT_SIZE, row_code));
+    printf("row code pos %d %d\n", LUT_DATA[row_entry].value,
+            lut_search(LUT_DATA, LUT_SIZE, row_code));
     print_bits(LUT_DATA[row_entry].key, LUT_KEY_LENGTH);
     print_bits(row_code, LUT_KEY_LENGTH);
     return 0;

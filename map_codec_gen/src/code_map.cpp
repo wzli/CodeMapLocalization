@@ -20,7 +20,8 @@ void CodeMap::generate(const std::string& sequence) {
 
 void CodeMap::save_pbm(const std::string& file_name) {
     std::ofstream f(file_name, std::ios::binary);
-    f << "P4\n#0x" << std::hex << sequence_hash << '\n' << std::dec << dmls.size() << ' ' << dmls.size() << '\n';
+    f << "P4\n#0x" << std::hex << sequence_hash << '\n'
+      << std::dec << dmls.size() << ' ' << dmls.size() << '\n';
     std::vector<char> linebits((dmls.size() + 7) / 8);
     for (size_t y = 0; y < dmls.size(); ++y) {
         std::fill(linebits.begin(), linebits.end(), 0);

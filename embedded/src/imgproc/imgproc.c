@@ -3,7 +3,8 @@
 #include <math.h>
 #include <assert.h>
 
-#define ELEMENT(MATRIX, ROW, COL) ((MATRIX).data[(ROW) * (MATRIX).n_cols + (COL)])
+#define ELEMENT(MATRIX, ROW, COL) \
+    ((MATRIX).data[(ROW) * (MATRIX).n_cols + (COL)])
 
 #define FOR_EACH_ELEMENT(MAT, EXPRESSION)                      \
     do {                                                       \
@@ -32,14 +33,16 @@ int32_t count_negative_elements(ImageMatrix mat) {
     return count;
 }
 
-void convolution(ImageMatrix* dst, const ImageMatrix src, const ImageMatrix kernel) {
+void convolution(
+        ImageMatrix* dst, const ImageMatrix src, const ImageMatrix kernel) {
     dst->n_rows = src.n_rows - ((kernel.n_rows >> 1) << 1);
     dst->n_cols = src.n_cols - ((kernel.n_cols >> 1) << 1);
     FOR_EACH_ELEMENT(*dst, ELEMENT(*dst, row, col) = 0);
     for (int16_t k_row = 0; k_row < kernel.n_rows; ++k_row) {
         for (int16_t k_col = 0; k_col < kernel.n_cols; ++k_col) {
-            FOR_EACH_ELEMENT(*dst,
-                    ELEMENT(*dst, row, col) += ELEMENT(kernel, k_row, k_col) * ELEMENT(src, row + k_row, col + k_col));
+            FOR_EACH_ELEMENT(*dst, ELEMENT(*dst, row, col) +=
+                                   ELEMENT(kernel, k_row, k_col) *
+                                   ELEMENT(src, row + k_row, col + k_col));
         }
     }
 }
@@ -53,32 +56,42 @@ void edge_filter(ImageMatrix* dst, const ImageMatrix src) {
     kernel.data = sobel_kernel_y;
     convolution(dst, src, kernel);
     // sum absolute value of gradient components
-    FOR_EACH_ELEMENT(buf_mat,
-            ELEMENT(*dst, row, col) = (SQUARE(ELEMENT(*dst, row, col)) + SQUARE(ELEMENT(buf_mat, row, col))) >> 6);
+    FOR_EACH_ELEMENT(
+            buf_mat, ELEMENT(*dst, row, col) =
+                             (SQUARE(ELEMENT(*dst, row, col)) +
+                                     SQUARE(ELEMENT(buf_mat, row, col))) >>
+                             6);
     assert(count_negative_elements(*dst) == 0);
 }
 
 void hough_line_transform(ImageMatrix* dst, const ImageMatrix src) {
     FOR_EACH_ELEMENT(*dst, ELEMENT(*dst, row, col) = 0);
     float angle_resolution = M_PI * 0.5f / dst->n_rows;
-    float scale_to_index = dst->n_cols / sqrtf((src.n_rows * src.n_rows) + (src.n_cols * src.n_cols));
+    float scale_to_index = dst->n_cols / sqrtf((src.n_rows * src.n_rows) +
+                                                 (src.n_cols * src.n_cols));
     for (uint16_t i = 0; i < dst->n_rows; ++i) {
         float sin = sinf(i * angle_resolution);
         float cos = cosf(i * angle_resolution);
         FOR_EACH_ELEMENT(src,
-                ELEMENT(*dst, i, (int16_t)(((sin * row) + (cos * col)) * scale_to_index)) += ELEMENT(src, row, col));
+                ELEMENT(*dst, i,
+                        (int16_t)(((sin * row) + (cos * col)) *
+                                  scale_to_index)) += ELEMENT(src, row, col));
     }
     assert(count_negative_elements(*dst) == 0);
 };
 
 void normalize_elements(ImageMatrix mat, int16_t max_val) {
     int16_t max_element = 1;
-    FOR_EACH_ELEMENT(mat, max_element = MAX(max_element, ELEMENT(mat, row, col)));
-    FOR_EACH_ELEMENT(mat, ELEMENT(mat, row, col) = (ELEMENT(mat, row, col) * max_val) / max_element);
+    FOR_EACH_ELEMENT(
+            mat, max_element = MAX(max_element, ELEMENT(mat, row, col)));
+    FOR_EACH_ELEMENT(
+            mat, ELEMENT(mat, row, col) =
+                         (ELEMENT(mat, row, col) * max_val) / max_element);
 };
 
 void square_elements(ImageMatrix mat) {
-    FOR_EACH_ELEMENT(mat, ELEMENT(mat, row, col) = SQUARE(ELEMENT(mat, row, col)) >> 8);
+    FOR_EACH_ELEMENT(
+            mat, ELEMENT(mat, row, col) = SQUARE(ELEMENT(mat, row, col)) >> 8);
 };
 
 void convert_uint8_to_int16(ImageMatrix mat) {

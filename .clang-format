@@ -29,4 +29,4 @@ SpaceAfterCStyleCast: true
 
 CommentPragmas: '^[/!]<'
 
-ColumnLimit: 120
+ColumnLimit: 80
