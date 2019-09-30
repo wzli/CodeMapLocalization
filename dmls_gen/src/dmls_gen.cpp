@@ -39,10 +39,10 @@ void DmlsGen::generate_dmls(std::vector<bool>& sequence, uint8_t word_length, ui
     _word_visit_counts.resize(1 << _word_length);
     _word_visit_ids.resize(1 << _word_length, _visit_id);
     _start_word_selector.param(std::uniform_int_distribution<uint32_t>::param_type(0, (1 << _word_length) - 1));
-    _gen.seed(_rd());
     const uint32_t MSB = 1 << (_word_length - 1);
     std::vector<double> next_word_weights(4);
     while (--iterations) {
+        _gen.seed(_rd());
         uint32_t l_word = _start_word_selector(_gen);
         uint32_t r_word = l_word;
         _l_sequence.clear();
