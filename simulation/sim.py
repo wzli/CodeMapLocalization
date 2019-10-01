@@ -45,9 +45,6 @@ libsim.threshold_elements.argtypes = [
 libsim.normalize_elements.restype = None
 libsim.normalize_elements.argtypes = [ImageMatrix, ctypes.c_short]
 
-libsim.square_elements.restype = None
-libsim.square_elements.argtypes = [ImageMatrix]
-
 libsim.edge_filter.restype = None
 libsim.edge_filter.argtypes = [ctypes.POINTER(ImageMatrix), ImageMatrix]
 
