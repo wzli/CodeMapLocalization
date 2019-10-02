@@ -1,6 +1,7 @@
 #include "imgproc.h"
 
 #include <limits.h>
+#include <float.h>
 #include <math.h>
 #include <assert.h>
 
@@ -79,48 +80,53 @@ void convolution(
     }
 }
 
-static const Vector2 ROTATION_VECTORS[] = {
-    {1 , 0},
-    {2 , 1},
-    {1 , 1},
-    {1 , 2},
-    };
+static const Vector2f ROTATION_VECTORS[] = {
+        {cosf((0.0f/8)*(M_PI/2) + (M_PI/4)), sinf((0.0f/8)*(M_PI/2) + (M_PI/4))},
+        {cosf((1.0f/8)*(M_PI/2) + (M_PI/4)), sinf((1.0f/8)*(M_PI/2) + (M_PI/4))},
+        {cosf((2.0f/8)*(M_PI/2) + (M_PI/4)), sinf((2.0f/8)*(M_PI/2) + (M_PI/4))},
+        {cosf((3.0f/8)*(M_PI/2) + (M_PI/4)), sinf((3.0f/8)*(M_PI/2) + (M_PI/4))},
+        {cosf((4.0f/8)*(M_PI/2) + (M_PI/4)), sinf((4.0f/8)*(M_PI/2) + (M_PI/4))},
+        {cosf((5.0f/8)*(M_PI/2) + (M_PI/4)), sinf((5.0f/8)*(M_PI/2) + (M_PI/4))},
+        {cosf((6.0f/8)*(M_PI/2) + (M_PI/4)), sinf((6.0f/8)*(M_PI/2) + (M_PI/4))},
+        {cosf((7.0f/8)*(M_PI/2) + (M_PI/4)), sinf((7.0f/8)*(M_PI/2) + (M_PI/4))},
+};
 
-#define N_ROTATION_VECTORS (sizeof(ROTATION_VECTORS) / sizeof(Vector2))
+#define N_ROTATION_VECTORS (sizeof(ROTATION_VECTORS) / sizeof(Vector2f))
 
-float dot_product(Vector2 a, Vector2 b) {
-    return (float)a.x * b.x + (float)a.y * b.y;
+float vector2f_dot(Vector2f a, Vector2f b) {
+    return a.x * b.x + a.y * b.y;
 }
 
-int32_t squared_distance(Vector2 a, Vector2 b) {
-    float da = dot_product(a,a);
-    float db = dot_product(b,b);
-    a.x *= 10000000 / sqrtf(da);
-    a.y *= 10000000 / sqrtf(da);
-    b.x *= 10000000 / sqrtf(db);
-    b.y *= 10000000 / sqrtf(db);
-    return (SQUARE((a.x-b.x)>>12)) + (SQUARE((a.y-b.y)>>12));
+float vector2f_distance_squared(Vector2f a, Vector2f b) {
+    return SQUARE(a.x - b.x) + SQUARE(a.y - b.y);
 }
 
-
-float cosine(Vector2 a, Vector2 b) {
-    return dot_product(a, b)/(sqrtf(dot_product(a,a)) * sqrtf(dot_product(b,b)));
+Vector2f vector2f_rotate(Vector2f vec, Vector2f rot) {
+    return (Vector2f){(rot.x * vec.x) - (rot.y * vec.y),
+            (rot.y * vec.x) + (rot.x * vec.y)};
 }
 
-Vector2 rotate_vector(Vector2 vector, Vector2 rotation) {
-    return (Vector2){
-        (rotation.x * vector.x) - (rotation.y * vector.y),
-        (rotation.y * vector.x) + (rotation.x * vector.y)
-    };
+Vector2f vector2f_normalize(Vector2f vec) {
+    float norm_scale = 1.0f/sqrt(SQUARE(vec.x) + SQUARE(vec.y));
+    return (Vector2f){vec.x * norm_scale, vec.y * norm_scale};
 }
 
-Vector2 estimate_rotation(const ImageMatrix mat) {
-    Vector2 rotation_estimates[N_ROTATION_VECTORS] = {};
+Vector2f vector2f_midpoint(Vector2f a, Vector2f b) {
+    return (Vector2f){0.5f * (a.x + b.x), 0.5f * (a.y + b.y)};
+}
+
+int idx = 0;
+void set_idx(int iidx) {
+    idx = iidx;
+}
+
+Vector2f estimate_rotation(const ImageMatrix mat) {
+    Vector2f rotation_estimates[N_ROTATION_VECTORS] = {};
     int16_t n_rows_bound = mat.n_rows - 2;
     int16_t n_cols_bound = mat.n_cols - 2;
     for (int16_t mat_row = 0; mat_row < n_rows_bound; mat_row++) {
         for (int16_t mat_col = 0; mat_col < n_cols_bound; mat_col++) {
-            Vector2 gradient = {};
+            Vector2f gradient = {};
             for (int16_t k_row = 0; k_row < 3; k_row++) {
                 for (int16_t k_col = 0; k_col < 3; k_col++) {
                     gradient.x +=
@@ -131,12 +137,15 @@ Vector2 estimate_rotation(const ImageMatrix mat) {
                             ELEMENT(mat, k_row + mat_row, k_col + mat_col);
                 }
             }
-            for(int16_t i = 0; i < N_ROTATION_VECTORS; ++i) {
-                Vector2 rotated_gradient = rotate_vector(gradient, ROTATION_VECTORS[i]);
+            for (int16_t i = 0; i < N_ROTATION_VECTORS; ++i) {
+                Vector2f rotated_gradient =
+                        vector2f_rotate(gradient, ROTATION_VECTORS[i]);
                 if (rotated_gradient.x == 0 || rotated_gradient.y == 0) {
-                    rotation_estimates[i].x += ABS(rotated_gradient.x) + ABS(rotated_gradient.y);
-                    rotation_estimates[i].y += ABS(rotated_gradient.x) + ABS(rotated_gradient.y);
-                } else if ((rotated_gradient.x ^ rotated_gradient.y) < 0) {
+                    rotation_estimates[i].x +=
+                            ABS(rotated_gradient.x) + ABS(rotated_gradient.y);
+                    rotation_estimates[i].y +=
+                            ABS(rotated_gradient.x) + ABS(rotated_gradient.y);
+                } else if ((rotated_gradient.x * rotated_gradient.y) < 0) {
                     rotation_estimates[i].x += ABS(rotated_gradient.y);
                     rotation_estimates[i].y += ABS(rotated_gradient.x);
                 } else {
@@ -146,58 +155,59 @@ Vector2 estimate_rotation(const ImageMatrix mat) {
             }
         }
     }
-    float similarity[N_ROTATION_VECTORS];
-    for(int16_t i = 0; i < N_ROTATION_VECTORS; ++i) {
+    uint8_t best_estimate = 0;
+    uint8_t second_best_estimate = 0;
+    for (int16_t i = 0; i < N_ROTATION_VECTORS; ++i) {
         assert(rotation_estimates[i].x >= 0);
         assert(rotation_estimates[i].y >= 0);
-        similarity[i] = cosine(rotation_estimates[i], (Vector2){1, 1});
-        assert(similarity[i] >= 0);
-        rotation_estimates[i] = rotate_vector(rotation_estimates[i], (Vector2){ROTATION_VECTORS[i].x, -ROTATION_VECTORS[i].y});
-        if (((rotation_estimates[i].x ^ rotation_estimates[i].y) < 0 && rotation_estimates[i].y != 0)
-                || rotation_estimates[i].x == 0) {
-            int32_t x = rotation_estimates[i].x;
+        rotation_estimates[i] = vector2f_normalize(rotation_estimates[i]);
+        float similarity = rotation_estimates[i].x + rotation_estimates[i].y;
+        assert(similarity >= 0);
+        if (similarity >  rotation_estimates[best_estimate].x + rotation_estimates[best_estimate].y) {
+            second_best_estimate = best_estimate;
+            best_estimate = i;
+        } else if (similarity > rotation_estimates[second_best_estimate].x + rotation_estimates[second_best_estimate].y) {
+            second_best_estimate = i;
+        }
+    }
+    for (int16_t i = 0; i < N_ROTATION_VECTORS; ++i) {
+        rotation_estimates[i] = vector2f_rotate(rotation_estimates[i],
+                (Vector2f){ROTATION_VECTORS[i].x, -ROTATION_VECTORS[i].y});
+        if (((rotation_estimates[i].x * rotation_estimates[i].y) < 0 &&
+                    rotation_estimates[i].y != 0) ||
+                rotation_estimates[i].x == 0) {
+            float tmp_x = rotation_estimates[i].x;
             rotation_estimates[i].x = ABS(rotation_estimates[i].y);
-            rotation_estimates[i].y = ABS(x);
+            rotation_estimates[i].y = ABS(tmp_x);
         } else {
             rotation_estimates[i].x = ABS(rotation_estimates[i].x);
             rotation_estimates[i].y = ABS(rotation_estimates[i].y);
         }
     }
-    Vector2 rotation_average = {
-        rotation_estimates[0].x + rotation_estimates[2].x,
-        rotation_estimates[0].y + rotation_estimates[2].y,
-    };
-    int16_t best_estimate = 0;
-    int16_t second_best_estimate = 0;
-    for(int16_t i = 0; i < N_ROTATION_VECTORS; ++i) {
-        if(similarity[i] >= similarity[best_estimate]) {
-            second_best_estimate = best_estimate;
-            best_estimate = i;
-        } else if (similarity[i] >= second_best_estimate) {
-            second_best_estimate = i;
-        }
-        printf("i %d s %f be %d sb %d bs %f c %d\n", i, similarity[i], best_estimate,second_best_estimate, similarity[best_estimate], squared_distance(rotation_estimates[i], rotation_average));
-    }
-    if(ABS(similarity[best_estimate] - similarity[second_best_estimate]) < 0.05) {
-        int32_t da = squared_distance(rotation_estimates[second_best_estimate], rotation_average);
-        int32_t db = squared_distance(rotation_estimates[best_estimate],  rotation_average);
-        if(da < db) {
-            best_estimate = second_best_estimate;
+    int16_t closest_estimates[2] = {};
+    float closest_distance_squared = 0.0f;
+    for (int16_t i = 0; i < N_ROTATION_VECTORS; ++i) {
+        for (int16_t j = i + 1; j < N_ROTATION_VECTORS; ++j) {
+            float distance_squared = vector2f_distance_squared(rotation_estimates[i], rotation_estimates[j]);
+            if(distance_squared > closest_distance_squared) {
+                closest_distance_squared = distance_squared;
+                closest_estimates[0] = i;
+                closest_estimates[1] = j;
+            }
         }
     }
-
-    //best_estimate = 3;
-    //return rotation_average;
-    return rotation_estimates[best_estimate]; 
+    //return rotation_estimates[idx];
+    return best_estimate != closest_estimates[0] && best_estimate != closest_estimates[1] ? 
+            rotation_estimates[best_estimate] : rotation_estimates[second_best_estimate];
 }
 
 float test_func(const ImageMatrix mat) {
-    Vector2 rotation = estimate_rotation(mat);
+    Vector2f rotation = estimate_rotation(mat);
     return rotation.x;
 }
 
 float test_func_2(const ImageMatrix mat) {
-    Vector2 rotation = estimate_rotation(mat);
+    Vector2f rotation = estimate_rotation(mat);
     return rotation.y;
 }
 

@@ -8,9 +8,9 @@ typedef struct {
 } ImageMatrix;
 
 typedef struct {
-    int32_t x;
-    int32_t y;
-} Vector2;
+    float x;
+    float y;
+} Vector2f;
 
 void convolution(
         ImageMatrix* dst, const ImageMatrix src, const ImageMatrix kernel);
