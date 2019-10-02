@@ -56,6 +56,9 @@ void normalize_elements(ImageMatrix mat, int16_t max_val) {
         max_element = MAX(max_element, ELEMENT(mat, row, col));
         min_element = MIN(min_element, ELEMENT(mat, row, col));
     }
+    if(max_element == min_element) {
+        return;
+    }
     FOR_EACH_ELEMENT(mat) {
         ELEMENT(mat, row, col) =
                 ((ELEMENT(mat, row, col) - min_element) * max_val) /
@@ -133,10 +136,12 @@ Vector2f estimate_rotation(const ImageMatrix mat) {
             gradient_sum.y += gradient.y;
         }
     }
-    gradient_sum = vector2f_normalize(gradient_sum);
-    gradient_sum = vector2f_half_angle(gradient_sum);
-    gradient_sum = vector2f_half_angle(gradient_sum);
-    assert(!isnan(gradient_sum.x) && !isnan(gradient_sum.y));
+    if(gradient_sum.x != 0 || gradient_sum.y != 0) {
+        gradient_sum = vector2f_normalize(gradient_sum);
+        gradient_sum = vector2f_half_angle(gradient_sum);
+        gradient_sum = vector2f_half_angle(gradient_sum);
+        assert(!isnan(gradient_sum.x) && !isnan(gradient_sum.y));
+    }
     return gradient_sum;
 }
 
