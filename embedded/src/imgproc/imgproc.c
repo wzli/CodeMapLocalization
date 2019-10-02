@@ -80,48 +80,39 @@ void convolution(
     }
 }
 
-static const Vector2f ROTATION_VECTORS[] = {
-        {cosf((0.0f/8)*(M_PI/2) + (M_PI/4)), sinf((0.0f/8)*(M_PI/2) + (M_PI/4))},
-        {cosf((1.0f/8)*(M_PI/2) + (M_PI/4)), sinf((1.0f/8)*(M_PI/2) + (M_PI/4))},
-        {cosf((2.0f/8)*(M_PI/2) + (M_PI/4)), sinf((2.0f/8)*(M_PI/2) + (M_PI/4))},
-        {cosf((3.0f/8)*(M_PI/2) + (M_PI/4)), sinf((3.0f/8)*(M_PI/2) + (M_PI/4))},
-        {cosf((4.0f/8)*(M_PI/2) + (M_PI/4)), sinf((4.0f/8)*(M_PI/2) + (M_PI/4))},
-        {cosf((5.0f/8)*(M_PI/2) + (M_PI/4)), sinf((5.0f/8)*(M_PI/2) + (M_PI/4))},
-        {cosf((6.0f/8)*(M_PI/2) + (M_PI/4)), sinf((6.0f/8)*(M_PI/2) + (M_PI/4))},
-        {cosf((7.0f/8)*(M_PI/2) + (M_PI/4)), sinf((7.0f/8)*(M_PI/2) + (M_PI/4))},
-};
 
-#define N_ROTATION_VECTORS (sizeof(ROTATION_VECTORS) / sizeof(Vector2f))
-
-float vector2f_dot(Vector2f a, Vector2f b) {
+inline float vector2f_dot(Vector2f a, Vector2f b) {
     return a.x * b.x + a.y * b.y;
 }
 
-float vector2f_distance_squared(Vector2f a, Vector2f b) {
+inline float vector2f_distance_squared(Vector2f a, Vector2f b) {
     return SQUARE(a.x - b.x) + SQUARE(a.y - b.y);
 }
 
-Vector2f vector2f_rotate(Vector2f vec, Vector2f rot) {
+inline Vector2f vector2f_rotate(Vector2f vec, Vector2f rot) {
     return (Vector2f){(rot.x * vec.x) - (rot.y * vec.y),
             (rot.y * vec.x) + (rot.x * vec.y)};
 }
 
-Vector2f vector2f_normalize(Vector2f vec) {
+inline Vector2f vector2f_normalize(Vector2f vec) {
     float norm_scale = 1.0f/sqrt(SQUARE(vec.x) + SQUARE(vec.y));
     return (Vector2f){vec.x * norm_scale, vec.y * norm_scale};
 }
 
-Vector2f vector2f_midpoint(Vector2f a, Vector2f b) {
+inline Vector2f vector2f_midpoint(Vector2f a, Vector2f b) {
     return (Vector2f){0.5f * (a.x + b.x), 0.5f * (a.y + b.y)};
 }
 
-int idx = 0;
-void set_idx(int iidx) {
-    idx = iidx;
+inline Vector2f vector2f_double_angle(Vector2f rot) {
+    return (Vector2f) {SQUARE(rot.x) - SQUARE(rot.y), 2.0f * rot.x * rot.y};
+}
+
+inline Vector2f vector2f_half_angle(Vector2f rot) {
+    return (Vector2f) {sqrtf((1.0f + rot.x) * 0.5f), copysignf(sqrtf((1.0f - rot.x) * 0.5f), rot.y)};
 }
 
 Vector2f estimate_rotation(const ImageMatrix mat) {
-    Vector2f rotation_estimates[N_ROTATION_VECTORS] = {};
+    Vector2f gradient_sum = {};
     int16_t n_rows_bound = mat.n_rows - 2;
     int16_t n_cols_bound = mat.n_cols - 2;
     for (int16_t mat_row = 0; mat_row < n_rows_bound; mat_row++) {
@@ -137,68 +128,17 @@ Vector2f estimate_rotation(const ImageMatrix mat) {
                             ELEMENT(mat, k_row + mat_row, k_col + mat_col);
                 }
             }
-            for (int16_t i = 0; i < N_ROTATION_VECTORS; ++i) {
-                Vector2f rotated_gradient =
-                        vector2f_rotate(gradient, ROTATION_VECTORS[i]);
-                if (rotated_gradient.x == 0 || rotated_gradient.y == 0) {
-                    rotation_estimates[i].x +=
-                            ABS(rotated_gradient.x) + ABS(rotated_gradient.y);
-                    rotation_estimates[i].y +=
-                            ABS(rotated_gradient.x) + ABS(rotated_gradient.y);
-                } else if ((rotated_gradient.x * rotated_gradient.y) < 0) {
-                    rotation_estimates[i].x += ABS(rotated_gradient.y);
-                    rotation_estimates[i].y += ABS(rotated_gradient.x);
-                } else {
-                    rotation_estimates[i].x += ABS(rotated_gradient.x);
-                    rotation_estimates[i].y += ABS(rotated_gradient.y);
-                }
-            }
+            gradient = vector2f_double_angle(gradient);
+            gradient = vector2f_double_angle(gradient);
+            gradient_sum.x += gradient.x;
+            gradient_sum.y += gradient.y;
         }
     }
-    uint8_t best_estimate = 0;
-    uint8_t second_best_estimate = 0;
-    for (int16_t i = 0; i < N_ROTATION_VECTORS; ++i) {
-        assert(rotation_estimates[i].x >= 0);
-        assert(rotation_estimates[i].y >= 0);
-        rotation_estimates[i] = vector2f_normalize(rotation_estimates[i]);
-        float similarity = rotation_estimates[i].x + rotation_estimates[i].y;
-        assert(similarity >= 0);
-        if (similarity >  rotation_estimates[best_estimate].x + rotation_estimates[best_estimate].y) {
-            second_best_estimate = best_estimate;
-            best_estimate = i;
-        } else if (similarity > rotation_estimates[second_best_estimate].x + rotation_estimates[second_best_estimate].y) {
-            second_best_estimate = i;
-        }
-    }
-    for (int16_t i = 0; i < N_ROTATION_VECTORS; ++i) {
-        rotation_estimates[i] = vector2f_rotate(rotation_estimates[i],
-                (Vector2f){ROTATION_VECTORS[i].x, -ROTATION_VECTORS[i].y});
-        if (((rotation_estimates[i].x * rotation_estimates[i].y) < 0 &&
-                    rotation_estimates[i].y != 0) ||
-                rotation_estimates[i].x == 0) {
-            float tmp_x = rotation_estimates[i].x;
-            rotation_estimates[i].x = ABS(rotation_estimates[i].y);
-            rotation_estimates[i].y = ABS(tmp_x);
-        } else {
-            rotation_estimates[i].x = ABS(rotation_estimates[i].x);
-            rotation_estimates[i].y = ABS(rotation_estimates[i].y);
-        }
-    }
-    int16_t closest_estimates[2] = {};
-    float closest_distance_squared = 0.0f;
-    for (int16_t i = 0; i < N_ROTATION_VECTORS; ++i) {
-        for (int16_t j = i + 1; j < N_ROTATION_VECTORS; ++j) {
-            float distance_squared = vector2f_distance_squared(rotation_estimates[i], rotation_estimates[j]);
-            if(distance_squared > closest_distance_squared) {
-                closest_distance_squared = distance_squared;
-                closest_estimates[0] = i;
-                closest_estimates[1] = j;
-            }
-        }
-    }
-    //return rotation_estimates[idx];
-    return best_estimate != closest_estimates[0] && best_estimate != closest_estimates[1] ? 
-            rotation_estimates[best_estimate] : rotation_estimates[second_best_estimate];
+    gradient_sum = vector2f_normalize(gradient_sum);
+    gradient_sum = vector2f_half_angle(gradient_sum);
+    gradient_sum = vector2f_half_angle(gradient_sum);
+    assert(!isnan(gradient_sum.x) && !isnan(gradient_sum.y));
+    return gradient_sum;
 }
 
 float test_func(const ImageMatrix mat) {

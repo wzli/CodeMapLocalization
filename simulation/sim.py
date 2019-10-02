@@ -73,9 +73,6 @@ libsim.test_func.argtypes = [ImageMatrix]
 libsim.test_func_2.restype = ctypes.c_float
 libsim.test_func_2.argtypes = [ImageMatrix]
 
-libsim.set_idx.restype = None
-libsim.set_idx.argtypes = [ctypes.c_int]
-
 n = 30
 
 code_map = Image.open("code_map.pbm").convert('L')
@@ -116,34 +113,35 @@ for i in range(30):
     test_matrix = ImageMatrix.from_image(test_image)
     test_values.append(libsim.test_func(test_matrix))
     test_values_2.append(libsim.test_func_2(test_matrix))
-#    test_values_3.append(test_values_2[-1] / test_values[-1])
+    angle = math.atan2(test_values_2[-1], test_values[-1]) * 180 / math.pi
+    if angle > 45:
+        angle -= 90
+    test_values_3.append(angle)
 
 x_range = [math.atan2(i - 14, 14) * 180 / math.pi for i in range(30)]
 #plt.plot(x_range, test_values)
 #plt.plot(x_range, test_values_2)
-#plt.plot(x_range, test_values_3)
+plt.plot(x_range, test_values_3)
 #plt.plot(x_range, test_values_4)
 
-for i in range(1):
-    test_values = []
-    test_values_2 = []
-    test_values_3 = []
-    test_values_4 = []
-    libsim.set_idx(i)
-    for i in range(-45, 45):
-        #for i in [0] * 90:
-        test_image = code_map.rotate(i, Image.BILINEAR).crop(
-            (500, 500, 500 + n, 500 + n))
-        test_matrix = ImageMatrix.from_image(test_image)
-        test_values.append(libsim.test_func(test_matrix))
-        test_values_2.append(libsim.test_func_2(test_matrix))
-        angle = math.atan2(test_values_2[-1], test_values[-1]) * 180 / math.pi
-        if angle > 45:
-            angle -= 90
-        test_values_3.append(angle)
-    #plt.plot(range(-45, 45), test_values)
-    #plt.plot(range(-45, 45), test_values_2)
-    plt.plot(range(-45, 45), test_values_3)
+test_values = []
+test_values_2 = []
+test_values_3 = []
+test_values_4 = []
+for i in range(-45, 45):
+    #for i in [0] * 90:
+    test_image = code_map.rotate(i, Image.BILINEAR).crop(
+        (500, 500, 500 + n, 500 + n))
+    test_matrix = ImageMatrix.from_image(test_image)
+    test_values.append(libsim.test_func(test_matrix))
+    test_values_2.append(libsim.test_func_2(test_matrix))
+    angle = math.atan2(test_values_2[-1], test_values[-1]) * 180 / math.pi
+    if angle > 45:
+        angle -= 90
+    test_values_3.append(angle)
+#plt.plot(range(-45, 45), test_values)
+#plt.plot(range(-45, 45), test_values_2)
+#plt.plot(range(-45, 45), test_values_3)
 #plt.plot(range(-45, 45), list(range(45, 90)) + list(range(0, 45)))
 plt.plot(range(-45, 45), range(-45, 45))
 #plt.plot(range(-45, 45), test_values)
