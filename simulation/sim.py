@@ -7,6 +7,10 @@ import ctypes
 libsim = ctypes.CDLL("build/libsimulation.so")
 
 
+class Vector2f(ctypes.Structure):
+    _fields_ = [('x', ctypes.c_float), ('y', ctypes.c_float)]
+
+
 class ImageMatrix(ctypes.Structure):
     _fields_ = [('data', ctypes.c_char_p), ('n_cols', ctypes.c_short),
                 ('n_rows', ctypes.c_short)]
@@ -51,9 +55,7 @@ libsim.edge_filter.restype = None
 libsim.edge_filter.argtypes = [ctypes.POINTER(ImageMatrix), ImageMatrix]
 
 libsim.hough_line_transform.restype = None
-libsim.hough_line_transform.argtypes = [
-    ctypes.POINTER(ImageMatrix), ImageMatrix
-]
+libsim.hough_line_transform.argtypes = [ImageMatrix, ImageMatrix]
 
 libsim.estimate_rotation.restype = None
 libsim.estimate_rotation.argtypes = [ImageMatrix]
@@ -67,16 +69,13 @@ libsim.convert_uint8_to_int16.argtypes = [ImageMatrix]
 libsim.print_matrix.restype = None
 libsim.print_matrix.argtypes = [ImageMatrix]
 
-libsim.test_func.restype = ctypes.c_float
-libsim.test_func.argtypes = [ImageMatrix]
-
-libsim.test_func_2.restype = ctypes.c_float
-libsim.test_func_2.argtypes = [ImageMatrix]
+libsim.estimate_rotation.restype = Vector2f
+libsim.estimate_rotation.argtypes = [ImageMatrix]
 
 n = 30
 
 code_map = Image.open("code_map.pbm").convert('L')
-camera_image = code_map.rotate(0, Image.BILINEAR).crop(
+camera_image = code_map.rotate(69, Image.BILINEAR).crop(
     (500, 500, 500 + n, 500 + n))
 camera_matrix = ImageMatrix.from_image(camera_image)
 
@@ -94,59 +93,35 @@ libsim.normalize_elements(edge_matrix, 255)
 libsim.hough_line_transform(edge_hough_matrix, edge_matrix)
 #edge_hough_matrix.print()
 
-#camera_matrix.show(10)
-#edge_matrix.show(10)
+camera_matrix.show(10)
+edge_matrix.show(10)
 #hough_matrix.show(1.1)
 #edge_hough_matrix.show(1.0)
 
-test_images = []
 test_values = []
-test_values_2 = []
-test_values_3 = []
-test_values_4 = []
-
 for i in range(30):
     test_image = Image.new('L', (30, 30), 0)
     draw = ImageDraw.Draw(test_image)
     draw.line(((0, i), (29, 29 - i)), 255, 2)
     draw.line(((i, 30), (29 - i, 0)), 255, 2)
     test_matrix = ImageMatrix.from_image(test_image)
-    test_values.append(libsim.test_func(test_matrix))
-    test_values_2.append(libsim.test_func_2(test_matrix))
-    angle = math.atan2(test_values_2[-1], test_values[-1]) * 180 / math.pi
-    if angle > 45:
-        angle -= 90
-    test_values_3.append(angle)
-
+    rotation_vector = libsim.estimate_rotation(test_matrix)
+    test_values.append(
+        math.atan2(rotation_vector.y, rotation_vector.x) * 180 / math.pi)
 x_range = [math.atan2(i - 14, 14) * 180 / math.pi for i in range(30)]
-#plt.plot(x_range, test_values)
-#plt.plot(x_range, test_values_2)
-plt.plot(x_range, test_values_3)
-#plt.plot(x_range, test_values_4)
+plt.plot(x_range, test_values)
 
 test_values = []
-test_values_2 = []
-test_values_3 = []
-test_values_4 = []
 for i in range(-45, 45):
-    #for i in [0] * 90:
-    test_image = code_map.rotate(i, Image.BILINEAR).crop(
-        (500, 500, 500 + n, 500 + n))
+    test_image = code_map.crop(
+        (500, 500, 500 + int(n * 1.5),
+         500 + int(n * 1.5))).rotate(i, Image.BILINEAR).crop(
+             (int(n * 0.25), int(n * 0.25), int(n * 1.25), int(n * 1.25)))
     test_matrix = ImageMatrix.from_image(test_image)
-    test_values.append(libsim.test_func(test_matrix))
-    test_values_2.append(libsim.test_func_2(test_matrix))
-    angle = math.atan2(test_values_2[-1], test_values[-1]) * 180 / math.pi
-    if angle > 45:
-        angle -= 90
-    test_values_3.append(angle)
-#plt.plot(range(-45, 45), test_values)
-#plt.plot(range(-45, 45), test_values_2)
-#plt.plot(range(-45, 45), test_values_3)
-#plt.plot(range(-45, 45), list(range(45, 90)) + list(range(0, 45)))
-plt.plot(range(-45, 45), range(-45, 45))
-#plt.plot(range(-45, 45), test_values)
-#plt.plot(range(-45, 45), test_values_2)
-#plt.plot(range(-45, 45), test_values_4)
-plt.show()
+    rotation_vector = libsim.estimate_rotation(test_matrix)
+    test_values.append(
+        math.atan2(rotation_vector.y, rotation_vector.x) * 180 / math.pi)
+plt.plot(range(-45, 45), test_values)
 
-#libsim.estimate_rotation(test_matrix)
+plt.plot(range(-45, 45), range(-45, 45))
+#plt.show()
