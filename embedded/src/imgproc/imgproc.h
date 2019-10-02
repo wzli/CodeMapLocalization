@@ -7,5 +7,10 @@ typedef struct {
     int16_t n_rows;
 } ImageMatrix;
 
+typedef struct {
+    int32_t x;
+    int32_t y;
+} Vector2;
+
 void convolution(
         ImageMatrix* dst, const ImageMatrix src, const ImageMatrix kernel);
