@@ -95,7 +95,7 @@ libsim.hough_line_transform(edge_hough_matrix, edge_matrix)
 #edge_hough_matrix.print()
 
 rotation = libsim.estimate_rotation(camera_matrix)
-rotated_matrix = ImageMatrix(30, 30)
+rotated_matrix = ImageMatrix(44, 44)
 libsim.rotate(rotated_matrix, camera_matrix, rotation)
 rotated_matrix.show()
 

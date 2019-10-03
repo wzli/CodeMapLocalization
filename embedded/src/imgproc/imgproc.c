@@ -18,7 +18,7 @@
         for (int16_t col = 0; col < (MAT).n_cols; ++col)
 
 #define ABS(x) ((x) < 0 ? -(x) : (x))
-#define SQUARE(x) ((x) * (x))
+#define SQR(x) ((x) * (x))
 #define MAX(x, y) ((x) > (y) ? (x) : (y))
 #define MIN(x, y) ((x) < (y) ? (x) : (y))
 
@@ -87,7 +87,7 @@ inline float vector2f_dot(Vector2f a, Vector2f b) {
 }
 
 inline float vector2f_distance_squared(Vector2f a, Vector2f b) {
-    return SQUARE(a.x - b.x) + SQUARE(a.y - b.y);
+    return SQR(a.x - b.x) + SQR(a.y - b.y);
 }
 
 inline Vector2f vector2f_midpoint(Vector2f a, Vector2f b) {
@@ -100,12 +100,12 @@ inline Vector2f vector2f_rotate(Vector2f vec, Vector2f rot) {
 }
 
 inline Vector2f vector2f_normalize(Vector2f vec) {
-    float norm_scale = 1.0f / sqrt(SQUARE(vec.x) + SQUARE(vec.y));
+    float norm_scale = 1.0f / sqrt(SQR(vec.x) + SQR(vec.y));
     return (Vector2f){vec.x * norm_scale, vec.y * norm_scale};
 }
 
 inline Vector2f vector2f_double_angle(Vector2f rot) {
-    return (Vector2f){SQUARE(rot.x) - SQUARE(rot.y), 2.0f * rot.x * rot.y};
+    return (Vector2f){SQR(rot.x) - SQR(rot.y), 2.0f * rot.x * rot.y};
 }
 
 inline Vector2f vector2f_half_angle(Vector2f rot) {
@@ -146,78 +146,35 @@ Vector2f estimate_rotation(const ImageMatrix mat) {
 }
 
 void rotate(ImageMatrix dst, const ImageMatrix src, Vector2f rotation) {
-    assert(rotation.x != 0 || rotation.y != 0);
-    float src_mid_row = 0.5f * src.n_rows;
-    float src_mid_col = 0.5f * src.n_cols;
-    float dst_mid_row = 0.5f * dst.n_rows;
-    float dst_mid_col = 0.5f * dst.n_cols;
+    if(rotation.x == 0 && rotation.y == 0) {
+        return;
+    }
+    Vector2f src_center = {0.5f * src.n_cols, 0.5f * src.n_rows};
+    Vector2f dst_center = {0.5f * dst.n_cols, 0.5f * dst.n_rows};
     FOR_EACH_ELEMENT(dst) {
-        float x_from_center = 0.5f + col - dst_mid_col;
-        float y_from_center = 0.5f + row - dst_mid_row;
-        Vector2f src_position = {(rotation.x * x_from_center) +
-                                         (rotation.y * y_from_center) +
-                                         src_mid_col,
-                -(rotation.y * x_from_center) + (rotation.x * y_from_center) +
-                        src_mid_row};
+        Vector2f from_center = {0.5f + col - dst_center.x, 0.5f + row - dst_center.y};
+        Vector2f src_position = {(rotation.x * from_center.x) +
+                                         (rotation.y * from_center.y) + src_center.x,
+                -(rotation.y * from_center.x) + (rotation.x * from_center.y) + src_center.y};
         if (src_position.x < 0.0f || src_position.x >= src.n_cols ||
                 src_position.y < 0.0f || src_position.y >= src.n_rows) {
             continue;
         }
         int16_t right = round(src_position.x);
         int16_t bottom = round(src_position.y);
-        float horizontal_progress = 0.5f - src_position.x + right;
-        float vertical_progress = 0.5f - src_position.y + bottom;
-        if (right >= src.n_cols) {
-            if (bottom >= src.n_rows) {
-                ELEMENT(dst, row, col) = ELEMENT(src, bottom - 1, right - 1);
-            } else if (bottom <= 0) {
-                ELEMENT(dst, row, col) = ELEMENT(src, bottom, right - 1);
-            } else {
-                ELEMENT(dst, row, col) =
-                        (float) ELEMENT(src, bottom, right - 1) +
-                        vertical_progress *
-                                (ELEMENT(src, bottom - 1, right - 1) -
-                                        ELEMENT(src, bottom, right - 1));
-            }
-        } else if (right <= 0) {
-            if (bottom >= src.n_rows) {
-                ELEMENT(dst, row, col) = ELEMENT(src, bottom - 1, right);
-            } else if (bottom <= 0) {
-                ELEMENT(dst, row, col) = ELEMENT(src, bottom, right);
-            } else {
-                ELEMENT(dst, row, col) =
-                        (float) ELEMENT(src, bottom, right) +
-                        vertical_progress *
-                                (ELEMENT(src, bottom - 1, right) -
-                                        ELEMENT(src, bottom, right));
-            }
-        } else if (bottom >= src.n_rows) {
-            ELEMENT(dst, row, col) =
-                    (float) ELEMENT(src, bottom - 1, right) +
-                    horizontal_progress *
-                            (ELEMENT(src, bottom - 1, right - 1) -
-                                    ELEMENT(src, bottom - 1, right));
-        } else if (bottom <= 0) {
-            ELEMENT(dst, row, col) =
-                    (float) ELEMENT(src, bottom, right) +
-                    horizontal_progress * (ELEMENT(src, bottom, right - 1) -
-                                                  ELEMENT(src, bottom, right));
-        } else {
-            float top_average =
-                    (float) ELEMENT(src, bottom - 1, right) +
-                    horizontal_progress *
-                            (ELEMENT(src, bottom - 1, right - 1) -
-                                    ELEMENT(src, bottom - 1, right));
-            float bottom_average =
-                    (float) ELEMENT(src, bottom, right) +
-                    horizontal_progress * (ELEMENT(src, bottom, right - 1) -
-                                                  ELEMENT(src, bottom, right));
-            ELEMENT(dst, row, col) =
-                    bottom_average +
-                    vertical_progress * (top_average - bottom_average);
-        }
-        // ELEMENT(dst, row, col) = ELEMENT(src, (uint16_t)src_position.y,
-        // (uint16_t)src_position.x);
+        int16_t left = MAX(right - 1, 0);
+        int16_t top = MAX(bottom - 1, 0);
+        right = MIN(right, src.n_cols - 1);
+        bottom = MIN(bottom, src.n_rows - 1);
+        Vector2f progress = { src_position.x - 0.5f - left, src_position.y - 0.5f - top };
+        float top_average = (float) ELEMENT(src, top, left) +
+                progress.x * (ELEMENT(src, top, right) -
+                                ELEMENT(src, top, left));
+        float bottom_average = (float) ELEMENT(src, bottom, left) +
+                progress.x * (ELEMENT(src, bottom, right) -
+                                              ELEMENT(src, bottom, left));
+        ELEMENT(dst, row, col) = top_average +
+                progress.y * (bottom_average - top_average);
     }
 }
 
@@ -231,8 +188,8 @@ void edge_filter(ImageMatrix* dst, const ImageMatrix src) {
     convolution(dst, src, kernel);
     // sum absolute value of gradient components
     FOR_EACH_ELEMENT(buf_mat) {
-        ELEMENT(*dst, row, col) = (SQUARE(ELEMENT(*dst, row, col)) +
-                                          SQUARE(ELEMENT(buf_mat, row, col))) >>
+        ELEMENT(*dst, row, col) = (SQR(ELEMENT(*dst, row, col)) +
+                                          SQR(ELEMENT(buf_mat, row, col))) >>
                                   6;
     }
     assert(count_negative_elements(*dst) == 0);
