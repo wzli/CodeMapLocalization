@@ -57,9 +57,6 @@ libsim.edge_filter.argtypes = [ctypes.POINTER(ImageMatrix), ImageMatrix]
 libsim.hough_line_transform.restype = None
 libsim.hough_line_transform.argtypes = [ImageMatrix, ImageMatrix]
 
-libsim.estimate_rotation.restype = None
-libsim.estimate_rotation.argtypes = [ImageMatrix]
-
 libsim.convert_int16_to_uint8.restype = None
 libsim.convert_int16_to_uint8.argtypes = [ImageMatrix]
 
@@ -70,12 +67,16 @@ libsim.print_matrix.restype = None
 libsim.print_matrix.argtypes = [ImageMatrix]
 
 libsim.estimate_rotation.restype = Vector2f
-libsim.estimate_rotation.argtypes = [ImageMatrix]
+#libsim.estimate_rotation.argtypes = [ImageMatrix]
+
+#libsim.rotate.restype = None
+#libsim.rotate.argtypes = [ImageMatrix, ImageMatrix, Vector2f]
 
 n = 30
 
 code_map = Image.open("code_map.pbm").convert('L')
-camera_image = code_map.rotate(69, Image.BILINEAR).crop(
+code_map.crop((500, 500, 500 + n, 500 + n)).resize((300, 300)).show()
+camera_image = code_map.rotate(30, Image.BILINEAR).crop(
     (500, 500, 500 + n, 500 + n))
 camera_matrix = ImageMatrix.from_image(camera_image)
 
@@ -93,10 +94,19 @@ libsim.normalize_elements(edge_matrix, 255)
 libsim.hough_line_transform(edge_hough_matrix, edge_matrix)
 #edge_hough_matrix.print()
 
-camera_matrix.show(10)
-edge_matrix.show(10)
+rotation = libsim.estimate_rotation(camera_matrix)
+rotated_matrix = ImageMatrix(30, 30)
+libsim.rotate(rotated_matrix, camera_matrix, rotation)
+rotated_matrix.show()
+
+camera_image.rotate(-30, Image.BILINEAR).resize((300, 300)).show()
+
+camera_matrix.show()
+#edge_matrix.show(10)
 #hough_matrix.show(1.1)
 #edge_hough_matrix.show(1.0)
+
+exit()
 
 test_values = []
 for i in range(30):

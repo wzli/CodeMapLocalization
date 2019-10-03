@@ -56,7 +56,7 @@ void normalize_elements(ImageMatrix mat, int16_t max_val) {
         max_element = MAX(max_element, ELEMENT(mat, row, col));
         min_element = MIN(min_element, ELEMENT(mat, row, col));
     }
-    if(max_element == min_element) {
+    if (max_element == min_element) {
         return;
     }
     FOR_EACH_ELEMENT(mat) {
@@ -136,13 +136,89 @@ Vector2f estimate_rotation(const ImageMatrix mat) {
             gradient_sum.y += gradient.y;
         }
     }
-    if(gradient_sum.x != 0 || gradient_sum.y != 0) {
+    if (gradient_sum.x != 0 || gradient_sum.y != 0) {
         gradient_sum = vector2f_normalize(gradient_sum);
         gradient_sum = vector2f_half_angle(gradient_sum);
         gradient_sum = vector2f_half_angle(gradient_sum);
         assert(!isnan(gradient_sum.x) && !isnan(gradient_sum.y));
     }
     return gradient_sum;
+}
+
+void rotate(ImageMatrix dst, const ImageMatrix src, Vector2f rotation) {
+    assert(rotation.x != 0 || rotation.y != 0);
+    float src_mid_row = 0.5f * src.n_rows;
+    float src_mid_col = 0.5f * src.n_cols;
+    float dst_mid_row = 0.5f * dst.n_rows;
+    float dst_mid_col = 0.5f * dst.n_cols;
+    FOR_EACH_ELEMENT(dst) {
+        float x_from_center = 0.5f + col - dst_mid_col;
+        float y_from_center = 0.5f + row - dst_mid_row;
+        Vector2f src_position = {(rotation.x * x_from_center) +
+                                         (rotation.y * y_from_center) +
+                                         src_mid_col,
+                -(rotation.y * x_from_center) + (rotation.x * y_from_center) +
+                        src_mid_row};
+        if (src_position.x < 0.0f || src_position.x >= src.n_cols ||
+                src_position.y < 0.0f || src_position.y >= src.n_rows) {
+            continue;
+        }
+        int16_t right = round(src_position.x);
+        int16_t bottom = round(src_position.y);
+        float horizontal_progress = 0.5f - src_position.x + right;
+        float vertical_progress = 0.5f - src_position.y + bottom;
+        if (right >= src.n_cols) {
+            if (bottom >= src.n_rows) {
+                ELEMENT(dst, row, col) = ELEMENT(src, bottom - 1, right - 1);
+            } else if (bottom <= 0) {
+                ELEMENT(dst, row, col) = ELEMENT(src, bottom, right - 1);
+            } else {
+                ELEMENT(dst, row, col) =
+                        (float) ELEMENT(src, bottom, right - 1) +
+                        vertical_progress *
+                                (ELEMENT(src, bottom - 1, right - 1) -
+                                        ELEMENT(src, bottom, right - 1));
+            }
+        } else if (right <= 0) {
+            if (bottom >= src.n_rows) {
+                ELEMENT(dst, row, col) = ELEMENT(src, bottom - 1, right);
+            } else if (bottom <= 0) {
+                ELEMENT(dst, row, col) = ELEMENT(src, bottom, right);
+            } else {
+                ELEMENT(dst, row, col) =
+                        (float) ELEMENT(src, bottom, right) +
+                        vertical_progress *
+                                (ELEMENT(src, bottom - 1, right) -
+                                        ELEMENT(src, bottom, right));
+            }
+        } else if (bottom >= src.n_rows) {
+            ELEMENT(dst, row, col) =
+                    (float) ELEMENT(src, bottom - 1, right) +
+                    horizontal_progress *
+                            (ELEMENT(src, bottom - 1, right - 1) -
+                                    ELEMENT(src, bottom - 1, right));
+        } else if (bottom <= 0) {
+            ELEMENT(dst, row, col) =
+                    (float) ELEMENT(src, bottom, right) +
+                    horizontal_progress * (ELEMENT(src, bottom, right - 1) -
+                                                  ELEMENT(src, bottom, right));
+        } else {
+            float top_average =
+                    (float) ELEMENT(src, bottom - 1, right) +
+                    horizontal_progress *
+                            (ELEMENT(src, bottom - 1, right - 1) -
+                                    ELEMENT(src, bottom - 1, right));
+            float bottom_average =
+                    (float) ELEMENT(src, bottom, right) +
+                    horizontal_progress * (ELEMENT(src, bottom, right - 1) -
+                                                  ELEMENT(src, bottom, right));
+            ELEMENT(dst, row, col) =
+                    bottom_average +
+                    vertical_progress * (top_average - bottom_average);
+        }
+        // ELEMENT(dst, row, col) = ELEMENT(src, (uint16_t)src_position.y,
+        // (uint16_t)src_position.x);
+    }
 }
 
 void edge_filter(ImageMatrix* dst, const ImageMatrix src) {
