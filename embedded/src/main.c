@@ -10,7 +10,7 @@ void print_bits(uint32_t word, int8_t word_length) {
     puts("");
 }
 
-BitMatrix matrix, matrix_mask;
+BitMatrix32 matrix, matrix_mask;
 const uint32_t row_entry = 1000;
 const uint32_t col_entry = 2000;
 
