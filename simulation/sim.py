@@ -6,6 +6,8 @@ import ctypes
 
 libsim = ctypes.CDLL("build/libsimulation.so")
 
+BitMatrix32 = ctypes.c_uint * 32
+
 
 class Vector2f(ctypes.Structure):
     _fields_ = [('x', ctypes.c_float), ('y', ctypes.c_float)]
@@ -75,7 +77,7 @@ libsim.estimate_rotation.restype = Vector2f
 n = 30
 
 code_map = Image.open("code_map.pbm").convert('L')
-code_map.crop((500, 500, 500 + n, 500 + n)).resize((300, 300)).show()
+#code_map.crop((500, 500, 500 + n, 500 + n)).resize((300, 300)).show()
 camera_image = code_map.rotate(30, Image.BILINEAR).crop(
     (500, 500, 500 + n, 500 + n))
 camera_matrix = ImageMatrix.from_image(camera_image)
@@ -98,14 +100,17 @@ rotation = libsim.estimate_rotation(camera_matrix)
 print("rotation", math.atan2(rotation.y, rotation.x) * 180 / math.pi)
 rotated_matrix = ImageMatrix(44, 44)
 libsim.rotate(rotated_matrix, camera_matrix, rotation)
-rotated_matrix.show()
+#rotated_matrix.show()
 
-camera_image.rotate(-30, Image.BILINEAR).resize((300, 300)).show()
+#camera_image.rotate(-30, Image.BILINEAR).resize((300, 300)).show()
 
-camera_matrix.show()
+#camera_matrix.show()
 #edge_matrix.show(10)
 #hough_matrix.show(1.1)
 #edge_hough_matrix.show(1.0)
+
+rotated_bit_mask = BitMatrix32()
+libsim.rotation_bit_mask(rotated_bit_mask, camera_matrix, rotation)
 
 exit()
 

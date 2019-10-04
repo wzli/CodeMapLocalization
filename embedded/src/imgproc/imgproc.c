@@ -1,6 +1,8 @@
 #include "imgproc.h"
+#include "bit_matrix/bit_matrix.h"
 
 #include <limits.h>
+#include <float.h>
 #include <math.h>
 #include <assert.h>
 
@@ -25,6 +27,13 @@
 static int16_t buf_data[128 * 128];
 static int16_t sobel_kernel_x[3 * 3] = {-1, 0, 1, -2, 0, 2, -1, 0, 1};
 static int16_t sobel_kernel_y[3 * 3] = {-1, -2, -1, 0, 0, 0, 1, 2, 1};
+
+void print_bits(uint32_t word, int8_t word_length) {
+    for (word_length--; word_length >= 0; word_length--) {
+        printf("%u", (word >> word_length) & 1);
+    }
+    puts("");
+}
 
 void print_matrix(ImageMatrix src) {
     for (int16_t row = 0; row < src.n_rows; ++row) {
@@ -146,9 +155,8 @@ Vector2f estimate_rotation(const ImageMatrix mat) {
 }
 
 void rotate(ImageMatrix dst, const ImageMatrix src, Vector2f rotation) {
-    if (rotation.x == 0 && rotation.y == 0) {
-        return;
-    }
+    assert(rotation.x != 0 || rotation.y != 0);
+    assert(!isnan(rotation.x) && !isnan(rotation.y));
     Vector2f src_center = {0.5f * src.n_cols, 0.5f * src.n_rows};
     Vector2f dst_center = {0.5f * dst.n_cols, 0.5f * dst.n_rows};
     FOR_EACH_ELEMENT(dst) {
@@ -179,6 +187,56 @@ void rotate(ImageMatrix dst, const ImageMatrix src, Vector2f rotation) {
                                                     ELEMENT(src, bottom, left));
         ELEMENT(dst, row, col) =
                 top_average + progress.y * (bottom_average - top_average);
+    }
+}
+
+void rotation_bit_mask(
+        BitMatrix32 rotated_mask, const ImageMatrix src, Vector2f rotation) {
+    assert(rotation.x != 0 || rotation.y != 0);
+    assert(!isnan(rotation.x) && !isnan(rotation.y));
+    if (rotation.x < 0) {
+        rotation.x = -rotation.x;
+        rotation.y = -rotation.y;
+    }
+    rotation.x += FLT_EPSILON;
+    rotation.y += (rotation.y == 0) * FLT_EPSILON;
+    Vector2f rotated_corners[2];
+    for (uint8_t i = 0; i < 2; ++i) {
+        Vector2f from_center = {
+                (i - 0.5f) * (src.n_cols - 1), (i - 0.5f) * (src.n_rows - 1)};
+        rotated_corners[i].x =
+                rotation.x * from_center.x - rotation.y * from_center.y + 16;
+        rotated_corners[i].y =
+                rotation.y * from_center.x + rotation.x * from_center.y + 16;
+    }
+    float inv_slope = rotation.x / rotation.y;
+    float inv_slope_90 = -rotation.y / rotation.x;
+    float x_intercepts[4] = {
+            rotated_corners[0].x - inv_slope * (rotated_corners[0].y - 0.5f),
+            rotated_corners[1].x - inv_slope_90 * (rotated_corners[1].y + 0.5f -
+                                                          (rotation.y < 0)),
+            rotated_corners[1].x - inv_slope * (rotated_corners[1].y + 0.5f),
+            rotated_corners[0].x - inv_slope_90 * (rotated_corners[0].y - 0.5f +
+                                                          (rotation.y < 0)),
+    };
+    for (uint8_t i = 0; i < 32; ++i) {
+        float y = (0.5f + i);
+        float intercepts[4] = {
+                inv_slope * y + x_intercepts[0],
+                inv_slope_90 * y + x_intercepts[1],
+                inv_slope * y + x_intercepts[2],
+                inv_slope_90 * y + x_intercepts[3],
+        };
+        float range_begin = rotation.y > 0 ? MAX(intercepts[2], intercepts[3])
+                                           : MAX(intercepts[0], intercepts[3]);
+        float range_end = rotation.y > 0 ? MIN(intercepts[0], intercepts[1])
+                                         : MIN(intercepts[1], intercepts[2]);
+        range_begin = range_begin < 0 ? 0 : range_begin > 31 ? 31 : range_begin;
+        range_end = range_end < 0 ? 0 : range_end > 31 ? 31 : range_end;
+        rotated_mask[i] = range_end <= range_begin
+                                  ? 0u
+                                  : (~0u << (uint8_t) range_begin) &
+                                            (~0u >> (31 - (uint8_t) range_end));
     }
 }
 
