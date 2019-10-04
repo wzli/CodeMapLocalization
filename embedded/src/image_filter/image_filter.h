@@ -1,11 +1,18 @@
 #pragma once
 #include "math_utils.h"
 
+#ifndef IMF_TYPE
+#define IMF_TYPE int16_t
+#endif
+
 typedef struct {
-    int16_t* data;
+    IMF_TYPE* data;
     int16_t n_cols;
     int16_t n_rows;
 } ImageMatrix;
+
+extern const int16_t sobel_kernel_x[3 * 3];
+extern const int16_t sobel_kernel_y[3 * 3];
 
 #define ELEMENT(MATRIX, ROW, COL) ((MATRIX).data[(ROW) * (MATRIX).n_cols + (COL)])
 
@@ -27,5 +34,6 @@ typedef struct {
             (STATEMENT);                                                    \
         }
 
-static const int16_t sobel_kernel_x[3 * 3] = {-1, 0, 1, -2, 0, 2, -1, 0, 1};
-static const int16_t sobel_kernel_y[3 * 3] = {-1, -2, -1, 0, 0, 0, 1, 2, 1};
+void imf_threshold(ImageMatrix mat, IMF_TYPE threshold);
+void imf_normalize(ImageMatrix mat);
+void imf_rotate(ImageMatrix dst, const ImageMatrix src, Vector2f rotation);

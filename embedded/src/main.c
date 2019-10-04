@@ -14,7 +14,7 @@ int main() {
         print_bits(matrix[i], LUT_KEY_LENGTH);
     }
     uint32_t row_code, col_code;
-    extract_codes(&row_code, &col_code, matrix, matrix_mask);
+    bm32_extract_codes(&row_code, &col_code, matrix, matrix_mask);
 
     uint16_t col_pos = lut_search(LUT_DATA, LUT_SIZE, col_code);
     if (col_pos == LUT_KEY_ERROR) {

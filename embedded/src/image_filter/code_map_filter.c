@@ -1,10 +1,10 @@
-#include "image_matrix.h"
+#include "image_filter.h"
 #include "bit_matrix/bit_matrix.h"
 
 #include <float.h>
 #include <assert.h>
 
-Vector2f estimate_rotation(const ImageMatrix mat) {
+Vector2f cmf_estimate_rotation(const ImageMatrix mat) {
     Vector2f gradient_sum = {};
     FOR_EACH_GRADIENT(mat,
             gradient_sum = v2f_add(gradient_sum, v2f_double_angle(v2f_double_angle(gradient))));
@@ -17,36 +17,7 @@ Vector2f estimate_rotation(const ImageMatrix mat) {
     return gradient_sum;
 }
 
-void rotate(ImageMatrix dst, const ImageMatrix src, Vector2f rotation) {
-    assert(!v2f_is_zero(rotation) && !v2f_is_nan(rotation));
-    assert(!isnan(rotation.x) && !isnan(rotation.y));
-    Vector2f src_center = {0.5f * src.n_cols, 0.5f * src.n_rows};
-    Vector2f dst_center = {0.5f * dst.n_cols, 0.5f * dst.n_rows};
-    rotation = v2f_flip_rotation(rotation);
-    FOR_EACH_ELEMENT(dst) {
-        Vector2f from_center = {0.5f + col - dst_center.x, 0.5f + row - dst_center.y};
-        Vector2f src_position = v2f_add(src_center, v2f_rotate(from_center, rotation));
-        if (src_position.x < 0.0f || src_position.x >= src.n_cols || src_position.y < 0.0f ||
-                src_position.y >= src.n_rows) {
-            continue;
-        }
-        int16_t right = round(src_position.x);
-        int16_t bottom = round(src_position.y);
-        int16_t left = MAX(right - 1, 0);
-        int16_t top = MAX(bottom - 1, 0);
-        right = MIN(right, src.n_cols - 1);
-        bottom = MIN(bottom, src.n_rows - 1);
-        Vector2f progress = {src_position.x - 0.5f - left, src_position.y - 0.5f - top};
-        float top_average = (float) ELEMENT(src, top, left) +
-                            progress.x * (ELEMENT(src, top, right) - ELEMENT(src, top, left));
-        float bottom_average =
-                (float) ELEMENT(src, bottom, left) +
-                progress.x * (ELEMENT(src, bottom, right) - ELEMENT(src, bottom, left));
-        ELEMENT(dst, row, col) = top_average + progress.y * (bottom_average - top_average);
-    }
-}
-
-void rotation_bit_mask(BitMatrix32 rotated_mask, const ImageMatrix src, Vector2f rotation) {
+void cmf_rotated_bit_mask(BitMatrix32 rotated_mask, const ImageMatrix src, Vector2f rotation) {
     assert(!v2f_is_zero(rotation) && !v2f_is_nan(rotation));
     if (rotation.x < 0) {
         rotation = v2f_scale(rotation, -1);
@@ -83,5 +54,23 @@ void rotation_bit_mask(BitMatrix32 rotated_mask, const ImageMatrix src, Vector2f
         rotated_mask[i] = range_end <= range_begin ? 0u
                                                    : (~0u << (uint8_t) range_begin) &
                                                              (~0u >> (31 - (uint8_t) range_end));
+    }
+}
+
+void cmf_bit_conversion(BitMatrix32 dst, BitMatrix32 mask, const ImageMatrix src,
+        IMF_TYPE low_thresh, IMF_TYPE high_thresh) {
+    assert(src.n_rows == 32 && src.n_cols == 32);
+    assert(high_thresh >= low_thresh);
+    FOR_EACH_ELEMENT(src) {
+        if (!bm32_get_bit(mask, row, col)) {
+            continue;
+        }
+        if (ELEMENT(src, row, col) >= high_thresh) {
+            bm32_set_bit(dst, row, col, 1);
+        } else if (ELEMENT(src, row, col) <= low_thresh) {
+            bm32_set_bit(dst, row, col, 0);
+        } else {
+            bm32_set_bit(mask, row, col, 0);
+        }
     }
 }

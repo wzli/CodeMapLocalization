@@ -27,94 +27,81 @@ class ImageMatrix(ctypes.Structure):
         buf = image.tobytes() * 2 if image.mode == 'L' else image.convert(
             'L').tobytes() * 2
         image_matrix = ImageMatrix(image.width, image.height, buf)
-        libsim.convert_uint8_to_int16(image_matrix)
+        libsim.imf_convert_uint8_to_int16(image_matrix)
         return image_matrix
 
     def to_image(self):
-        libsim.normalize_elements(self, 255)
-        libsim.convert_int16_to_uint8(self)
+        libsim.imf_normalize(self)
+        libsim.imf_convert_int16_to_uint8(self)
         image = Image.frombuffer('L', (self.n_cols, self.n_rows), self.buf,
                                  'raw', 'L', 0, 1)
         return image
 
     def print(self):
-        libsim.print_matrix(self)
+        libsim.print_image_matrix(self)
 
     def show(self, scale=10):
         self.to_image().resize(
             (int(self.n_cols * scale), int(self.n_rows * scale))).show()
 
 
-libsim.threshold_elements.restype = None
-libsim.threshold_elements.argtypes = [
-    ImageMatrix, ctypes.c_short, ctypes.c_short
-]
-
-libsim.normalize_elements.restype = None
-libsim.normalize_elements.argtypes = [ImageMatrix, ctypes.c_short]
-
-libsim.edge_filter.restype = None
-libsim.edge_filter.argtypes = [ctypes.POINTER(ImageMatrix), ImageMatrix]
-
-libsim.hough_line_transform.restype = None
-libsim.hough_line_transform.argtypes = [ImageMatrix, ImageMatrix]
-
-libsim.convert_int16_to_uint8.restype = None
-libsim.convert_int16_to_uint8.argtypes = [ImageMatrix]
-
-libsim.convert_uint8_to_int16.restype = None
-libsim.convert_uint8_to_int16.argtypes = [ImageMatrix]
-
-libsim.print_matrix.restype = None
-libsim.print_matrix.argtypes = [ImageMatrix]
-
-libsim.estimate_rotation.restype = Vector2f
-#libsim.estimate_rotation.argtypes = [ImageMatrix]
-
-#libsim.rotate.restype = None
-#libsim.rotate.argtypes = [ImageMatrix, ImageMatrix, Vector2f]
+libsim.cmf_estimate_rotation.restype = Vector2f
 
 n = 30
 
 code_map = Image.open("code_map.pbm").convert('L')
-#code_map.crop((500, 500, 500 + n, 500 + n)).resize((300, 300)).show()
+code_map.crop((500, 500, 500 + n, 500 + n)).resize((300, 300)).show()
 camera_image = code_map.rotate(30, Image.BILINEAR).crop(
     (500, 500, 500 + n, 500 + n))
 camera_matrix = ImageMatrix.from_image(camera_image)
 
 edge_matrix = ImageMatrix(n, n)
-libsim.edge_filter(edge_matrix, camera_matrix)
+libsim.imf_edge_filter(ctypes.byref(edge_matrix), camera_matrix)
 #edge_matrix.print()
 
 hough_matrix = ImageMatrix(600, 600)
-libsim.hough_line_transform(hough_matrix, camera_matrix)
+libsim.imf_hough_line_transform(hough_matrix, camera_matrix)
 #hough_matrix.print()
 
 edge_hough_matrix = ImageMatrix(600, 600)
-libsim.normalize_elements(edge_matrix, 255)
+libsim.imf_normalize(edge_matrix, 255)
 #libsim.threshold_elements(edge_matrix, 200, 255)
-libsim.hough_line_transform(edge_hough_matrix, edge_matrix)
+libsim.imf_hough_line_transform(edge_hough_matrix, edge_matrix)
 #edge_hough_matrix.print()
 
-rotation = libsim.estimate_rotation(camera_matrix)
+rotation = libsim.cmf_estimate_rotation(camera_matrix)
 print("rotation", math.atan2(rotation.y, rotation.x) * 180 / math.pi)
-rotated_matrix = ImageMatrix(44, 44)
+rotated_matrix = ImageMatrix(32, 32)
 rotation.y *= -1
-libsim.rotate(rotated_matrix, camera_matrix, rotation)
-rotated_matrix.show()
+libsim.imf_rotate(rotated_matrix, camera_matrix, rotation)
+
+bit_mask = BitMatrix32()
+libsim.cmf_rotated_bit_mask(bit_mask, camera_matrix, rotation)
+
+bit_matrix = BitMatrix32()
+libsim.cmf_bit_conversion(bit_matrix, bit_mask, rotated_matrix, 80, 160)
+
+row_code = ctypes.c_uint()
+col_code = ctypes.c_uint()
+libsim.bm32_extract_codes(ctypes.byref(row_code), ctypes.byref(col_code),
+                          bit_matrix, bit_mask)
 
 #camera_image.rotate(-30, Image.BILINEAR).resize((300, 300)).show()
 
 #camera_matrix.show()
-edge_matrix.show(10)
+#edge_matrix.show(10)
 #hough_matrix.show(1.1)
 #edge_hough_matrix.show(1.0)
+rotated_matrix.show()
 
-rotated_bit_mask = BitMatrix32()
-libsim.rotation_bit_mask(rotated_bit_mask, camera_matrix, rotation)
-
-for row in rotated_bit_mask:
+for row in bit_mask:
     libsim.print_bits(row, 32)
+print('')
+for row in bit_matrix:
+    libsim.print_bits(row, 32)
+print('')
+libsim.print_bits(row_code, 32)
+libsim.print_bits(col_code, 32)
 
 exit()
 
@@ -125,7 +112,7 @@ for i in range(30):
     draw.line(((0, i), (29, 29 - i)), 255, 2)
     draw.line(((i, 30), (29 - i, 0)), 255, 2)
     test_matrix = ImageMatrix.from_image(test_image)
-    rotation_vector = libsim.estimate_rotation(test_matrix)
+    rotation_vector = libsim.cmf_estimate_rotation(test_matrix)
     test_values.append(
         math.atan2(rotation_vector.y, rotation_vector.x) * 180 / math.pi)
 x_range = [math.atan2(i - 14, 14) * 180 / math.pi for i in range(30)]
@@ -138,7 +125,7 @@ for i in range(-45, 45):
          500 + int(n * 1.5))).rotate(i, Image.BILINEAR).crop(
              (int(n * 0.25), int(n * 0.25), int(n * 1.25), int(n * 1.25)))
     test_matrix = ImageMatrix.from_image(test_image)
-    rotation_vector = libsim.estimate_rotation(test_matrix)
+    rotation_vector = libsim.cmf_estimate_rotation(test_matrix)
     test_values.append(
         math.atan2(rotation_vector.y, rotation_vector.x) * 180 / math.pi)
 plt.plot(range(-45, 45), test_values)

@@ -7,6 +7,7 @@
 #define SQR(x) ((x) * (x))
 #define MAX(x, y) ((x) > (y) ? (x) : (y))
 #define MIN(x, y) ((x) < (y) ? (x) : (y))
+#define IS_SIGNED(Type) ((Type) 0 - 1 <= 0)
 
 #ifndef M_PI
 #define M_PI 3.1415926f
