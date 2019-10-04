@@ -17,8 +17,7 @@ const uint32_t col_entry = 2000;
 int main() {
     for (int i = 0; i < LUT_KEY_LENGTH; ++i) {
         matrix_mask[i] = (1 << LUT_KEY_LENGTH) - 1;
-        matrix[i] =
-                LUT_DATA[row_entry].key ^ -((LUT_DATA[col_entry].key >> i) & 1);
+        matrix[i] = LUT_DATA[row_entry].key ^ -((LUT_DATA[col_entry].key >> i) & 1);
         print_bits(matrix[i], LUT_KEY_LENGTH);
     }
     uint32_t row_code, col_code;

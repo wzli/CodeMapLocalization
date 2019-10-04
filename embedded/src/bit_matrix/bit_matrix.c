@@ -17,8 +17,7 @@ void transpose32(BitMatrix32 A) {
     }
 }
 
-uint32_t extract_column_code(
-        uint32_t* row_code, const BitMatrix32 matrix, const BitMatrix32 mask) {
+uint32_t extract_column_code(uint32_t* row_code, const BitMatrix32 matrix, const BitMatrix32 mask) {
     uint32_t column_code = 0;
     for (uint8_t i = 0; i < 32; ++i) {
         uint8_t row_diff = bit_sum((*row_code ^ matrix[i]) & mask[i]);
@@ -30,8 +29,7 @@ uint32_t extract_column_code(
     return column_code;
 }
 
-void extract_codes(uint32_t* row_code, uint32_t* col_code, BitMatrix32 matrix,
-        BitMatrix32 mask) {
+void extract_codes(uint32_t* row_code, uint32_t* col_code, BitMatrix32 matrix, BitMatrix32 mask) {
     *col_code = extract_column_code(row_code, matrix, mask);
     transpose32(matrix);
     transpose32(mask);

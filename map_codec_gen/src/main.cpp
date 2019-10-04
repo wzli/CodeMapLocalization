@@ -43,19 +43,18 @@ int main(int argc, char** argv) {
     std::getline(file, s, ' ');
     std::getline(file, s);
     size_t sequence_hash = std::stoul(s, 0, 16);
-    std::cout << "parsed sequence_hash: 0x" << std::hex << sequence_hash
-              << std::endl;
+    std::cout << "parsed sequence_hash: 0x" << std::hex << sequence_hash << std::endl;
 
     std::getline(file, s, '"');
     std::getline(file, s, '"');
 
     if (s.size() != sequence_length) {
-        std::cout << "WARNING: sequence length doesn't match, actual is "
-                  << std::dec << s.size() << std::endl;
+        std::cout << "WARNING: sequence length doesn't match, actual is " << std::dec << s.size()
+                  << std::endl;
     }
     if (std::hash<std::string>{}(s) != sequence_hash) {
-        std::cout << "WARNING: sequence hash doesn't match, actual is 0x"
-                  << std::hex << std::hash<std::string>{}(s) << std::endl;
+        std::cout << "WARNING: sequence hash doesn't match, actual is 0x" << std::hex
+                  << std::hash<std::string>{}(s) << std::endl;
     }
     std::cout << "Generating Map Codec ..." << std::endl;
 
@@ -73,16 +72,14 @@ int main(int argc, char** argv) {
         if (s[i] == '1') {
             word |= 1 << (word_length - 1);
         } else if (s[i] != '0') {
-            std::cout << "Error: sequence contains invalid character " << s[i]
-                      << std::endl;
+            std::cout << "Error: sequence contains invalid character " << s[i] << std::endl;
             return -2;
         }
         int position = i - word_length + 1;
         if (position >= 0) {
             uint32_t rword = reverse_bits(word, word_length);
             if (test_lut[word] != LUT_KEY_ERROR) {
-                std::cout << "Error: sequence doesn't satisfy dmls constraints"
-                          << std::endl;
+                std::cout << "Error: sequence doesn't satisfy dmls constraints" << std::endl;
                 return -3;
             }
             test_lut[word] = position;
@@ -112,12 +109,12 @@ int main(int argc, char** argv) {
     lut_file << "#include \"lut.h\"\n";
     lut_file << "const uint8_t LUT_KEY_LENGTH = " << word_length << ";\n";
     lut_file << "const uint32_t LUT_SIZE = " << LUT_SIZE << ";\n";
-    lut_file << "const uint64_t LUT_UNIQUE_ID = 0x" << std::hex
-             << std::hash<std::string>{}(s) << ";\n";
+    lut_file << "const uint64_t LUT_UNIQUE_ID = 0x" << std::hex << std::hash<std::string>{}(s)
+             << ";\n";
     lut_file << "const LutEntry __LUT_DATA[] = {\n";
     for (uint32_t i = 0; i < LUT_SIZE; ++i) {
-        lut_file << "  { 0x" << std::hex << lut[i].key << ", " << std::dec
-                 << lut[i].value << " },\n";
+        lut_file << "  { 0x" << std::hex << lut[i].key << ", " << std::dec << lut[i].value
+                 << " },\n";
     }
     lut_file << "};\n";
     lut_file << "const LutEntry* LUT_DATA = __LUT_DATA;\n";

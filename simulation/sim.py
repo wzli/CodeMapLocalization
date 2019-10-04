@@ -99,18 +99,22 @@ libsim.hough_line_transform(edge_hough_matrix, edge_matrix)
 rotation = libsim.estimate_rotation(camera_matrix)
 print("rotation", math.atan2(rotation.y, rotation.x) * 180 / math.pi)
 rotated_matrix = ImageMatrix(44, 44)
+rotation.y *= -1
 libsim.rotate(rotated_matrix, camera_matrix, rotation)
-#rotated_matrix.show()
+rotated_matrix.show()
 
 #camera_image.rotate(-30, Image.BILINEAR).resize((300, 300)).show()
 
 #camera_matrix.show()
-#edge_matrix.show(10)
+edge_matrix.show(10)
 #hough_matrix.show(1.1)
 #edge_hough_matrix.show(1.0)
 
 rotated_bit_mask = BitMatrix32()
 libsim.rotation_bit_mask(rotated_bit_mask, camera_matrix, rotation)
+
+for row in rotated_bit_mask:
+    libsim.print_bits(row, 32)
 
 exit()
 

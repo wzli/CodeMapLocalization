@@ -29,10 +29,8 @@ void DmlsGen::set_word_visited(uint32_t word) {
     _word_visit_ids[inverse_bits(rword)] = _visit_id;
 }
 
-void DmlsGen::generate_dmls(std::vector<bool>& sequence, uint8_t word_length,
-        uint32_t iterations,
-        std::function<void(std::vector<bool>& sequence, uint8_t word_length)>
-                new_record_callback) {
+void DmlsGen::generate_dmls(std::vector<bool>& sequence, uint8_t word_length, uint32_t iterations,
+        std::function<void(std::vector<bool>& sequence, uint8_t word_length)> new_record_callback) {
     if (word_length > 32) {
         return;
     }
@@ -41,8 +39,7 @@ void DmlsGen::generate_dmls(std::vector<bool>& sequence, uint8_t word_length,
     _word_visit_counts.resize(1 << _word_length);
     _word_visit_ids.resize(1 << _word_length, _visit_id);
     _start_word_selector.param(
-            std::uniform_int_distribution<uint32_t>::param_type(
-                    0, (1 << _word_length) - 1));
+            std::uniform_int_distribution<uint32_t>::param_type(0, (1 << _word_length) - 1));
     const uint32_t MSB = 1 << (_word_length - 1);
     std::vector<double> next_word_weights(4);
     while (--iterations) {
@@ -65,19 +62,16 @@ void DmlsGen::generate_dmls(std::vector<bool>& sequence, uint8_t word_length,
             };
             double weight_sum = 0;
             for (uint8_t i = 0; i < 4; ++i) {
-                next_word_weights[i] =
-                        is_word_visited(next_words[i])
-                                ? 0.0
-                                : 1.0 / (_word_visit_counts[next_words[i]] + 1);
+                next_word_weights[i] = is_word_visited(next_words[i])
+                                               ? 0.0
+                                               : 1.0 / (_word_visit_counts[next_words[i]] + 1);
                 weight_sum += next_word_weights[i];
             }
             if (weight_sum == 0.0) {
                 break;
             }
-            _next_word_selector.param(
-                    std::discrete_distribution<uint16_t>::param_type(
-                            next_word_weights.begin(),
-                            next_word_weights.end()));
+            _next_word_selector.param(std::discrete_distribution<uint16_t>::param_type(
+                    next_word_weights.begin(), next_word_weights.end()));
             int next_word_index = _next_word_selector(_gen);
             if (next_word_index & 2) {
                 r_word = next_words[next_word_index];
@@ -90,10 +84,8 @@ void DmlsGen::generate_dmls(std::vector<bool>& sequence, uint8_t word_length,
         }
         if (_l_sequence.size() + _r_sequence.size() > sequence.size()) {
             sequence.clear();
-            sequence.insert(
-                    sequence.end(), _l_sequence.rbegin(), _l_sequence.rend());
-            sequence.insert(
-                    sequence.end(), _r_sequence.begin(), _r_sequence.end());
+            sequence.insert(sequence.end(), _l_sequence.rbegin(), _l_sequence.rend());
+            sequence.insert(sequence.end(), _r_sequence.begin(), _r_sequence.end());
             if (new_record_callback) {
                 new_record_callback(sequence, _word_length);
             }
