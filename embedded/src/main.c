@@ -1,14 +1,7 @@
 #include "lut/lut.h"
 #include "bit_matrix/bit_matrix.h"
-
+#include "debug_utils/debug_utils.h"
 #include <stdio.h>
-
-void print_bits(uint32_t word, int8_t word_length) {
-    for (word_length--; word_length >= 0; word_length--) {
-        printf("%u", (word >> word_length) & 1);
-    }
-    puts("");
-}
 
 BitMatrix32 matrix, matrix_mask;
 const uint32_t row_entry = 1000;
