@@ -146,16 +146,19 @@ Vector2f estimate_rotation(const ImageMatrix mat) {
 }
 
 void rotate(ImageMatrix dst, const ImageMatrix src, Vector2f rotation) {
-    if(rotation.x == 0 && rotation.y == 0) {
+    if (rotation.x == 0 && rotation.y == 0) {
         return;
     }
     Vector2f src_center = {0.5f * src.n_cols, 0.5f * src.n_rows};
     Vector2f dst_center = {0.5f * dst.n_cols, 0.5f * dst.n_rows};
     FOR_EACH_ELEMENT(dst) {
-        Vector2f from_center = {0.5f + col - dst_center.x, 0.5f + row - dst_center.y};
+        Vector2f from_center = {
+                0.5f + col - dst_center.x, 0.5f + row - dst_center.y};
         Vector2f src_position = {(rotation.x * from_center.x) -
-                                         (rotation.y * from_center.y) + src_center.x,
-                (rotation.y * from_center.x) + (rotation.x * from_center.y) + src_center.y};
+                                         (rotation.y * from_center.y) +
+                                         src_center.x,
+                (rotation.y * from_center.x) + (rotation.x * from_center.y) +
+                        src_center.y};
         if (src_position.x < 0.0f || src_position.x >= src.n_cols ||
                 src_position.y < 0.0f || src_position.y >= src.n_rows) {
             continue;
@@ -166,15 +169,16 @@ void rotate(ImageMatrix dst, const ImageMatrix src, Vector2f rotation) {
         int16_t top = MAX(bottom - 1, 0);
         right = MIN(right, src.n_cols - 1);
         bottom = MIN(bottom, src.n_rows - 1);
-        Vector2f progress = { src_position.x - 0.5f - left, src_position.y - 0.5f - top };
+        Vector2f progress = {
+                src_position.x - 0.5f - left, src_position.y - 0.5f - top};
         float top_average = (float) ELEMENT(src, top, left) +
-                progress.x * (ELEMENT(src, top, right) -
-                                ELEMENT(src, top, left));
+                            progress.x * (ELEMENT(src, top, right) -
+                                                 ELEMENT(src, top, left));
         float bottom_average = (float) ELEMENT(src, bottom, left) +
-                progress.x * (ELEMENT(src, bottom, right) -
-                                              ELEMENT(src, bottom, left));
-        ELEMENT(dst, row, col) = top_average +
-                progress.y * (bottom_average - top_average);
+                               progress.x * (ELEMENT(src, bottom, right) -
+                                                    ELEMENT(src, bottom, left));
+        ELEMENT(dst, row, col) =
+                top_average + progress.y * (bottom_average - top_average);
     }
 }
 

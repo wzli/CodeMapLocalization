@@ -20,7 +20,7 @@ CFLAGS ?= -fPIC -O3 -Wall -Werror -std=c99
 CC ?= gcc
 
 CPPFLAGS ?= $(INC_FLAGS) -MMD -MP 
-LDLIBS += 
+LDLIBS += -lm
 
 $(BUILD_DIR)/$(TARGET_EXEC): $(OBJS)
 	$(CC) $(OBJS) -o $@ $(LDFLAGS) $(LDLIBS)
