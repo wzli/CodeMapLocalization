@@ -23,8 +23,8 @@
 #define MIN(x, y) ((x) < (y) ? (x) : (y))
 
 static int16_t buf_data[128 * 128];
-static int16_t sobel_kernel_x[3 * 3] = {-1, -2, -1, 0, 0, 0, 1, 2, 1};
-static int16_t sobel_kernel_y[3 * 3] = {-1, 0, 1, -2, 0, 2, -1, 0, 1};
+static int16_t sobel_kernel_x[3 * 3] = {-1, 0, 1, -2, 0, 2, -1, 0, 1};
+static int16_t sobel_kernel_y[3 * 3] = {-1, -2, -1, 0, 0, 0, 1, 2, 1};
 
 void print_matrix(ImageMatrix src) {
     for (int16_t row = 0; row < src.n_rows; ++row) {
@@ -153,9 +153,9 @@ void rotate(ImageMatrix dst, const ImageMatrix src, Vector2f rotation) {
     Vector2f dst_center = {0.5f * dst.n_cols, 0.5f * dst.n_rows};
     FOR_EACH_ELEMENT(dst) {
         Vector2f from_center = {0.5f + col - dst_center.x, 0.5f + row - dst_center.y};
-        Vector2f src_position = {(rotation.x * from_center.x) +
+        Vector2f src_position = {(rotation.x * from_center.x) -
                                          (rotation.y * from_center.y) + src_center.x,
-                -(rotation.y * from_center.x) + (rotation.x * from_center.y) + src_center.y};
+                (rotation.y * from_center.x) + (rotation.x * from_center.y) + src_center.y};
         if (src_position.x < 0.0f || src_position.x >= src.n_cols ||
                 src_position.y < 0.0f || src_position.y >= src.n_rows) {
             continue;
