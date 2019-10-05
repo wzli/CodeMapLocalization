@@ -9,29 +9,38 @@ def reverseBits(num, bits):
 
 
 taps = {
+    2: [2, 1],
+    3: [3, 2],
+    4: [4, 3],
     5: [5, 3],
     6: [6, 5],
     7: [7, 6],
+    8: [8, 6, 5, 4],
+    9: [9, 5],
+    10: [10, 7],
+    11: [11, 9],
+    12: [12, 11, 10, 4],
+    13: [13, 12, 11, 8],
+    14: [14, 13, 12, 2],
     15: [15, 14],
     16: [16, 15, 13, 4],
+    17: [17, 14],
+    18: [18, 11],
+    19: [19, 18, 17, 14],
+    20: [20, 17],
+    21: [21, 19],
+    22: [22, 21],
+    23: [23, 18],
+    24: [24, 23, 22, 17],
 }
 
 
-def lfsr(x, n, filter_reversed=False):
+def lfsr(x, n):
     bit = 0
     for tap in taps[n]:
         bit = bit ^ (x >> (n - tap))
     last_x = x
     x = (x >> 1) | ((bit & 1) << (n - 1))
-    if filter_reversed:
-        global non_rev
-        rev = reverseBits(x, n)
-        if rev in non_rev:
-            x = x ^ (1 << (n - 1))
-        if x in non_rev:
-            print(f'count {len(non_rev)}')
-            input()
-        non_rev.add(x)
     return x
 
 
