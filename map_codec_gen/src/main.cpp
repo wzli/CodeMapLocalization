@@ -42,11 +42,16 @@ int main(int argc, char** argv) {
 
     std::getline(file, s, ' ');
     std::getline(file, s);
-    size_t sequence_hash = std::stoul(s, 0, 16);
-    std::cout << "parsed sequence_hash: 0x" << std::hex << sequence_hash << std::endl;
+    size_t sequence_hash = 0;
+    try {
+        sequence_hash = std::stoul(s, 0, 16);
+        std::cout << "parsed sequence_hash: 0x" << std::hex << sequence_hash << std::endl;
+    } catch (std::exception& e) {
+        std::cout << e.what();
+    }
 
-    std::getline(file, s, '"');
-    std::getline(file, s, '"');
+    std::getline(file, s, '\'');
+    std::getline(file, s, '\'');
 
     if (s.size() != sequence_length) {
         std::cout << "WARNING: sequence length doesn't match, actual is " << std::dec << s.size()

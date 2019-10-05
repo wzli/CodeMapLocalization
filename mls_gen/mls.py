@@ -1,7 +1,5 @@
-#!/usr/bin/env python3
 
-
-class LinearFeedbackShiftRegister:
+class LFSR:
     taps = {
         2: [2, 1],
         3: [3, 2],
@@ -55,7 +53,7 @@ class LinearFeedbackShiftRegister:
 
     def sequence(self, seed=None):
         self.reset(self.state if not seed else seed)
-        while lfsr.cycles == 0:
+        while self.cycles == 0:
             yield self.next()
 
     def sequence_string(self):

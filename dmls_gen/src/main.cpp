@@ -22,7 +22,7 @@ int main(int argc, char** argv) {
                 file << "word_length: " << (int) word_length << '\n';
                 file << "sequence_length: " << sequence.size() << '\n';
                 file << "sequence_hash: 0x" << std::hex << sequence_hash << '\n';
-                file << "sequence: \"" << sequence_string.str() << "\"" << '\n';
+                file << "sequence: \'" << sequence_string.str() << "\'" << '\n';
                 file.close();
                 std::cout << sequence_string.str() << "\nword_length: " << (int) word_length
                           << " sequence_length: " << sequence.size() << '\n'
