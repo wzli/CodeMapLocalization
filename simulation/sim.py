@@ -2,50 +2,7 @@
 import math
 import matplotlib.pyplot as plt
 from PIL import Image, ImageFilter, ImageDraw
-import ctypes
-
-libsim = ctypes.CDLL("build/libsimulation.so")
-
-BitMatrix32 = ctypes.c_uint * 32
-
-
-class Vector2f(ctypes.Structure):
-    _fields_ = [('x', ctypes.c_float), ('y', ctypes.c_float)]
-
-
-class ImageMatrix(ctypes.Structure):
-    _fields_ = [('data', ctypes.c_char_p), ('n_cols', ctypes.c_short),
-                ('n_rows', ctypes.c_short)]
-
-    def __init__(self, width, height, buf=None):
-        self.buf = buf if buf else bytes(2 * width * height)
-        self.data = self.buf
-        self.n_cols = width
-        self.n_rows = height
-
-    def from_image(image):
-        buf = image.tobytes() * 2 if image.mode == 'L' else image.convert(
-            'L').tobytes() * 2
-        image_matrix = ImageMatrix(image.width, image.height, buf)
-        libsim.imf_convert_uint8_to_int16(image_matrix)
-        return image_matrix
-
-    def to_image(self):
-        libsim.imf_normalize(self)
-        libsim.imf_convert_int16_to_uint8(self)
-        image = Image.frombuffer('L', (self.n_cols, self.n_rows), self.buf,
-                                 'raw', 'L', 0, 1)
-        return image
-
-    def print(self):
-        libsim.print_image_matrix(self)
-
-    def show(self, scale=10):
-        self.to_image().resize(
-            (int(self.n_cols * scale), int(self.n_rows * scale))).show()
-
-
-libsim.cmf_estimate_rotation.restype = Vector2f
+from sim_wrapper import *
 
 n = 30
 
@@ -53,6 +10,7 @@ code_map = Image.open("code_map.pbm").convert('L')
 code_map.crop((500, 500, 500 + n, 500 + n)).resize((300, 300)).show()
 camera_image = code_map.rotate(30, Image.BILINEAR).crop(
     (500, 500, 500 + n, 500 + n))
+camera_image.resize((300, 300)).show()
 camera_matrix = ImageMatrix.from_image(camera_image)
 
 edge_matrix = ImageMatrix(n, n)
@@ -60,13 +18,13 @@ libsim.imf_edge_filter(ctypes.byref(edge_matrix), camera_matrix)
 #edge_matrix.print()
 
 hough_matrix = ImageMatrix(600, 600)
-libsim.imf_hough_line_transform(hough_matrix, camera_matrix)
+#libsim.imf_hough_line_transform(hough_matrix, camera_matrix)
 #hough_matrix.print()
 
 edge_hough_matrix = ImageMatrix(600, 600)
 libsim.imf_normalize(edge_matrix, 255)
 #libsim.threshold_elements(edge_matrix, 200, 255)
-libsim.imf_hough_line_transform(edge_hough_matrix, edge_matrix)
+#libsim.imf_hough_line_transform(edge_hough_matrix, edge_matrix)
 #edge_hough_matrix.print()
 
 rotation = libsim.cmf_estimate_rotation(camera_matrix)

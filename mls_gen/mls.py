@@ -1,4 +1,3 @@
-
 class LFSR:
     taps = {
         2: [2, 1],
