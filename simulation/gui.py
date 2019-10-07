@@ -4,12 +4,6 @@ import tkinter, math, ctypes
 from PIL import Image, ImageTk, ImageDraw
 from sim_wrapper import *
 
-root = tkinter.Tk()
-root.title("CodeMap Sim")
-root.bind("<Escape>", lambda e: root.destroy())
-root.bind("<Q>", lambda e: root.destroy())
-
-
 class CodeMapCanvas():
     def __init__(self,
                  parent,
@@ -41,7 +35,7 @@ class CodeMapCanvas():
                                      height=size[1] * scale)
         self.view_box = [0, 0, size[0], size[1]]
         self.image_area = self.canvas.create_image(0, 0, anchor=tkinter.NW)
-        self.canvas.bind("<ButtonPress-1>", self.on_start)
+        self.canvas.bind("<ButtonPress-1>", self.on_click)
         self.canvas.bind("<B1-Motion>", self.on_drag)
         self.canvas.bind("<4>", self.on_wheel)
         self.canvas.bind("<5>", self.on_wheel)
@@ -50,6 +44,20 @@ class CodeMapCanvas():
         self.update_view()
 
     def update_view(self):
+        if self.view_box[0] < 0:
+            self.view_box[2] -= self.view_box[0]
+            self.view_box[0] = 0
+        elif self.view_box[2] >= self.code_map_image.width:
+            self.view_box[0] -= (self.view_box[2] -
+                                 (self.code_map_image.width - 1))
+            self.view_box[2] = self.code_map_image.width - 1
+        if self.view_box[1] < 0:
+            self.view_box[3] -= self.view_box[1]
+            self.view_box[1] = 0
+        elif self.view_box[3] >= self.code_map_image.height:
+            self.view_box[1] -= (self.view_box[3] -
+                                 (self.code_map_image.height - 1))
+            self.view_box[3] = self.code_map_image.height - 1
         unscaled_width = self.view_box[2] - self.view_box[0]
         unscaled_height = self.view_box[3] - self.view_box[1]
         width = round(unscaled_width * self.scale)
@@ -88,7 +96,7 @@ class CodeMapCanvas():
         if self.update_callback:
             self.update_callback(camera_image)
 
-    def on_start(self, event):
+    def on_click(self, event):
         self.last_event = event
 
     def on_drag(self, event):
@@ -99,20 +107,6 @@ class CodeMapCanvas():
         self.view_box[1] -= dy
         self.view_box[2] -= dx
         self.view_box[3] -= dy
-        if self.view_box[0] < 0:
-            self.view_box[2] -= self.view_box[0]
-            self.view_box[0] = 0
-        elif self.view_box[2] >= self.code_map_image.width:
-            self.view_box[0] -= (self.view_box[2] -
-                                 (self.code_map_image.width - 1))
-            self.view_box[2] = self.code_map_image.width - 1
-        if self.view_box[1] < 0:
-            self.view_box[3] -= self.view_box[1]
-            self.view_box[1] = 0
-        elif self.view_box[3] >= self.code_map_image.height:
-            self.view_box[1] -= (self.view_box[3] -
-                                 (self.code_map_image.height - 1))
-            self.view_box[3] = self.code_map_image.height - 1
         self.update_view()
 
     def on_wheel(self, event):
@@ -120,6 +114,25 @@ class CodeMapCanvas():
             self.camera_rotation += 3
         elif event.num == 5:
             self.camera_rotation -= 3
+        self.update_view()
+
+    def on_key(self, event):
+        if event.char == 'q':
+            self.camera_rotation -= 2
+        elif event.char == 'e':
+            self.camera_rotation += 2
+        elif event.char == 'w':
+            self.view_box[1] -= 1
+            self.view_box[3] -= 1
+        elif event.char == 'a':
+            self.view_box[0] -= 1
+            self.view_box[2] -= 1
+        elif event.char == 's':
+            self.view_box[1] += 1
+            self.view_box[3] += 1
+        elif event.char == 'd':
+            self.view_box[0] += 1
+            self.view_box[2] += 1
         self.update_view()
 
 
@@ -153,6 +166,7 @@ class ImageProcessor:
         rotation.y *= -self.bits_per_pixel
         unrotated_matrix = ImageMatrix(32, 32)
         libsim.imf_rotate(unrotated_matrix, matrix, rotation)
+        libsim.imf_threshold(unrotated_matrix, 127)
         image = unrotated_matrix.to_image()
         if self.update_callback:
             self.update_callback(image)
@@ -161,8 +175,11 @@ class ImageProcessor:
 code_map_image = Image.open("code_map.pbm")
 view_size = (32, 32)
 camera_resolution = (30, 30)
-camera_size = (18, 18)
+camera_size = (23, 23)
 scale = 10
+
+root = tkinter.Tk()
+root.title("CodeMap Sim")
 
 filtered_canvas = ImagePipelineCanvas(root, scale, view_size)
 image_filter = ImageProcessor(camera_size[0] / camera_resolution[0],
@@ -172,6 +189,10 @@ camera_view_canvas = ImagePipelineCanvas(root, scale, camera_resolution,
 code_map_canvas = CodeMapCanvas(root, code_map_image, view_size, camera_size,
                                 camera_resolution, scale,
                                 camera_view_canvas.on_image_update)
+
+root.bind("<Escape>", lambda e: root.destroy())
+for key in ('<q>', '<e>', '<w>', '<a>', '<s>', '<d>'):
+    root.bind(key, code_map_canvas.on_key)
 
 code_map_canvas.canvas.grid(row=0, column=0)
 camera_view_canvas.canvas.grid(row=0, column=1)
