@@ -24,7 +24,6 @@ for position in range(len(sequence) - word_length + 1):
     word_position_map[int(word, 2)] = position
     word_vectors.append(np.fromstring(word, dtype=np.int8) - ord('0'))
     position_vectors.append(position)
-
 ''' this is for the negative samples
 for word in range(2**17):
     if word not in word_position_map:
@@ -36,7 +35,6 @@ for word in range(2**17):
 
 x_train = np.vstack(word_vectors)[..., np.newaxis]
 y_train = np.array(position_vectors)
-
 ''' this is for binary output encoding
 for position in range(len(sequence) - word_length + 1):
     word_string = sequence[position : position + 17]
@@ -57,7 +55,8 @@ y_train = np.vstack(position_vectors)
 ''' and None
 
 model = keras.models.Sequential([
-    keras.layers.Conv1D(16, 3, activation='relu', input_shape=(word_length, 1)),
+    keras.layers.Conv1D(16, 3, activation='relu',
+                        input_shape=(word_length, 1)),
     keras.layers.Conv1D(16, 3, activation='relu'),
     keras.layers.Conv1D(16, 3, activation='relu'),
     keras.layers.Conv1D(16, 3, activation='relu'),

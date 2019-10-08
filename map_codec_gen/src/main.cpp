@@ -67,7 +67,7 @@ int main(int argc, char** argv) {
     // below is word size specific (since the look up table optimized for
     // 16-bits)
 
-    uint32_t* bit_array = new uint32_t[(s.size()/32) + 1];
+    uint32_t* bit_array = new uint32_t[(s.size() / 32) + 1];
 
     const size_t LUT_SIZE = s.size() - word_length + 1;
     uint16_t* lut = new uint16_t[LUT_SIZE];
@@ -102,39 +102,39 @@ int main(int argc, char** argv) {
         }
     };
 
-
     for (uint32_t i = 0, word = 0; i < s.size(); ++i) {
         word >>= 1;
         if (s[i] == '1') {
-            if(!ba32_get_bit(bit_array, i)) {
+            if (!ba32_get_bit(bit_array, i)) {
                 std::cout << "Error: bit_array_mismatch" << std::endl;
             }
             word |= 1 << (word_length - 1);
         }
         int position = i - word_length + 1;
-        if(position >= 0) {
+        if (position >= 0) {
             uint32_t got_word = mlsq_position_to_code(bit_array, word_length, position);
-            if(word != got_word) {
-                std::cout << "Error: word fetch mismatch " << (int)i << ' ' << std::bitset<17>(word) << " " << std::bitset<17>(got_word) << std::endl;
+            if (word != got_word) {
+                std::cout << "Error: word fetch mismatch " << (int) i << ' '
+                          << std::bitset<17>(word) << " " << std::bitset<17>(got_word) << std::endl;
             }
         }
     }
 
     MlsQueryIndex query_index = {bit_array, lut, s.size(), word_length};
     uint16_t len = mlsq_sort_code_positions(query_index);
-    while(len--) {
+    while (len--) {
         std::cout << query_index.sorted_code_positions[len] << std::endl;
     }
     for (uint32_t i = 0; i < (1 << word_length); ++i) {
         uint16_t position = mlsq_code_to_position(query_index, i);
         if (position != MLSQ_NOT_FOUND && position != test_lut[i]) {
             std::cout << "Internal Error: LUT search result doesn't match the "
-                         "original i " << i << " p " << position << " t " << test_lut[i]
-                      << std::endl;
+                         "original i "
+                      << i << " p " << position << " t " << test_lut[i] << std::endl;
             return -4;
         }
     }
-    #if 0
+#if 0
     std::ofstream lut_file("lut_dat.c");
     if (!lut_file.is_open()) {
         std::cout << "Unable to write LUT file" << std::endl;
@@ -154,16 +154,16 @@ int main(int argc, char** argv) {
     lut_file << "const LutEntry* LUT_DATA = __LUT_DATA;\n";
     lut_file.close();
     std::cout << "LookupTable file succesfully generated" << std::endl;
-    #endif
+#endif
 
     delete bit_array;
     delete lut;
     delete test_lut;
 
-    //CodeMap code_map;
-    //code_map.generate(s);
-    //code_map.save_pbm("code_map.pbm");
-    //std::cout << "CodeMap file succesfully generated" << std::endl;
+    // CodeMap code_map;
+    // code_map.generate(s);
+    // code_map.save_pbm("code_map.pbm");
+    // std::cout << "CodeMap file succesfully generated" << std::endl;
 
     return 0;
 }

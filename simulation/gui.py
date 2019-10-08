@@ -4,6 +4,7 @@ import tkinter, math, ctypes
 from PIL import Image, ImageTk, ImageDraw
 from sim_wrapper import *
 
+
 class CodeMapCanvas():
     def __init__(self,
                  parent,

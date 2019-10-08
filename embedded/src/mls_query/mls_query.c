@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <assert.h>
 
+#include <stdio.h>
+
 static MlsQueryIndex compare_query_index;
 static int compare_positions(const void* position1, const void* position2) {
     assert(compare_query_index.sorted_code_positions);
@@ -27,11 +29,24 @@ uint32_t mlsq_position_to_code(const uint32_t* sequence, uint8_t code_length, ui
 }
 
 uint16_t mlsq_code_to_position(const MlsQueryIndex query_index, uint32_t code) {
-    compare_query_index = query_index;
-    code |= 1 << 31;
-    const void* position = bsearch(&code, query_index.sorted_code_positions,
-            query_index.sequence_length - query_index.code_length + 1, 2, compare_positions);
-    return position ? *(uint16_t*) position : MLSQ_NOT_FOUND;
+    assert(query_index.sorted_code_positions);
+    assert(query_index.sequence_length >= query_index.code_length);
+    int32_t start = 0;
+    int32_t end = query_index.sequence_length - query_index.code_length;
+    while (start <= end) {
+        uint16_t mid = (start + end) / 2;
+        uint16_t mid_position = query_index.sorted_code_positions[mid];
+        uint32_t mid_code =
+                mlsq_position_to_code(query_index.sequence, query_index.code_length, mid_position);
+        if (code > mid_code) {
+            start = mid + 1;
+        } else if (code < mid_code) {
+            end = mid - 1;
+        } else {
+            return mid_position;
+        }
+    }
+    return MLSQ_NOT_FOUND;
 }
 
 uint16_t mlsq_sort_code_positions(const MlsQueryIndex query_index) {
