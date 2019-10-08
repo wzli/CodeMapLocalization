@@ -175,7 +175,7 @@ class ImageProcessor:
 code_map_image = Image.open("code_map.pbm")
 view_size = (32, 32)
 camera_resolution = (30, 30)
-camera_size = (23, 23)
+camera_size = (20, 20)
 scale = 10
 
 root = tkinter.Tk()

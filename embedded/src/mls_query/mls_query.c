@@ -14,11 +14,12 @@ static int compare_positions(const void* position1, const void* position2) {
 }
 
 uint32_t mlsq_position_to_code(const uint32_t* sequence, uint8_t code_length, uint32_t position) {
+    assert(is_little_endian());
     assert(code_length < 32);
     uint32_t index = position >> 5;
     uint8_t offset = position & 0x1F;
     uint32_t code = sequence[index] >> offset;
-    if(offset) {
+    if(offset + code_length > 32) {
         code |= sequence[index + 1] << (32 - offset);
     }
     return code & ~(~0 << code_length);
