@@ -161,16 +161,48 @@ class ImageProcessor:
         self.bits_per_pixel = bits_per_pixel
 
     def process_image(self, image):
+        # convert to matrix
         matrix = ImageMatrix.from_image(image)
+        # estimate rotation
         rotation = libsim.cmf_estimate_rotation(matrix)
         rotation.x *= self.bits_per_pixel
         rotation.y *= -self.bits_per_pixel
-        unrotated_matrix = ImageMatrix(32, 32)
+        # reverse rotation
+        unrotated_matrix = ImageMatrix.from_image(Image.new(
+            'L', (32, 32), 127))
         libsim.imf_rotate(unrotated_matrix, matrix, rotation)
-        libsim.imf_threshold(unrotated_matrix, 127)
+        # store bit mask and matrix in image
         image = unrotated_matrix.to_image()
+        image.unrotated_matrix = unrotated_matrix
         if self.update_callback:
             self.update_callback(image)
+
+
+class BitMatrixProcessor:
+    def __init__(self, update_callback=None):
+        self.update_callback = update_callback
+
+    def process_image(self, image):
+        # convert to bit matrix
+        bit_matrix = BitMatrix32()
+        bit_mask = BitMatrix32()
+        libsim.cmf_bit_matrix_conversion(bit_matrix, bit_mask,
+                                         image.unrotated_matrix, 125, 130)
+        # extract row and column code
+        row_code = ctypes.c_uint()
+        col_code = ctypes.c_uint()
+        libsim.bm32_extract_codes(ctypes.byref(row_code),
+                                  ctypes.byref(col_code), bit_matrix, bit_mask)
+        libsim.print_bits(row_code, 32)
+        libsim.print_bits(col_code, 32)
+        bit_matrix_image = Image.new('L', (32, 32), 127)
+        for row in range(32):
+            for col in range(32):
+                if (bit_mask[row] >> col) & 1 != 0:
+                    val = ((bit_matrix[row] >> col) & 1) * 255
+                    bit_matrix_image.putpixel((col, row), val)
+        if self.update_callback:
+            self.update_callback(bit_matrix_image)
 
 
 code_map_image = Image.open("code_map.pbm")
@@ -182,9 +214,13 @@ scale = 10
 root = tkinter.Tk()
 root.title("CodeMap Sim")
 
-filtered_canvas = ImagePipelineCanvas(root, scale, view_size)
+thresholded_canvas = ImagePipelineCanvas(root, scale, view_size)
+bit_array_filter = BitMatrixProcessor(thresholded_canvas.on_image_update)
+
+unrotated_canvas = ImagePipelineCanvas(root, scale, view_size,
+                                       bit_array_filter.process_image)
 image_filter = ImageProcessor(camera_size[0] / camera_resolution[0],
-                              filtered_canvas.on_image_update)
+                              unrotated_canvas.on_image_update)
 camera_view_canvas = ImagePipelineCanvas(root, scale, camera_resolution,
                                          image_filter.process_image)
 code_map_canvas = CodeMapCanvas(root, code_map_image, view_size, camera_size,
@@ -197,6 +233,7 @@ for key in ('<q>', '<e>', '<w>', '<a>', '<s>', '<d>'):
 
 code_map_canvas.canvas.grid(row=0, column=0)
 camera_view_canvas.canvas.grid(row=0, column=1)
-filtered_canvas.canvas.grid(row=0, column=2)
+unrotated_canvas.canvas.grid(row=0, column=2)
+thresholded_canvas.canvas.grid(row=1, column=2)
 
 root.mainloop()

@@ -17,6 +17,24 @@ Vector2f cmf_estimate_rotation(const ImageMatrix mat) {
     return gradient_sum;
 }
 
+void cmf_bit_matrix_conversion(BitMatrix32 dst, BitMatrix32 mask, const ImageMatrix src,
+        IMF_TYPE low_thresh, IMF_TYPE high_thresh) {
+    assert(src.n_rows == 32 && src.n_cols == 32);
+    assert(high_thresh >= low_thresh);
+    FOR_EACH_ELEMENT(src) {
+        if (ELEMENT(src, row, col) >= high_thresh) {
+            bm32_set_bit(dst, row, col);
+        } else if (ELEMENT(src, row, col) <= low_thresh) {
+            bm32_clear_bit(dst, row, col);
+        } else {
+            bm32_clear_bit(mask, row, col);
+            continue;
+        }
+        bm32_set_bit(mask, row, col);
+    }
+}
+
+#if 0
 void cmf_rotated_bit_mask(BitMatrix32 rotated_mask, const ImageMatrix src, Vector2f rotation) {
     assert(!v2f_is_zero(rotation) && !v2f_is_nan(rotation));
     if (rotation.x < 0) {
@@ -56,21 +74,4 @@ void cmf_rotated_bit_mask(BitMatrix32 rotated_mask, const ImageMatrix src, Vecto
                                                              (~0u >> (31 - (uint8_t) range_end));
     }
 }
-
-void cmf_bit_conversion(BitMatrix32 dst, BitMatrix32 mask, const ImageMatrix src,
-        IMF_TYPE low_thresh, IMF_TYPE high_thresh) {
-    assert(src.n_rows == 32 && src.n_cols == 32);
-    assert(high_thresh >= low_thresh);
-    FOR_EACH_ELEMENT(src) {
-        if (!bm32_get_bit(mask, row, col)) {
-            continue;
-        }
-        if (ELEMENT(src, row, col) >= high_thresh) {
-            bm32_set_bit(dst, row, col);
-        } else if (ELEMENT(src, row, col) <= low_thresh) {
-            bm32_clear_bit(dst, row, col);
-        } else {
-            bm32_clear_bit(mask, row, col);
-        }
-    }
-}
+#endif

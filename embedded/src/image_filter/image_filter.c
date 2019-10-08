@@ -4,6 +4,10 @@
 const int16_t sobel_kernel_x[3 * 3] = {-1, 0, 1, -2, 0, 2, -1, 0, 1};
 const int16_t sobel_kernel_y[3 * 3] = {-1, -2, -1, 0, 0, 0, 1, 2, 1};
 
+void imf_fill(ImageMatrix mat, IMF_TYPE value) {
+    FOR_EACH_ELEMENT(mat) { ELEMENT(mat, row, col) = value; }
+}
+
 void imf_threshold(ImageMatrix mat, IMF_TYPE threshold) {
     FOR_EACH_ELEMENT(mat) { ELEMENT(mat, row, col) = (ELEMENT(mat, row, col) >= threshold) * 255; }
 }
