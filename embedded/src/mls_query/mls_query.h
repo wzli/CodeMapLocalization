@@ -40,6 +40,6 @@ static inline uint32_t reverse_bits(uint32_t v, uint32_t n) {
     return r << (n - 1);
 }
 
-uint32_t mlsq_position_to_code(const uint32_t* sequence, uint8_t code_length, uint32_t position);
-uint16_t mlsq_code_to_position(const MlsQueryIndex query_index, uint32_t code);
+uint32_t mlsq_code_from_position(const uint32_t* sequence, uint8_t code_length, uint32_t position);
+uint16_t mlsq_position_from_code(const MlsQueryIndex query_index, uint32_t code);
 uint16_t mlsq_sort_code_positions(MlsQueryIndex query_index);

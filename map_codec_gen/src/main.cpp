@@ -94,7 +94,7 @@ int main(int argc, char** argv) {
         word |= new_bit << (word_length - 1);
         int position = i - word_length + 1;
         if (position >= 0) {
-            if (word != mlsq_position_to_code(sequence, word_length, position)) {
+            if (word != mlsq_code_from_position(sequence, word_length, position)) {
                 std::cout << "Internal Error: position lookup doesn't match expected word"
                           << std::endl;
                 return -4;
@@ -111,7 +111,7 @@ int main(int argc, char** argv) {
     }
     uint32_t match_count = 0;
     for (uint32_t word = 0; word < (1u << word_length); ++word) {
-        uint16_t position = mlsq_code_to_position(query_index, word);
+        uint16_t position = mlsq_position_from_code(query_index, word);
         if (position != MLSQ_NOT_FOUND && position != test_lookup[word]) {
             std::cout << "Internal Error: MLS query result doesn't match the "
                          "original word"

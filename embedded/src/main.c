@@ -4,34 +4,36 @@
 #include <stdio.h>
 
 BitMatrix32 matrix, matrix_mask;
-const uint32_t row_entry = 1000;
-const uint32_t col_entry = 2000;
+const uint32_t src_row_pos = 1000;
+const uint32_t src_col_pos = 2000;
 
-#if 0
 int main() {
-    for (int i = 0; i < LUT_KEY_LENGTH; ++i) {
-        matrix_mask[i] = (1 << LUT_KEY_LENGTH) - 1;
-        matrix[i] = LUT_DATA[row_entry].key ^ -((LUT_DATA[col_entry].key >> i) & 1);
-        print_bits(matrix[i], LUT_KEY_LENGTH);
+    uint32_t src_row_code =
+            mlsq_code_from_position(MLSQ_INDEX.sequence, MLSQ_INDEX.code_length, src_row_pos);
+    uint32_t src_col_code =
+            mlsq_code_from_position(MLSQ_INDEX.sequence, MLSQ_INDEX.code_length, src_col_pos);
+    for (int i = 0; i < MLSQ_INDEX.code_length; ++i) {
+        matrix_mask[i] = (1 << MLSQ_INDEX.code_length) - 1;
+        matrix[i] = src_row_code ^ -((src_col_code >> i) & 1);
+        print_bits(matrix[i], MLSQ_INDEX.code_length);
     }
     uint32_t row_code, col_code;
     bm32_extract_codes(&row_code, &col_code, matrix, matrix_mask);
 
-    uint16_t col_pos = lut_search(LUT_DATA, LUT_SIZE, col_code);
-    if (col_pos == LUT_KEY_ERROR) {
-        col_code = ~col_code & ((1 << LUT_KEY_LENGTH) - 1);
-        row_code = ~row_code & ((1 << LUT_KEY_LENGTH) - 1);
-        col_pos = lut_search(LUT_DATA, LUT_SIZE, col_code);
+    uint16_t col_pos = mlsq_position_from_code(MLSQ_INDEX, col_code);
+    if (col_pos == MLSQ_NOT_FOUND) {
+        col_code = ~col_code & ((1 << MLSQ_INDEX.code_length) - 1);
+        row_code = ~row_code & ((1 << MLSQ_INDEX.code_length) - 1);
+        col_pos = mlsq_position_from_code(MLSQ_INDEX, col_code);
     }
-    uint16_t row_pos = lut_search(LUT_DATA, LUT_SIZE, row_code);
+    uint16_t row_pos = mlsq_position_from_code(MLSQ_INDEX, row_code);
 
-    printf("col code pos %d %d\n", LUT_DATA[col_entry].value, col_pos);
-    print_bits(LUT_DATA[col_entry].key, LUT_KEY_LENGTH);
-    print_bits(col_code, LUT_KEY_LENGTH);
+    printf("col code pos src %d recovered %d\n", src_col_pos, col_pos);
+    print_bits(src_col_code, MLSQ_INDEX.code_length);
+    print_bits(col_code, MLSQ_INDEX.code_length);
 
-    printf("row code pos %d %d\n", LUT_DATA[row_entry].value, row_pos);
-    print_bits(LUT_DATA[row_entry].key, LUT_KEY_LENGTH);
-    print_bits(row_code, LUT_KEY_LENGTH);
+    printf("row code pos src %d recovered %d\n", src_row_pos, row_pos);
+    print_bits(src_row_code, MLSQ_INDEX.code_length);
+    print_bits(row_code, MLSQ_INDEX.code_length);
     return 0;
 }
-#endif
