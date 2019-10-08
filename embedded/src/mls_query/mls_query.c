@@ -1,21 +1,5 @@
 #include "mls_query.h"
-#include <stdlib.h>
 #include <assert.h>
-
-#include <stdio.h>
-
-static MlsQueryIndex compare_query_index;
-static int compare_positions(const void* position1, const void* position2) {
-    assert(compare_query_index.sorted_code_positions);
-    uint32_t code1 = mlsq_position_to_code(
-            compare_query_index.sequence, compare_query_index.code_length, *(uint16_t*) position1);
-    uint32_t code2 = mlsq_position_to_code(
-            compare_query_index.sequence, compare_query_index.code_length, *(uint16_t*) position2);
-    if (*(uint32_t*) position1 & (1 << 31)) {
-        code1 = *(uint32_t*) position1 ^ (1 << 31);
-    }
-    return code1 == code2 ? 0 : code1 > code2 ? 1 : -1;
-}
 
 uint32_t mlsq_position_to_code(const uint32_t* sequence, uint8_t code_length, uint32_t position) {
     assert(code_length < 32);
@@ -51,11 +35,22 @@ uint16_t mlsq_code_to_position(const MlsQueryIndex query_index, uint32_t code) {
 
 uint16_t mlsq_sort_code_positions(const MlsQueryIndex query_index) {
     assert(query_index.sequence_length >= query_index.code_length);
+    uint16_t* sorted_code_positions = (uint16_t*) query_index.sorted_code_positions;
     uint16_t positions_length = query_index.sequence_length - query_index.code_length + 1;
-    for (uint16_t i = 0; i < positions_length - 1; ++i) {
-        query_index.sorted_code_positions[i] = i;
+    for (int32_t key_position = 0; key_position < positions_length; ++key_position) {
+        uint32_t key_code =
+                mlsq_position_to_code(query_index.sequence, query_index.code_length, key_position);
+        int32_t test_index = key_position - 1;
+        for (; test_index >= 0; --test_index) {
+            uint16_t test_position = sorted_code_positions[test_index];
+            uint32_t test_code = mlsq_position_to_code(
+                    query_index.sequence, query_index.code_length, test_position);
+            if (test_code <= key_code) {
+                break;
+            }
+            sorted_code_positions[test_index + 1] = test_position;
+        }
+        sorted_code_positions[test_index + 1] = key_position;
     }
-    compare_query_index = query_index;
-    qsort(query_index.sorted_code_positions, positions_length, 2, compare_positions);
     return positions_length;
 }

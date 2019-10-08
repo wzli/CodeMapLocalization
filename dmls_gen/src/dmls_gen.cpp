@@ -1,12 +1,12 @@
 #include "dmls_gen.hpp"
 
 uint32_t DmlsGen::inverse_bits(uint32_t v) const {
-    return ~(v | (0xFFFFFFFF << _word_length));
+    return ~(v | (~0 << _word_length));
 }
 
 uint32_t DmlsGen::reverse_bits(uint32_t v) const {
     uint8_t n = _word_length;
-    v &= ~(0xFFFFFFFF << n);
+    v &= ~(~0 << n);
     unsigned int r = v & 1;
     for (v >>= 1; v; v >>= 1) {
         r <<= 1;
