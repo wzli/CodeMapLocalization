@@ -5,11 +5,15 @@
 typedef uint32_t BitMatrix32[32];
 
 static inline bool bm32_get_bit(const BitMatrix32 matrix, uint8_t row, uint8_t col) {
-    return (matrix[row] >> col) & 1;
+    return (matrix[row] >> col) & 1u;
 };
 
-static inline void bm32_set_bit(BitMatrix32 matrix, uint8_t row, uint8_t col, bool val) {
-    matrix[row] = (matrix[row] & ~(1u << col)) | ((val != 0) << col);
+static inline void bm32_set_bit(BitMatrix32 matrix, uint8_t row, uint8_t col) {
+    matrix[row] |= 1u << col;
+};
+
+static inline void bm32_clear_bit(BitMatrix32 matrix, uint8_t row, uint8_t col) {
+    matrix[row] &= ~(1u << col);
 };
 
 uint8_t bit_sum(uint32_t x);

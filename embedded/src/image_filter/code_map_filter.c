@@ -49,8 +49,8 @@ void cmf_rotated_bit_mask(BitMatrix32 rotated_mask, const ImageMatrix src, Vecto
                                            : MAX(intercepts[0], intercepts[3]);
         float range_end = rotation.y > 0 ? MIN(intercepts[0], intercepts[1])
                                          : MIN(intercepts[1], intercepts[2]);
-        range_begin = range_begin < 0 ? 0 : range_begin > 31 ? 31 : range_begin;
-        range_end = range_end < 0 ? 0 : range_end > 31 ? 31 : range_end;
+        range_begin = CLAMP(range_begin, 0, 31);
+        range_end = CLAMP(range_end, 0, 31);
         rotated_mask[i] = range_end <= range_begin ? 0u
                                                    : (~0u << (uint8_t) range_begin) &
                                                              (~0u >> (31 - (uint8_t) range_end));
@@ -66,11 +66,11 @@ void cmf_bit_conversion(BitMatrix32 dst, BitMatrix32 mask, const ImageMatrix src
             continue;
         }
         if (ELEMENT(src, row, col) >= high_thresh) {
-            bm32_set_bit(dst, row, col, 1);
+            bm32_set_bit(dst, row, col);
         } else if (ELEMENT(src, row, col) <= low_thresh) {
-            bm32_set_bit(dst, row, col, 0);
+            bm32_clear_bit(dst, row, col);
         } else {
-            bm32_set_bit(mask, row, col, 0);
+            bm32_clear_bit(mask, row, col);
         }
     }
 }

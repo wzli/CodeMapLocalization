@@ -1,4 +1,4 @@
-#include "lut/lut.h"
+#include "mls_query/mls_query.h"
 #include "bit_matrix/bit_matrix.h"
 #include "debug_utils/debug_utils.h"
 #include <stdio.h>
@@ -7,6 +7,7 @@ BitMatrix32 matrix, matrix_mask;
 const uint32_t row_entry = 1000;
 const uint32_t col_entry = 2000;
 
+#if 0
 int main() {
     for (int i = 0; i < LUT_KEY_LENGTH; ++i) {
         matrix_mask[i] = (1 << LUT_KEY_LENGTH) - 1;
@@ -33,3 +34,4 @@ int main() {
     print_bits(row_code, LUT_KEY_LENGTH);
     return 0;
 }
+#endif
