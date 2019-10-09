@@ -168,9 +168,8 @@ class ImageProcessor:
         rotation.x *= self.bits_per_pixel
         rotation.y *= -self.bits_per_pixel
         # reverse rotation
-        unrotated_matrix = ImageMatrix.from_image(Image.new(
-            'L', (32, 32), 127))
-        libsim.imf_rotate(unrotated_matrix, matrix, rotation)
+        unrotated_matrix = ImageMatrix(32,32)
+        libsim.imf_rotate(unrotated_matrix, matrix, rotation, 127)
         # store bit mask and matrix in image
         image = unrotated_matrix.to_image()
         image.unrotated_matrix = unrotated_matrix

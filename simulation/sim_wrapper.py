@@ -28,7 +28,7 @@ class ImageMatrix(ctypes.Structure):
         return image_matrix
 
     def to_image(self):
-        libsim.imf_normalize(self)
+        #libsim.imf_normalize(self)
         #libsim.imf_convert_int16_to_uint8(self)
         image = Image.frombuffer('L', (self.n_cols, self.n_rows), self.buf,
                                  'raw', 'L', 0, 1)

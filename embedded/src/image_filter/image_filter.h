@@ -37,4 +37,4 @@ extern const int16_t sobel_kernel_y[3 * 3];
 void imf_fill(ImageMatrix mat, IMF_TYPE value);
 void imf_threshold(ImageMatrix mat, IMF_TYPE threshold);
 void imf_normalize(ImageMatrix mat);
-void imf_rotate(ImageMatrix dst, const ImageMatrix src, Vector2f rotation);
+void imf_rotate(ImageMatrix dst, const ImageMatrix src, Vector2f rotation, IMF_TYPE bg_fill);

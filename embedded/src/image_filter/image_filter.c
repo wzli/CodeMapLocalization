@@ -28,7 +28,7 @@ void imf_normalize(ImageMatrix mat) {
     }
 }
 
-void imf_rotate(ImageMatrix dst, const ImageMatrix src, Vector2f rotation) {
+void imf_rotate(ImageMatrix dst, const ImageMatrix src, Vector2f rotation, IMF_TYPE bg_fill) {
     assert(!v2f_is_zero(rotation) && !v2f_is_nan(rotation));
     assert(!isnan(rotation.x) && !isnan(rotation.y));
     Vector2f src_center = {0.5f * src.n_cols, 0.5f * src.n_rows};
@@ -39,6 +39,7 @@ void imf_rotate(ImageMatrix dst, const ImageMatrix src, Vector2f rotation) {
         Vector2f src_position = v2f_add(src_center, v2f_rotate(from_center, rotation));
         if (src_position.x < 0.0f || src_position.x >= src.n_cols || src_position.y < 0.0f ||
                 src_position.y >= src.n_rows) {
+            ELEMENT(dst, row, col) = bg_fill;
             continue;
         }
         int16_t right = round(src_position.x);
