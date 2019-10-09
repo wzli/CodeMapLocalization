@@ -17,27 +17,25 @@ edge_matrix = ImageMatrix(n, n)
 libsim.imf_edge_filter(ctypes.byref(edge_matrix), camera_matrix)
 #edge_matrix.print()
 
-hough_matrix = ImageMatrix(600, 600)
-#libsim.imf_hough_line_transform(hough_matrix, camera_matrix)
+hough_matrix = ImageMatrix(800, 800)
+libsim.imf_hough_line_transform(hough_matrix, camera_matrix)
 #hough_matrix.print()
 
-edge_hough_matrix = ImageMatrix(600, 600)
+edge_hough_matrix = ImageMatrix(800, 800)
 libsim.imf_normalize(edge_matrix, 255)
 #libsim.threshold_elements(edge_matrix, 200, 255)
-#libsim.imf_hough_line_transform(edge_hough_matrix, edge_matrix)
+libsim.imf_hough_line_transform(edge_hough_matrix, edge_matrix)
 #edge_hough_matrix.print()
 
 rotation = libsim.cmf_estimate_rotation(camera_matrix)
 print("rotation", math.atan2(rotation.y, rotation.x) * 180 / math.pi)
 rotated_matrix = ImageMatrix(32, 32)
 rotation.y *= -1
-libsim.imf_rotate(rotated_matrix, camera_matrix, rotation)
+libsim.imf_rotate(rotated_matrix, camera_matrix, rotation, 127)
 
 bit_mask = BitMatrix32()
-libsim.cmf_rotated_bit_mask(bit_mask, camera_matrix, rotation)
-
 bit_matrix = BitMatrix32()
-libsim.cmf_bit_conversion(bit_matrix, bit_mask, rotated_matrix, 80, 160)
+libsim.cmf_bit_matrix_conversion(bit_matrix, bit_mask, rotated_matrix, 80, 160)
 
 row_code = ctypes.c_uint()
 col_code = ctypes.c_uint()
@@ -48,8 +46,8 @@ libsim.bm32_extract_codes(ctypes.byref(row_code), ctypes.byref(col_code),
 
 #camera_matrix.show()
 #edge_matrix.show(10)
-#hough_matrix.show(1.1)
-#edge_hough_matrix.show(1.0)
+hough_matrix.show(1.1)
+edge_hough_matrix.show(1.0)
 rotated_matrix.show()
 
 for row in bit_mask:

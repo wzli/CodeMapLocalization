@@ -24,14 +24,15 @@ class ImageMatrix(ctypes.Structure):
         buf = image.tobytes() * 2 if image.mode == 'L' else image.convert(
             'L').tobytes() * 2
         image_matrix = ImageMatrix(image.width, image.height, buf)
-        #libsim.imf_convert_uint8_to_int16(image_matrix)
+        libsim.imf_convert_uint8_to_int16(image_matrix)
         return image_matrix
 
     def to_image(self):
         #libsim.imf_normalize(self)
-        #libsim.imf_convert_int16_to_uint8(self)
+        libsim.imf_convert_int16_to_uint8(self)
         image = Image.frombuffer('L', (self.n_cols, self.n_rows), self.buf,
-                                 'raw', 'L', 0, 1)
+                                 'raw', 'L', 0, 1).copy()
+        libsim.imf_convert_uint8_to_int16(self)
         return image
 
     def print(self):

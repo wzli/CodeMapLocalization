@@ -2,7 +2,7 @@
 #include "math_utils.h"
 
 #ifndef IMF_TYPE
-#define IMF_TYPE uint8_t
+#define IMF_TYPE int16_t
 #endif
 
 typedef struct {

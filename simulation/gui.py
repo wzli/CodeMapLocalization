@@ -36,11 +36,11 @@ class CodeMapCanvas():
                                      height=size[1] * scale)
         self.view_box = [0, 0, size[0], size[1]]
         self.image_area = self.canvas.create_image(0, 0, anchor=tkinter.NW)
-        self.canvas.bind("<ButtonPress-1>", self.on_click)
-        self.canvas.bind("<B1-Motion>", self.on_drag)
-        self.canvas.bind("<4>", self.on_wheel)
-        self.canvas.bind("<5>", self.on_wheel)
-        self.canvas.configure(cursor="hand1")
+        parent.bind("<ButtonPress-1>", self.on_click)
+        parent.bind("<B1-Motion>", self.on_drag)
+        parent.bind("<4>", self.on_wheel)
+        parent.bind("<5>", self.on_wheel)
+        parent.configure(cursor="hand1")
         self.update_callback = update_callback
         self.update_view()
 
@@ -187,6 +187,12 @@ class BitMatrixProcessor:
         bit_mask = BitMatrix32()
         libsim.cmf_bit_matrix_conversion(bit_matrix, bit_mask,
                                          image.unrotated_matrix, 125, 130)
+        bit_matrix_image = Image.new('L', (32, 32), 127)
+        for row in range(32):
+            for col in range(32):
+                if (bit_mask[row] >> col) & 1 != 0:
+                    val = ((bit_matrix[row] >> col) & 1) * 255
+                    bit_matrix_image.putpixel((col, row), val)
         # extract row and column code
         row_code = ctypes.c_uint()
         col_code = ctypes.c_uint()
@@ -194,12 +200,6 @@ class BitMatrixProcessor:
                                   ctypes.byref(col_code), bit_matrix, bit_mask)
         libsim.print_bits(row_code, 32)
         libsim.print_bits(col_code, 32)
-        bit_matrix_image = Image.new('L', (32, 32), 127)
-        for row in range(32):
-            for col in range(32):
-                if (bit_mask[row] >> col) & 1 != 0:
-                    val = ((bit_matrix[row] >> col) & 1) * 255
-                    bit_matrix_image.putpixel((col, row), val)
         if self.update_callback:
             self.update_callback(bit_matrix_image)
 
@@ -232,7 +232,7 @@ for key in ('<q>', '<e>', '<w>', '<a>', '<s>', '<d>'):
 
 code_map_canvas.canvas.grid(row=0, column=0)
 camera_view_canvas.canvas.grid(row=0, column=1)
-unrotated_canvas.canvas.grid(row=0, column=2)
-thresholded_canvas.canvas.grid(row=1, column=2)
+unrotated_canvas.canvas.grid(row=1, column=1)
+thresholded_canvas.canvas.grid(row=1, column=0)
 
 root.mainloop()
