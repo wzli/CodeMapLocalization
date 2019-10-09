@@ -1,8 +1,9 @@
 #pragma once
 #include "math_utils.h"
 
+//#define IMF_TYPE int16_t
 #ifndef IMF_TYPE
-#define IMF_TYPE int16_t
+#define IMF_TYPE uint8_t
 #endif
 
 typedef struct {
@@ -11,8 +12,8 @@ typedef struct {
     int16_t n_rows;
 } ImageMatrix;
 
-extern const int16_t sobel_kernel_x[3 * 3];
-extern const int16_t sobel_kernel_y[3 * 3];
+extern const int8_t sobel_kernel_x[3 * 3];
+extern const int8_t sobel_kernel_y[3 * 3];
 
 #define ELEMENT(MATRIX, ROW, COL) ((MATRIX).data[(ROW) * (MATRIX).n_cols + (COL)])
 
