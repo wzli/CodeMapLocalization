@@ -5,6 +5,7 @@ libsim = ctypes.CDLL("build/libsimulation.so")
 
 BitMatrix32 = ctypes.c_uint * 32
 
+
 class AxisCode(ctypes.Structure):
     _fields_ = [('bits', ctypes.c_uint), ('mask', ctypes.c_uint)]
 

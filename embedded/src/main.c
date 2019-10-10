@@ -53,5 +53,6 @@ int main() {
     print_bits(row_code.bits, 32);
     printf("mask ");
     print_bits(row_code.mask, 32);
+
     return 0;
 }
