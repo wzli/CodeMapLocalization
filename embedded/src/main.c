@@ -1,8 +1,6 @@
 #include "mls_query.h"
-#include "bit_matrix.h"
+#include "decode_location.h"
 #include "test_utils.h"
-#include "decode.h"
-#include <stdio.h>
 
 BitMatrix32 matrix, matrix_mask;
 const uint32_t src_row_pos = 1000;
@@ -29,17 +27,8 @@ int main() {
     puts("");
 
     AxisCode row_code, col_code;
-    bm32_extract_codes(&row_code, &col_code, matrix, matrix_mask);
+    bm32_extract_axis_codes(&row_code, &col_code, matrix, matrix_mask);
 
-#if 0
-    uint16_t col_pos = mlsq_position_from_code(MLSQ_INDEX, col_code.bits);
-    if (col_pos == MLSQ_NOT_FOUND) {
-        col_code.bits = ~col_code.bits & ((1 << MLSQ_INDEX.code_length) - 1);
-        row_code.bits = ~row_code.bits & ((1 << MLSQ_INDEX.code_length) - 1);
-        col_pos = mlsq_position_from_code(MLSQ_INDEX, col_code.bits);
-    }
-    uint16_t row_pos = mlsq_position_from_code(MLSQ_INDEX, row_code.bits);
-#endif
     uint16_t row_pos, col_pos;
     CodeVerdict row_verdict = decode_axis(&row_pos, row_code, MLSQ_INDEX.code_length);
     CodeVerdict col_verdict = decode_axis(&col_pos, col_code, MLSQ_INDEX.code_length);

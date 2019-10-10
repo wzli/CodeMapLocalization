@@ -1,5 +1,5 @@
 extern "C" {
-#include "mls_query/mls_query.h"
+#include "mls_query.h"
 }
 #include "code_map.hpp"
 #include <cstdlib>
@@ -131,7 +131,7 @@ int main(int argc, char** argv) {
         std::cout << "Unable to write MLSQ index file" << std::endl;
         return -8;
     }
-    mlsq_index_file << "#include \"mls_query/mls_query.h\"\n";
+    mlsq_index_file << "#include \"mls_query.h\"\n";
 
     mlsq_index_file << "\nconst uint64_t MLSQ_SEQUENCE_ID = 0x" << std::hex
                     << std::hash<std::string>{}(s) << ";\n";

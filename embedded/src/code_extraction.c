@@ -1,29 +1,34 @@
-#include "bit_matrix.h"
+#include "code_extraction.h"
+#include <assert.h>
 
-// bunch of bit twiddling hacks
-// see https://graphics.stanford.edu/~seander/bithacks.html
-
-void bm32_transpose32(BitMatrix32 A) {
-    uint32_t m = 0xFFFF0000;
-    for (uint32_t j = 16; j != 0; j = j >> 1, m = m ^ (m >> j)) {
-        for (uint32_t k = 0; k < 32; k = (k + j + 1) & ~j) {
-            uint32_t t = (A[k] ^ (A[k + j] << j)) & m;
-            A[k] ^= t;
-            A[k + j] ^= (t >> j);
-        }
+Vector2f img_estimate_rotation(const ImageMatrix mat) {
+    Vector2f gradient_sum = {};
+    FOR_EACH_GRADIENT(mat,
+            gradient_sum = v2f_add(gradient_sum, v2f_double_angle(v2f_double_angle(gradient))));
+    if (!v2f_is_zero(gradient_sum)) {
+        gradient_sum = v2f_normalize(gradient_sum);
+        gradient_sum = v2f_half_angle(gradient_sum);
+        gradient_sum = v2f_half_angle(gradient_sum);
+        assert(!v2f_is_nan(gradient_sum));
     }
+    return gradient_sum;
 }
 
-uint8_t first_set_bit(uint32_t x) {
-    static const int MultiplyDeBruijnBitPosition[32] = {0, 1, 28, 2, 29, 14, 24, 3, 30, 22, 20, 15,
-            25, 17, 4, 8, 31, 27, 13, 23, 21, 19, 16, 7, 26, 12, 18, 6, 11, 5, 10, 9};
-    return MultiplyDeBruijnBitPosition[((uint32_t)((x & -x) * 0x077CB531U)) >> 27];
-}
-
-uint8_t bit_sum(uint32_t x) {
-    x = x - ((x >> 1) & 0x55555555);
-    x = (x & 0x33333333) + ((x >> 2) & 0x33333333);
-    return (((x + (x >> 4)) & 0x0F0F0F0F) * 0x01010101) >> 24;
+void img_bit_matrix_conversion(BitMatrix32 dst, BitMatrix32 mask, const ImageMatrix src,
+        IMF_TYPE low_thresh, IMF_TYPE high_thresh) {
+    assert(src.n_rows == 32 && src.n_cols == 32);
+    assert(high_thresh >= low_thresh);
+    FOR_EACH_ELEMENT(src) {
+        if (ELEMENT(src, row, col) >= high_thresh) {
+            bm32_set_bit(dst, row, col);
+        } else if (ELEMENT(src, row, col) <= low_thresh) {
+            bm32_clear_bit(dst, row, col);
+        } else {
+            bm32_clear_bit(mask, row, col);
+            continue;
+        }
+        bm32_set_bit(mask, row, col);
+    }
 }
 
 AxisCode bm32_extract_column_code(
@@ -44,7 +49,7 @@ AxisCode bm32_extract_column_code(
     return column_code;
 }
 
-void bm32_extract_codes(
+void bm32_extract_axis_codes(
         AxisCode* row_code, AxisCode* col_code, BitMatrix32 matrix, BitMatrix32 mask) {
     *col_code = bm32_extract_column_code(row_code->bits, matrix, mask);
     bm32_transpose32(matrix);

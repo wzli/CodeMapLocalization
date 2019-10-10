@@ -1,18 +1,18 @@
-#include "image_filter.h"
+#include "image_utils.h"
 #include <assert.h>
 
 const int8_t sobel_kernel_x[3 * 3] = {-1, 0, 1, -2, 0, 2, -1, 0, 1};
 const int8_t sobel_kernel_y[3 * 3] = {-1, -2, -1, 0, 0, 0, 1, 2, 1};
 
-void imf_fill(ImageMatrix mat, IMF_TYPE value) {
+void img_fill(ImageMatrix mat, IMF_TYPE value) {
     FOR_EACH_ELEMENT(mat) { ELEMENT(mat, row, col) = value; }
 }
 
-void imf_threshold(ImageMatrix mat, IMF_TYPE threshold) {
+void img_threshold(ImageMatrix mat, IMF_TYPE threshold) {
     FOR_EACH_ELEMENT(mat) { ELEMENT(mat, row, col) = (ELEMENT(mat, row, col) >= threshold) * 255; }
 }
 
-void imf_normalize(ImageMatrix mat) {
+void img_normalize(ImageMatrix mat) {
     IMF_TYPE max_element = ELEMENT(mat, 0, 0);
     IMF_TYPE min_element = ELEMENT(mat, 0, 0);
     FOR_EACH_ELEMENT(mat) {
@@ -28,7 +28,7 @@ void imf_normalize(ImageMatrix mat) {
     }
 }
 
-void imf_rotate(ImageMatrix dst, const ImageMatrix src, Vector2f rotation, IMF_TYPE bg_fill) {
+void img_rotate(ImageMatrix dst, const ImageMatrix src, Vector2f rotation, IMF_TYPE bg_fill) {
     assert(!v2f_is_zero(rotation) && !v2f_is_nan(rotation));
     assert(!isnan(rotation.x) && !isnan(rotation.y));
     Vector2f src_center = {0.5f * src.n_cols, 0.5f * src.n_rows};

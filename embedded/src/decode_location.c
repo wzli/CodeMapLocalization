@@ -1,10 +1,7 @@
-#include "decode.h"
-#include "code_map_filter.h"
+#include "decode_location.h"
 #include "mls_query.h"
 
 #include "test_utils.h"
-#include <stdio.h>
-
 
 uint8_t skip_to_valid_code_segment(AxisCode* axis_code, uint8_t code_length) {
     if (axis_code->mask == ~0) {
