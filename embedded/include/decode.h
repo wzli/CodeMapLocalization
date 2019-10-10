@@ -1,5 +1,5 @@
 #pragma once
-#include "bit_matrix/bit_matrix.h"
+#include "bit_matrix.h"
 
 typedef enum {
     CODE_VERDICT_DIRECT,

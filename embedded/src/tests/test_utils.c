@@ -1,4 +1,4 @@
-#include "debug_utils.h"
+#include "test_utils.h"
 #include <stdio.h>
 
 void print_bits(uint32_t word, int8_t word_length) {

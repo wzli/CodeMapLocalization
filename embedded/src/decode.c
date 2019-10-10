@@ -1,8 +1,8 @@
 #include "decode.h"
-#include "image_filter/code_map_filter.h"
-#include "mls_query/mls_query.h"
+#include "code_map_filter.h"
+#include "mls_query.h"
 
-#include "debug_utils/debug_utils.h"
+#include "test_utils.h"
 #include <stdio.h>
 
 

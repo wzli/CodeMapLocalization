@@ -1,7 +1,5 @@
 #include "image_filter.h"
-#include "bit_matrix/bit_matrix.h"
-
-#include <float.h>
+#include "bit_matrix.h"
 #include <assert.h>
 
 Vector2f cmf_estimate_rotation(const ImageMatrix mat) {
@@ -35,6 +33,7 @@ void cmf_bit_matrix_conversion(BitMatrix32 dst, BitMatrix32 mask, const ImageMat
 }
 
 #if 0
+#include <float.h>
 void cmf_rotated_bit_mask(BitMatrix32 rotated_mask, const ImageMatrix src, Vector2f rotation) {
     assert(!v2f_is_zero(rotation) && !v2f_is_nan(rotation));
     if (rotation.x < 0) {

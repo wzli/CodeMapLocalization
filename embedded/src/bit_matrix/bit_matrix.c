@@ -1,4 +1,4 @@
-#include "bit_matrix/bit_matrix.h"
+#include "bit_matrix.h"
 
 // bunch of bit twiddling hacks
 // see https://graphics.stanford.edu/~seander/bithacks.html

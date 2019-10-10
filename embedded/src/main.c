@@ -1,6 +1,6 @@
-#include "mls_query/mls_query.h"
-#include "bit_matrix/bit_matrix.h"
-#include "debug_utils/debug_utils.h"
+#include "mls_query.h"
+#include "bit_matrix.h"
+#include "test_utils.h"
 #include "decode.h"
 #include <stdio.h>
 
