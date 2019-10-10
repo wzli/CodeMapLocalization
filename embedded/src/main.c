@@ -1,6 +1,7 @@
 #include "mls_query/mls_query.h"
 #include "bit_matrix/bit_matrix.h"
 #include "debug_utils/debug_utils.h"
+#include "decode.h"
 #include <stdio.h>
 
 BitMatrix32 matrix, matrix_mask;
@@ -30,6 +31,7 @@ int main() {
     AxisCode row_code, col_code;
     bm32_extract_codes(&row_code, &col_code, matrix, matrix_mask);
 
+#if 0
     uint16_t col_pos = mlsq_position_from_code(MLSQ_INDEX, col_code.bits);
     if (col_pos == MLSQ_NOT_FOUND) {
         col_code.bits = ~col_code.bits & ((1 << MLSQ_INDEX.code_length) - 1);
@@ -37,8 +39,12 @@ int main() {
         col_pos = mlsq_position_from_code(MLSQ_INDEX, col_code.bits);
     }
     uint16_t row_pos = mlsq_position_from_code(MLSQ_INDEX, row_code.bits);
+#endif
+    uint16_t row_pos, col_pos;
+    CodeVerdict row_verdict = decode_axis(&row_pos, row_code, MLSQ_INDEX.code_length);
+    CodeVerdict col_verdict = decode_axis(&col_pos, col_code, MLSQ_INDEX.code_length);
 
-    printf("col code pos src %d recovered %d\n", src_col_pos, col_pos);
+    printf("col code pos verdict %d src %d recovered %d\n", col_verdict, src_col_pos, col_pos);
     printf(" src ");
     print_bits(src_col_code, 32);
     printf("bits ");
@@ -46,7 +52,7 @@ int main() {
     printf("mask ");
     print_bits(col_code.mask, 32);
 
-    printf("row code pos src %d recovered %d\n", src_row_pos, row_pos);
+    printf("row code pos verdict %d src %d recovered %d\n", row_verdict, src_row_pos, row_pos);
     printf(" src ");
     print_bits(src_row_code, 32);
     printf("bits ");
