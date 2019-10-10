@@ -62,9 +62,9 @@ int main(int argc, char** argv) {
         word >>= 1;
         if (s[i] == '1') {
             word |= 1 << (word_length - 1);
-            ba32_set_bit(sequence, i);
+            bv32_set_bit(sequence, i);
         } else if (s[i] == '0') {
-            ba32_clear_bit(sequence, i);
+            bv32_clear_bit(sequence, i);
         } else {
             std::cout << "Error: sequence contains invalid character " << s[i] << std::endl;
             return -2;
@@ -85,7 +85,7 @@ int main(int argc, char** argv) {
 
     for (uint32_t i = 0, word = 0; i < s.size(); ++i) {
         uint32_t new_bit = s[i] - '0';
-        if (new_bit != ba32_get_bit(sequence, i)) {
+        if (new_bit != bv32_get_bit(sequence, i)) {
             std::cout << "Internal Error: sequence bit array doesn't match source string"
                       << std::endl;
             return -4;
