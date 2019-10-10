@@ -31,17 +31,17 @@ class ImageMatrix(ctypes.Structure):
             'L').tobytes() * 2
         image_matrix = ImageMatrix(image.width, image.height, buf)
         if ImageMatrix.pixel_size == 2:
-            libsim.imf_convert_uint8_to_int16(image_matrix)
+            libsim.img_convert_uint8_to_int16(image_matrix)
         return image_matrix
 
     def to_image(self):
-        #libsim.imf_normalize(self)
+        #libsim.img_normalize(self)
         if ImageMatrix.pixel_size == 2:
-            libsim.imf_convert_int16_to_uint8(self)
+            libsim.img_convert_int16_to_uint8(self)
         image = Image.frombuffer('L', (self.n_cols, self.n_rows), self.buf,
                                  'raw', 'L', 0, 1).copy()
         if ImageMatrix.pixel_size == 2:
-            libsim.imf_convert_uint8_to_int16(self)
+            libsim.img_convert_uint8_to_int16(self)
         return image
 
     def print(self):
@@ -52,10 +52,10 @@ class ImageMatrix(ctypes.Structure):
             (int(self.n_cols * scale), int(self.n_rows * scale))).show()
 
 
-libsim.cmf_estimate_rotation.restype = Vector2f
+libsim.img_estimate_rotation.restype = Vector2f
 
 test_image = ImageMatrix(1, 8)
-libsim.imf_fill(test_image, 0xFF)
+libsim.img_fill(test_image, 0xFF)
 while test_image.buf[ImageMatrix.pixel_size] != 0xFF:
     ImageMatrix.pixel_size += 1
 if ImageMatrix.pixel_size not in (1, 2):

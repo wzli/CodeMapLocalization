@@ -164,12 +164,12 @@ class ImageProcessor:
         # convert to matrix
         matrix = ImageMatrix.from_image(image)
         # estimate rotation
-        rotation = libsim.cmf_estimate_rotation(matrix)
+        rotation = libsim.img_estimate_rotation(matrix)
         rotation.x *= self.bits_per_pixel
         rotation.y *= -self.bits_per_pixel
         # reverse rotation
         unrotated_matrix = ImageMatrix(32, 32)
-        libsim.imf_rotate(unrotated_matrix, matrix, rotation, 127)
+        libsim.img_rotate(unrotated_matrix, matrix, rotation, 127)
         # store bit mask and matrix in image
         image = unrotated_matrix.to_image()
         image.unrotated_matrix = unrotated_matrix
@@ -185,7 +185,7 @@ class BitMatrixProcessor:
         # convert to bit matrix
         bit_matrix = BitMatrix32()
         bit_mask = BitMatrix32()
-        libsim.cmf_bit_matrix_conversion(bit_matrix, bit_mask,
+        libsim.img_bit_matrix_conversion(bit_matrix, bit_mask,
                                          image.unrotated_matrix, 125, 130)
         bit_matrix_image = Image.new('L', (32, 32), 127)
         for row in range(32):
@@ -196,7 +196,7 @@ class BitMatrixProcessor:
         # extract row and column code
         row_code = AxisCode()
         col_code = AxisCode()
-        libsim.bm32_extract_codes(ctypes.byref(row_code),
+        libsim.bm32_extract_axis_codes(ctypes.byref(row_code),
                                   ctypes.byref(col_code), bit_matrix, bit_mask)
         libsim.print_bits(row_code.bits, 32)
         libsim.print_bits(col_code.bits, 32)

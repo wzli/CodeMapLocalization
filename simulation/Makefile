@@ -1,13 +1,14 @@
 TARGET_LIB ?= libsimulation.so
 
 BUILD_DIR ?= ./build
-SRC_DIRS ?= ./src
+SRC_DIR ?= ./src
+INC_DIR ?= ./include
 
-SRCS := $(shell find -L $(SRC_DIRS) -name "*.cpp" -or -name "*.c")
+SRCS := $(shell find -L $(SRC_DIR) -name "*.cpp" -or -name "*.c")
 OBJS := $(SRCS:%=$(BUILD_DIR)/%.o)
 DEPS := $(OBJS:.o=.d)
 
-INC_DIRS := $(shell find -L $(SRC_DIRS) -type d)
+INC_DIRS := $(shell find -L $(INC_DIR) -type d)
 INC_FLAGS := $(addprefix -I,$(INC_DIRS))
 
 CXXWARNING =  -Wall -Wuninitialized -Wmissing-field-initializers -Werror=pointer-arith
