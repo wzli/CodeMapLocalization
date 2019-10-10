@@ -5,6 +5,9 @@ libsim = ctypes.CDLL("build/libsimulation.so")
 
 BitMatrix32 = ctypes.c_uint * 32
 
+class AxisCode(ctypes.Structure):
+    _fields_ = [('bits', ctypes.c_uint), ('mask', ctypes.c_uint)]
+
 
 class Vector2f(ctypes.Structure):
     _fields_ = [('x', ctypes.c_float), ('y', ctypes.c_float)]
@@ -16,7 +19,8 @@ class ImageMatrix(ctypes.Structure):
     pixel_size = 1
 
     def __init__(self, width, height, buf=None):
-        self.buf = buf if buf else bytes(ImageMatrix.pixel_size * width * height)
+        self.buf = buf if buf else bytes(ImageMatrix.pixel_size * width *
+                                         height)
         self.data = self.buf
         self.n_cols = width
         self.n_rows = height
@@ -46,9 +50,10 @@ class ImageMatrix(ctypes.Structure):
         self.to_image().resize(
             (int(self.n_cols * scale), int(self.n_rows * scale))).show()
 
+
 libsim.cmf_estimate_rotation.restype = Vector2f
 
-test_image = ImageMatrix(1,8)
+test_image = ImageMatrix(1, 8)
 libsim.imf_fill(test_image, 0xFF)
 while test_image.buf[ImageMatrix.pixel_size] != 0xFF:
     ImageMatrix.pixel_size += 1
