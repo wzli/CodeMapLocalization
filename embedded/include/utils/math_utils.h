@@ -87,3 +87,7 @@ static inline Vector2f v2f_double_angle(Vector2f rot) {
 static inline Vector2f v2f_half_angle(Vector2f rot) {
     return (Vector2f){sqrtf((1.0f + rot.x) * 0.5f), copysignf(sqrtf((1.0f - rot.x) * 0.5f), rot.y)};
 }
+
+static inline Vector2f v2f_sum_angle(Vector2f rot_a, Vector2f rot_b) {
+    return (Vector2f){rot_a.x * rot_b.x - rot_a.y * rot_b.y, rot_a.y * rot_b.x + rot_a.x * rot_b.y};
+}

@@ -32,6 +32,11 @@ void print_axis_position(AxisPosition position) {
 }
 
 void print_location(Location location) {
-    printf("x %d y %d cos %f sin %f size %d\n", location.x, location.y, location.rotation.x,
-            location.rotation.y, location.detection_size);
+    printf("x %d y %d rot %f size %d\n", location.x, location.y,
+            atan2f(location.rotation.y, location.rotation.x) * 180.f / M_PI,
+            location.detection_size);
+}
+
+Vector2f test_sum_angle(Vector2f rot_a, Vector2f rot_b) {
+    return v2f_sum_angle(rot_a, rot_b);
 }

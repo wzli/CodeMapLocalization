@@ -79,6 +79,7 @@ class ImageMatrix(ctypes.Structure):
             (int(self.n_cols * scale), int(self.n_rows * scale))).show()
 
 
+libsim.test_sum_angle.restype = Vector2f
 libsim.img_estimate_rotation.restype = Vector2f
 libsim.decode_axis_position.restype = AxisPosition
 libsim.deduce_location.restype = Location
