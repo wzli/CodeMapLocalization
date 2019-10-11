@@ -53,7 +53,7 @@ int main(int argc, char** argv) {
     uint32_t* sequence = new uint32_t[sequence_chunks];
     uint16_t* sorted_positions = new uint16_t[positions_length];
     uint16_t* test_lookup = new uint16_t[1 << word_length];
-    sequence[sequence_chunks-1] = 0;
+    sequence[sequence_chunks - 1] = 0;
 
     for (int32_t i = 0; i < (1 << word_length); i++) {
         test_lookup[i] = MLSQ_NOT_FOUND;
@@ -134,8 +134,8 @@ int main(int argc, char** argv) {
     }
     mlsq_index_file << "#include \"mls_query.h\"\n";
 
-    mlsq_index_file << "\nconst uint64_t MLS_ID = 0x" << std::hex
-                    << std::hash<std::string>{}(s) << ";\n";
+    mlsq_index_file << "\nconst uint64_t MLS_ID = 0x" << std::hex << std::hash<std::string>{}(s)
+                    << ";\n";
 
     mlsq_index_file << "\nstatic const uint32_t MLS_SEQUENCE[" << std::dec << sequence_chunks
                     << "] = {\n";

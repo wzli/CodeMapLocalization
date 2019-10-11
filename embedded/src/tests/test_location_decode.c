@@ -71,28 +71,46 @@ int test_location_decode() {
     test_assert(src_row_pos == row_pos.start + 1 - row_pos.span);
     test_assert(src_col_pos == col_pos.start + 1 - col_pos.span);
 
-#if 0
-    print_bit_matrix(matrix_mask);
-    puts("");
-    print_bit_matrix(matrix);
-    puts("");
+    // third test, normal axis with invalid segments
+    src_row_code = reverse_bits(src_row_code, 32);
+    src_col_code = reverse_bits(src_col_code, 32);
 
-    printf("col code pos verdict %d src %d recovered %d\n", col_verdict, src_col_pos, col_pos);
-    printf(" src ");
-    print_bits(src_col_code, 32);
-    printf("bits ");
-    print_bits(col_code.bits, 32);
-    printf("mask ");
-    print_bits(col_code.mask, 32);
+    for (uint8_t i = 0; i < 32; ++i) {
+        matrix_mask[i] = ~0xA;
+        matrix[i] = src_row_code ^ -((src_col_code >> i) & 1);
+        matrix[i] &= matrix_mask[i];
+    }
 
-    printf("row code pos verdict %d src %d recovered %d\n", row_verdict, src_row_pos, row_pos);
-    printf(" src ");
-    print_bits(src_row_code, 32);
-    printf("bits ");
-    print_bits(row_code.bits, 32);
-    printf("mask ");
-    print_bits(row_code.mask, 32);
-#endif
+    bm32_extract_axis_codes(&row_code, &col_code, matrix, matrix_mask);
+    row_pos = decode_axis_position(row_code, MLS_INDEX.code_length);
+    col_pos = decode_axis_position(col_code, MLS_INDEX.code_length);
+
+    test_assert(row_pos.inverted == col_pos.inverted);
+    test_assert(row_pos.reversed == 0);
+    test_assert(col_pos.reversed == 0);
+    test_assert(row_pos.span == 33 - MLS_INDEX.code_length - 4);
+    test_assert(col_pos.span == 33 - MLS_INDEX.code_length);
+    test_assert(src_row_pos == row_pos.start - 4);
+    test_assert(src_col_pos == col_pos.start);
+
+    // 4th test, normal axis with invalid segments and boundaries
+    for (uint8_t i = 0; i < 32; ++i) {
+        matrix_mask[i] = ~0x400000F;
+        matrix[i] = src_row_code ^ -((src_col_code >> i) & 1);
+        matrix[i] &= matrix_mask[i];
+    }
+
+    bm32_extract_axis_codes(&row_code, &col_code, matrix, matrix_mask);
+    row_pos = decode_axis_position(row_code, MLS_INDEX.code_length);
+    col_pos = decode_axis_position(col_code, MLS_INDEX.code_length);
+
+    test_assert(row_pos.inverted == col_pos.inverted);
+    test_assert(row_pos.reversed == 0);
+    test_assert(col_pos.reversed == 0);
+    test_assert(row_pos.span == 33 - MLS_INDEX.code_length - 10);
+    test_assert(col_pos.span == 33 - MLS_INDEX.code_length);
+    test_assert(src_row_pos == row_pos.start - 4);
+    test_assert(src_col_pos == col_pos.start);
 
     return 0;
 }
