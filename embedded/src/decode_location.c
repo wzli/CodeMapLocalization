@@ -1,14 +1,15 @@
 #include "decode_location.h"
 #include "mls_query.h"
+#include <assert.h>
 
 #include "test_utils.h"
 
-uint8_t skip_to_valid_code_segment(AxisCode* axis_code, uint8_t code_length) {
-    if (axis_code->mask == ~0) {
-        return 32;
-    }
+uint8_t next_valid_code_segment(AxisCode* axis_code, uint8_t code_length) {
     uint8_t valid_segment_length = first_set_bit(~axis_code->mask);
-    while (valid_segment_length > 0 && valid_segment_length < code_length) {
+    while (axis_code->mask > 0 && valid_segment_length < code_length) {
+        axis_code->mask >>= valid_segment_length;
+        axis_code->bits >>= valid_segment_length;
+        valid_segment_length = first_set_bit(axis_code->mask);
         axis_code->mask >>= valid_segment_length;
         axis_code->bits >>= valid_segment_length;
         valid_segment_length = first_set_bit(~axis_code->mask);
@@ -20,12 +21,10 @@ CodeVerdict decode_axis(uint16_t* output_position, AxisCode axis_code, uint8_t c
     *output_position = MLSQ_NOT_FOUND;
     CodeVerdict best_verdict = CODE_VERDICT_ERROR;
     uint8_t max_position_matches = 0;
-    uint32_t code_mask = ~(~0 << code_length);
-    uint8_t valid_segment_length = skip_to_valid_code_segment(&axis_code, code_length);
+    uint32_t code_mask = mask_bits(code_length);
+    uint8_t valid_segment_length = next_valid_code_segment(&axis_code, code_length);
     while (valid_segment_length > 0 &&
             max_position_matches <= (valid_segment_length - code_length)) {
-        print_bits(axis_code.bits, 32);
-        print_bits(axis_code.mask, 32);
         CodeVerdict verdict = CODE_VERDICT_DIRECT;
         uint32_t code = axis_code.bits & code_mask;
         uint16_t position = mlsq_position_from_code(MLSQ_INDEX, code);
@@ -51,11 +50,12 @@ CodeVerdict decode_axis(uint16_t* output_position, AxisCode axis_code, uint8_t c
         if (position == MLSQ_NOT_FOUND) {
             axis_code.bits >>= 1;
             axis_code.mask >>= 1;
-            valid_segment_length = skip_to_valid_code_segment(&axis_code, code_length);
+            valid_segment_length = next_valid_code_segment(&axis_code, code_length);
             continue;
         }
 
-        uint32_t extended_code = axis_code.bits & ~(~0 << valid_segment_length);
+        uint32_t extended_code = axis_code.bits;
+        extended_code &= mask_bits(valid_segment_length);
         uint32_t expected_code;
         switch (verdict) {
             case CODE_VERDICT_INVERSE:
@@ -72,7 +72,7 @@ CodeVerdict decode_axis(uint16_t* output_position, AxisCode axis_code, uint8_t c
                         position + code_length - valid_segment_length);
                 break;
             default:
-                break;
+                assert(0);
         }
         uint8_t position_matches =
                 valid_segment_length - code_length + 1 - sum_bits(extended_code ^ expected_code);

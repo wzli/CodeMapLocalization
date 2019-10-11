@@ -4,18 +4,17 @@
 #include <stdio.h>
 
 // unit test defines
-#define test_assert(COND) \
-    do {                         \
-        int error = !(COND);      \
-        if (error) {             \
-            sprintf(test_error, "FAILED %s\n  %s:%d\n  %s",\
-            __func__, __FILE__, __LINE__, #COND); \
-            return error;      \
-        }                       \
+#define test_assert(COND)                                                                         \
+    do {                                                                                          \
+        int error = !(COND);                                                                      \
+        if (error) {                                                                              \
+            sprintf(test_error, "FAILED %s\n  %s:%d\n  %s", __func__, __FILE__, __LINE__, #COND); \
+            return error;                                                                         \
+        }                                                                                         \
     } while (0)
-#define test_run(test)       \
-    do {                        \
-        test_count++;            \
+#define test_run(test)        \
+    do {                      \
+        test_count++;         \
         int error = (test)(); \
         if (error)            \
             return error;     \

@@ -35,8 +35,12 @@ void bm32_transpose32(BitMatrix32 matrix);
 
 // bitwise operations
 
+static inline uint32_t mask_bits(uint32_t n) {
+    return ~0u >> (32 - n);
+}
+
 static inline uint32_t inverse_bits(uint32_t x, uint32_t n) {
-    return ~(x | (~0 << n));
+    return ~x & mask_bits(n);
 }
 
 uint32_t reverse_bits(uint32_t x, uint32_t n);
