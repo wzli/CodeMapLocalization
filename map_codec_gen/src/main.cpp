@@ -103,7 +103,7 @@ int main(int argc, char** argv) {
         }
     }
 
-    MlsQueryIndex query_index = {sequence, sorted_positions, static_cast<uint16_t>(s.size()),
+    MlsIndex query_index = {sequence, sorted_positions, static_cast<uint16_t>(s.size()),
             static_cast<uint8_t>(word_length)};
     if (mlsq_sort_code_positions(query_index) != positions_length) {
         std::cout << "Internal Error: sorted position length doesn't match expected length"
@@ -127,33 +127,33 @@ int main(int argc, char** argv) {
         return -7;
     }
 
-    std::ofstream mlsq_index_file("mlsq_index_data.c");
+    std::ofstream mlsq_index_file("mls_index.c");
     if (!mlsq_index_file.is_open()) {
-        std::cout << "Unable to write MLSQ index file" << std::endl;
+        std::cout << "Unable to write MLS index file" << std::endl;
         return -8;
     }
     mlsq_index_file << "#include \"mls_query.h\"\n";
 
-    mlsq_index_file << "\nconst uint64_t MLSQ_SEQUENCE_ID = 0x" << std::hex
+    mlsq_index_file << "\nconst uint64_t MLS_ID = 0x" << std::hex
                     << std::hash<std::string>{}(s) << ";\n";
 
-    mlsq_index_file << "\nstatic const uint32_t MLSQ_SEQUENCE[" << std::dec << sequence_chunks
+    mlsq_index_file << "\nstatic const uint32_t MLS_SEQUENCE[" << std::dec << sequence_chunks
                     << "] = {\n";
     for (uint32_t i = 0; i < sequence_chunks; ++i) {
         mlsq_index_file << "    0x" << std::hex << query_index.sequence[i] << ",\n";
     }
     mlsq_index_file << "};\n";
 
-    mlsq_index_file << "\nstatic const uint16_t MLSQ_SORTED_CODE_POSITIONS[" << std::dec
+    mlsq_index_file << "\nstatic const uint16_t MLS_SORTED_CODE_POSITIONS[" << std::dec
                     << positions_length << "] = {\n";
     for (uint32_t i = 0; i < positions_length; ++i) {
         mlsq_index_file << "    0x" << std::hex << query_index.sorted_code_positions[i] << ",\n";
     }
     mlsq_index_file << "};\n";
 
-    mlsq_index_file << "\nconst MlsQueryIndex MLSQ_INDEX = {\n";
-    mlsq_index_file << "    MLSQ_SEQUENCE,\n";
-    mlsq_index_file << "    MLSQ_SORTED_CODE_POSITIONS,\n";
+    mlsq_index_file << "\nconst MlsIndex MLS_INDEX = {\n";
+    mlsq_index_file << "    MLS_SEQUENCE,\n";
+    mlsq_index_file << "    MLS_SORTED_CODE_POSITIONS,\n";
     mlsq_index_file << "    " << std::dec << s.size() << ",\n";
     mlsq_index_file << "    " << std::dec << word_length << ",\n};\n";
     mlsq_index_file.close();

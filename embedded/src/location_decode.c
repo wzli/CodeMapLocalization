@@ -24,21 +24,21 @@ AxisPosition decode_axis_position(AxisCode axis_code, uint8_t code_length) {
     while (valid_segment_length > 0) {
         uint32_t code = axis_code.bits & code_mask;
         AxisPosition position = {};
-        position.start = mlsq_position_from_code(MLSQ_INDEX, code);
+        position.start = mlsq_position_from_code(MLS_INDEX, code);
         if (position.start == MLSQ_NOT_FOUND) {
             code = invert_bits(code, code_length);
             position.inverted = 1;
-            position.start = mlsq_position_from_code(MLSQ_INDEX, code);
+            position.start = mlsq_position_from_code(MLS_INDEX, code);
         }
         if (position.start == MLSQ_NOT_FOUND) {
             code = reverse_bits(code, code_length);
             position.reversed = 1;
-            position.start = mlsq_position_from_code(MLSQ_INDEX, code);
+            position.start = mlsq_position_from_code(MLS_INDEX, code);
         }
         if (position.start == MLSQ_NOT_FOUND) {
             code = invert_bits(code, code_length);
             position.inverted = 0;
-            position.start = mlsq_position_from_code(MLSQ_INDEX, code);
+            position.start = mlsq_position_from_code(MLS_INDEX, code);
         }
         if (position.start == MLSQ_NOT_FOUND) {
             axis_code.bits >>= 1;
@@ -57,11 +57,11 @@ AxisPosition decode_axis_position(AxisCode axis_code, uint8_t code_length) {
             uint32_t expected_code;
             if (position.reversed) {
                 extended_code = reverse_bits(extended_code, valid_segment_length);
-                expected_code = mlsq_code_from_position(MLSQ_INDEX.sequence, valid_segment_length,
+                expected_code = mlsq_code_from_position(MLS_INDEX.sequence, valid_segment_length,
                         position.start + code_length - valid_segment_length);
             } else {
                 expected_code = mlsq_code_from_position(
-                        MLSQ_INDEX.sequence, valid_segment_length, position.start);
+                        MLS_INDEX.sequence, valid_segment_length, position.start);
             }
             uint32_t diff_code = extended_code ^ expected_code;
             uint8_t first_diff = first_set_bit(diff_code);

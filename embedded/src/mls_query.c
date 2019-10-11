@@ -12,7 +12,7 @@ uint32_t mlsq_code_from_position(const uint32_t* sequence, uint8_t code_length, 
     return code & mask_bits(code_length);
 }
 
-uint16_t mlsq_position_from_code(const MlsQueryIndex query_index, uint32_t code) {
+uint16_t mlsq_position_from_code(const MlsIndex query_index, uint32_t code) {
     assert(query_index.sorted_code_positions);
     assert(query_index.sequence_length >= query_index.code_length);
     int32_t start = 0;
@@ -33,7 +33,7 @@ uint16_t mlsq_position_from_code(const MlsQueryIndex query_index, uint32_t code)
     return MLSQ_NOT_FOUND;
 }
 
-uint16_t mlsq_sort_code_positions(const MlsQueryIndex query_index) {
+uint16_t mlsq_sort_code_positions(const MlsIndex query_index) {
     assert(query_index.sequence_length >= query_index.code_length);
     uint16_t* sorted_code_positions = (uint16_t*) query_index.sorted_code_positions;
     uint16_t positions_length = query_index.sequence_length - query_index.code_length + 1;

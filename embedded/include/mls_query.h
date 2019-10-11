@@ -8,11 +8,11 @@ typedef struct {
     const uint16_t* sorted_code_positions;
     const uint16_t sequence_length;
     const uint8_t code_length;
-} MlsQueryIndex;
+} MlsIndex;
 
-extern const uint64_t MLSQ_SEQUENCE_ID;
-extern const MlsQueryIndex MLSQ_INDEX;
+extern const uint64_t MLS_ID;
+extern const MlsIndex MLS_INDEX;
 
 uint32_t mlsq_code_from_position(const uint32_t* sequence, uint8_t code_length, uint32_t position);
-uint16_t mlsq_position_from_code(const MlsQueryIndex query_index, uint32_t code);
-uint16_t mlsq_sort_code_positions(MlsQueryIndex query_index);
+uint16_t mlsq_position_from_code(const MlsIndex query_index, uint32_t code);
+uint16_t mlsq_sort_code_positions(MlsIndex query_index);
