@@ -19,10 +19,11 @@ uint8_t skip_to_valid_code_segment(AxisCode* axis_code, uint8_t code_length) {
 CodeVerdict decode_axis(uint16_t* output_position, AxisCode axis_code, uint8_t code_length) {
     *output_position = MLSQ_NOT_FOUND;
     CodeVerdict best_verdict = CODE_VERDICT_ERROR;
-    uint8_t max_position_matches= 0;
+    uint8_t max_position_matches = 0;
     uint32_t code_mask = ~(~0 << code_length);
     uint8_t valid_segment_length = skip_to_valid_code_segment(&axis_code, code_length);
-    while (valid_segment_length > 0 && max_position_matches <= (valid_segment_length - code_length)) {
+    while (valid_segment_length > 0 &&
+            max_position_matches <= (valid_segment_length - code_length)) {
         print_bits(axis_code.bits, 32);
         print_bits(axis_code.mask, 32);
         CodeVerdict verdict = CODE_VERDICT_DIRECT;
@@ -73,7 +74,8 @@ CodeVerdict decode_axis(uint16_t* output_position, AxisCode axis_code, uint8_t c
             default:
                 break;
         }
-        uint8_t position_matches = valid_segment_length - code_length + 1 - bit_sum(extended_code ^ expected_code);
+        uint8_t position_matches =
+                valid_segment_length - code_length + 1 - bit_sum(extended_code ^ expected_code);
         if (position_matches > max_position_matches) {
             max_position_matches = position_matches;
             *output_position = position;

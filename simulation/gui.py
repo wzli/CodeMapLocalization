@@ -197,7 +197,8 @@ class BitMatrixProcessor:
         row_code = AxisCode()
         col_code = AxisCode()
         libsim.bm32_extract_axis_codes(ctypes.byref(row_code),
-                                  ctypes.byref(col_code), bit_matrix, bit_mask)
+                                       ctypes.byref(col_code), bit_matrix,
+                                       bit_mask)
         libsim.print_bits(row_code.bits, 32)
         libsim.print_bits(col_code.bits, 32)
         if self.update_callback:
