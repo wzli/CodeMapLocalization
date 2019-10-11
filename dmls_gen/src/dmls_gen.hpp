@@ -11,7 +11,7 @@ public:
                     new_record_callback = nullptr);
 
 private:
-    uint32_t inverse_bits(uint32_t v) const;
+    uint32_t invert_bits(uint32_t v) const;
     uint32_t reverse_bits(uint32_t v) const;
     bool is_word_visited(uint32_t word) const;
     void set_word_visited(uint32_t word);

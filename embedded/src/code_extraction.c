@@ -51,6 +51,7 @@ AxisCode bm32_extract_column_code(
 
 void bm32_extract_axis_codes(
         AxisCode* row_code, AxisCode* col_code, BitMatrix32 matrix, BitMatrix32 mask) {
+    assert(row_code && col_code);
     *col_code = bm32_extract_column_code(0, matrix, mask);
     bm32_transpose32(matrix);
     bm32_transpose32(mask);

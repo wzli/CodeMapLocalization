@@ -39,7 +39,7 @@ static inline uint32_t mask_bits(uint32_t n) {
     return ~0u >> (32 - n);
 }
 
-static inline uint32_t inverse_bits(uint32_t x, uint32_t n) {
+static inline uint32_t invert_bits(uint32_t x, uint32_t n) {
     return ~x & mask_bits(n);
 }
 

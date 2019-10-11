@@ -25,3 +25,8 @@ void print_image_matrix(ImageMatrix src) {
     }
     puts("");
 }
+
+void print_axis_position(AxisPosition position) {
+    printf("start %d span %d inverted %d reversed %d\n", position.start, position.span,
+            position.inverted, position.reversed);
+}

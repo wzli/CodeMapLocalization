@@ -78,8 +78,8 @@ int main(int argc, char** argv) {
             }
             test_lookup[word] = position;
             test_lookup[rword] = position;
-            test_lookup[inverse_bits(word, word_length)] = position;
-            test_lookup[inverse_bits(rword, word_length)] = position;
+            test_lookup[invert_bits(word, word_length)] = position;
+            test_lookup[invert_bits(rword, word_length)] = position;
         }
     };
 

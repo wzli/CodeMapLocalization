@@ -1,6 +1,7 @@
 #pragma once
 #include "image_utils.h"
 #include "bitwise_utils.h"
+#include "location_decode.h"
 #include <stdio.h>
 
 // unit test defines
@@ -26,3 +27,4 @@ extern char test_error[];
 void print_bits(uint32_t word, int8_t word_length);
 void print_bit_matrix(BitMatrix32 matrix);
 void print_image_matrix(ImageMatrix src);
+void print_axis_position(AxisPosition position);

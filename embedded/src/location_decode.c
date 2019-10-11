@@ -5,6 +5,8 @@
 #include "test_utils.h"
 
 uint8_t next_valid_code_segment(AxisCode* axis_code, uint8_t code_length) {
+    assert(axis_code);
+    assert(code_length <= 32);
     uint8_t valid_segment_length = first_set_bit(~axis_code->mask);
     while (axis_code->mask > 0 && valid_segment_length < code_length) {
         axis_code->mask >>= valid_segment_length;
@@ -17,73 +19,67 @@ uint8_t next_valid_code_segment(AxisCode* axis_code, uint8_t code_length) {
     return valid_segment_length;
 };
 
-CodeVerdict decode_axis(uint16_t* output_position, AxisCode axis_code, uint8_t code_length) {
-    *output_position = MLSQ_NOT_FOUND;
-    CodeVerdict best_verdict = CODE_VERDICT_ERROR;
-    uint8_t max_position_matches = 0;
-    uint32_t code_mask = mask_bits(code_length);
+AxisPosition decode_axis_position(AxisCode axis_code, uint8_t code_length) {
+    AxisPosition best_position = {};
+    const uint32_t code_mask = mask_bits(code_length);
     uint8_t valid_segment_length = next_valid_code_segment(&axis_code, code_length);
-    while (valid_segment_length > 0 &&
-            max_position_matches <= (valid_segment_length - code_length)) {
-        CodeVerdict verdict = CODE_VERDICT_DIRECT;
+    while (valid_segment_length > 0) {
         uint32_t code = axis_code.bits & code_mask;
-        uint16_t position = mlsq_position_from_code(MLSQ_INDEX, code);
-
-        if (position == MLSQ_NOT_FOUND) {
-            verdict = CODE_VERDICT_INVERSE;
-            code = inverse_bits(code, code_length);
-            position = mlsq_position_from_code(MLSQ_INDEX, code);
+        AxisPosition position = {};
+        position.start = mlsq_position_from_code(MLSQ_INDEX, code);
+        if (position.start == MLSQ_NOT_FOUND) {
+            code = invert_bits(code, code_length);
+            position.inverted = 1;
+            position.start = mlsq_position_from_code(MLSQ_INDEX, code);
         }
-
-        if (position == MLSQ_NOT_FOUND) {
-            verdict = CODE_VERDICT_REVERSE;
+        if (position.start == MLSQ_NOT_FOUND) {
             code = reverse_bits(code, code_length);
-            position = mlsq_position_from_code(MLSQ_INDEX, code);
+            position.reversed = 1;
+            position.start = mlsq_position_from_code(MLSQ_INDEX, code);
         }
-
-        if (position == MLSQ_NOT_FOUND) {
-            verdict = CODE_VERDICT_INVERSE_REVERSE;
-            code = inverse_bits(code, code_length);
-            position = mlsq_position_from_code(MLSQ_INDEX, code);
+        if (position.start == MLSQ_NOT_FOUND) {
+            code = invert_bits(code, code_length);
+            position.inverted = 0;
+            position.start = mlsq_position_from_code(MLSQ_INDEX, code);
         }
-
-        if (position == MLSQ_NOT_FOUND) {
+        if (position.start == MLSQ_NOT_FOUND) {
             axis_code.bits >>= 1;
             axis_code.mask >>= 1;
             valid_segment_length = next_valid_code_segment(&axis_code, code_length);
             continue;
         }
-
-        uint32_t extended_code = axis_code.bits;
-        extended_code &= mask_bits(valid_segment_length);
-        uint32_t expected_code;
-        switch (verdict) {
-            case CODE_VERDICT_INVERSE:
-                extended_code = inverse_bits(extended_code, valid_segment_length);
-            case CODE_VERDICT_DIRECT:
-                expected_code = mlsq_code_from_position(
-                        MLSQ_INDEX.sequence, valid_segment_length, position);
-                break;
-            case CODE_VERDICT_INVERSE_REVERSE:
-                extended_code = inverse_bits(extended_code, valid_segment_length);
-            case CODE_VERDICT_REVERSE:
+        if (valid_segment_length == code_length) {
+            position.span = 1;
+            axis_code.bits >>= 1;
+            axis_code.mask >>= 1;
+        } else {
+            uint32_t extended_code = position.inverted
+                                             ? invert_bits(axis_code.bits, valid_segment_length)
+                                             : axis_code.bits & mask_bits(valid_segment_length);
+            uint32_t expected_code;
+            if (position.reversed) {
                 extended_code = reverse_bits(extended_code, valid_segment_length);
                 expected_code = mlsq_code_from_position(MLSQ_INDEX.sequence, valid_segment_length,
-                        position + code_length - valid_segment_length);
-                break;
-            default:
-                assert(0);
+                        position.start + code_length - valid_segment_length);
+            } else {
+                expected_code = mlsq_code_from_position(
+                        MLSQ_INDEX.sequence, valid_segment_length, position.start);
+            }
+            uint32_t diff_code = extended_code ^ expected_code;
+            uint8_t first_diff = first_set_bit(diff_code);
+            position.span = valid_segment_length - code_length + 1 - sum_bits(diff_code);
+            if (first_diff < 32) {
+                axis_code.bits >>= first_diff;
+                axis_code.mask >>= first_diff;
+            } else {
+                axis_code.bits = 0;
+                axis_code.mask = 0;
+            }
         }
-        uint8_t position_matches =
-                valid_segment_length - code_length + 1 - sum_bits(extended_code ^ expected_code);
-        if (position_matches > max_position_matches) {
-            max_position_matches = position_matches;
-            *output_position = position;
-            best_verdict = verdict;
+        if (position.span > best_position.span) {
+            best_position = position;
         }
+        valid_segment_length = next_valid_code_segment(&axis_code, code_length);
     }
-    if (!valid_segment_length) {
-        return CODE_VERDICT_ERROR;
-    }
-    return best_verdict;
+    return best_position;
 }

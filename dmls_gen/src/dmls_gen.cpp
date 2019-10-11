@@ -1,6 +1,6 @@
 #include "dmls_gen.hpp"
 
-uint32_t DmlsGen::inverse_bits(uint32_t v) const {
+uint32_t DmlsGen::invert_bits(uint32_t v) const {
     return ~(v | (~0 << _word_length));
 }
 
@@ -25,8 +25,8 @@ void DmlsGen::set_word_visited(uint32_t word) {
     uint32_t rword = reverse_bits(word);
     _word_visit_ids[word] = _visit_id;
     _word_visit_ids[rword] = _visit_id;
-    _word_visit_ids[inverse_bits(word)] = _visit_id;
-    _word_visit_ids[inverse_bits(rword)] = _visit_id;
+    _word_visit_ids[invert_bits(word)] = _visit_id;
+    _word_visit_ids[invert_bits(rword)] = _visit_id;
 }
 
 void DmlsGen::generate_dmls(std::vector<bool>& sequence, uint8_t word_length, uint32_t iterations,

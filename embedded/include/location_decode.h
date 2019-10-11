@@ -1,13 +1,12 @@
 #pragma once
 #include "code_extraction.h"
 
-typedef enum {
-    CODE_VERDICT_DIRECT,
-    CODE_VERDICT_INVERSE,
-    CODE_VERDICT_REVERSE,
-    CODE_VERDICT_INVERSE_REVERSE,
-    CODE_VERDICT_ERROR,
-} CodeVerdict;
+typedef struct {
+    uint16_t start;
+    uint8_t span : 6;
+    uint8_t inverted : 1;
+    uint8_t reversed : 1;
+} AxisPosition;
 
 uint8_t next_valid_code_segment(AxisCode* axis_code, uint8_t code_length);
-CodeVerdict decode_axis(uint16_t* output_position, AxisCode axis_code, uint8_t code_length);
+AxisPosition decode_axis_position(AxisCode axis_code, uint8_t code_length);
