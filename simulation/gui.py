@@ -199,8 +199,8 @@ class BitMatrixProcessor:
         libsim.bm32_extract_axis_codes(ctypes.byref(row_code),
                                        ctypes.byref(col_code), bit_matrix,
                                        bit_mask)
-        libsim.print_bits(row_code.bits, 32)
-        libsim.print_bits(col_code.bits, 32)
+        row_position = libsim.decode_axis_position(row_code, 16)
+        libsim.print_axis_position(row_position)
         if self.update_callback:
             self.update_callback(bit_matrix_image)
 

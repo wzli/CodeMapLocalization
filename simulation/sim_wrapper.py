@@ -14,6 +14,24 @@ class Vector2f(ctypes.Structure):
     _fields_ = [('x', ctypes.c_float), ('y', ctypes.c_float)]
 
 
+class AxisPosition(ctypes.Structure):
+    _fields_ = [
+        ('start', ctypes.c_ushort),
+        ('span', ctypes.c_ubyte, 6),
+        ('inverted', ctypes.c_ubyte, 1),
+        ('reveresd', ctypes.c_ubyte, 1),
+    ]
+
+
+class Location(ctypes.Structure):
+    _fields_ = [
+        ('x', ctypes.c_ushort),
+        ('y', ctypes.c_ushort),
+        ('rotation', Vector2f),
+        ('detection_size', ctypes.c_short),
+    ]
+
+
 class ImageMatrix(ctypes.Structure):
     _fields_ = [('data', ctypes.c_char_p), ('n_cols', ctypes.c_short),
                 ('n_rows', ctypes.c_short)]
@@ -53,6 +71,8 @@ class ImageMatrix(ctypes.Structure):
 
 
 libsim.img_estimate_rotation.restype = Vector2f
+libsim.decode_axis_position.restype = AxisPosition
+libsim.deduce_location.restype = Location
 
 test_image = ImageMatrix(1, 8)
 libsim.img_fill(test_image, 0xFF)
