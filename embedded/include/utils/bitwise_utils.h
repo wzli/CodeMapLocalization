@@ -41,4 +41,4 @@ static inline uint32_t inverse_bits(uint32_t x, uint32_t n) {
 
 uint32_t reverse_bits(uint32_t x, uint32_t n);
 uint8_t first_set_bit(uint32_t x);
-uint8_t bit_sum(uint32_t x);
+uint8_t sum_bits(uint32_t x);

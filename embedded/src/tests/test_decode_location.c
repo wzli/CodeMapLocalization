@@ -1,24 +1,20 @@
-#include "test_decode_location.h"
+#include "tests.h"
 #include "decode_location.h"
 #include "mls_query.h"
 
 static BitMatrix32 matrix, matrix_mask;
 static const uint32_t src_row_pos = 1000;
 static const uint32_t src_col_pos = 2000;
-static const uint8_t row_bits_offset = 5;
-static const uint8_t col_bits_offset = 9;
 
-char* test_decode_location() {
+int test_decode_location() {
     uint32_t src_row_code =
-            mlsq_code_from_position(MLSQ_INDEX.sequence, MLSQ_INDEX.code_length, src_row_pos);
+            mlsq_code_from_position(MLSQ_INDEX.sequence, 32, src_row_pos);
     uint32_t src_col_code =
-            mlsq_code_from_position(MLSQ_INDEX.sequence, MLSQ_INDEX.code_length, src_col_pos);
+            mlsq_code_from_position(MLSQ_INDEX.sequence, 32, src_col_pos);
 
-    for (int i = col_bits_offset; i < MLSQ_INDEX.code_length + col_bits_offset; ++i) {
-        matrix_mask[i] =
-                ~(~0 << (MLSQ_INDEX.code_length + row_bits_offset)) & (~0 << row_bits_offset);
-        matrix[i] =
-                (src_row_code << row_bits_offset) ^ -((src_col_code >> (i - col_bits_offset)) & 1);
+    for (uint8_t i = 0; i < 32; ++i) {
+        matrix_mask[i] = ~0;
+        matrix[i] = src_row_code ^ -((src_col_code >> i) & 1);
         matrix[i] &= matrix_mask[i];
     }
     print_bit_matrix(matrix_mask);
@@ -49,7 +45,7 @@ char* test_decode_location() {
     printf("mask ");
     print_bits(row_code.mask, 32);
 
-    mu_assert("Decoded row position mismatch", src_row_pos == row_pos);
-    mu_assert("Decoded column position mismatch", src_col_pos == col_pos);
+    test_assert(src_row_pos == row_pos);
+    test_assert(src_col_pos == col_pos);
     return 0;
 }

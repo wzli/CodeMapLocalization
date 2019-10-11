@@ -35,11 +35,11 @@ AxisCode bm32_extract_column_code(
         uint32_t row_code_bits, const BitMatrix32 matrix, const BitMatrix32 mask) {
     AxisCode column_code = {};
     for (uint8_t i = 0; i < 32; ++i) {
-        uint8_t mask_sum = bit_sum(mask[i]);
+        uint8_t mask_sum = sum_bits(mask[i]);
         if (mask_sum == 0) {
             continue;
         }
-        uint8_t row_diff = bit_sum((row_code_bits ^ matrix[i]) & mask[i]);
+        uint8_t row_diff = sum_bits((row_code_bits ^ matrix[i]) & mask[i]);
         uint32_t inv_bits = -(2 * row_diff > mask_sum);
         column_code.bits |= (inv_bits & 1) << i;
         column_code.mask |= 1 << i;

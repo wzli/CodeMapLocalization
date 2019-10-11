@@ -4,19 +4,24 @@
 #include <stdio.h>
 
 // unit test defines
-#define mu_assert(message, test) \
+#define test_assert(COND) \
     do {                         \
-        if (!(test))             \
-            return message;      \
+        int error = !(COND);      \
+        if (error) {             \
+            sprintf(test_error, "FAILED %s\n  %s:%d\n  %s",\
+            __func__, __FILE__, __LINE__, #COND); \
+            return error;      \
+        }                       \
     } while (0)
-#define mu_run_test(test)       \
+#define test_run(test)       \
     do {                        \
-        char* message = test(); \
-        tests_run++;            \
-        if (message)            \
-            return message;     \
+        test_count++;            \
+        int error = (test)(); \
+        if (error)            \
+            return error;     \
     } while (0)
-extern int tests_run;
+extern int test_count;
+extern char test_error[];
 
 // debug prints for internal data structures
 void print_bits(uint32_t word, int8_t word_length);

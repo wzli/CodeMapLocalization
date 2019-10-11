@@ -75,7 +75,7 @@ CodeVerdict decode_axis(uint16_t* output_position, AxisCode axis_code, uint8_t c
                 break;
         }
         uint8_t position_matches =
-                valid_segment_length - code_length + 1 - bit_sum(extended_code ^ expected_code);
+                valid_segment_length - code_length + 1 - sum_bits(extended_code ^ expected_code);
         if (position_matches > max_position_matches) {
             max_position_matches = position_matches;
             *output_position = position;

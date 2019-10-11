@@ -1,3 +1,4 @@
+#pragma once
 #include "image_utils.h"
 
 void img_convolution(ImageMatrix* dst, const ImageMatrix src, const ImageMatrix kernel);
