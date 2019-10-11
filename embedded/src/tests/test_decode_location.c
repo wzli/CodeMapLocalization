@@ -17,6 +17,7 @@ int test_decode_location() {
         matrix[i] = src_row_code ^ -((src_col_code >> i) & 1);
         matrix[i] &= matrix_mask[i];
     }
+
     print_bit_matrix(matrix_mask);
     puts("");
     print_bit_matrix(matrix);
@@ -25,8 +26,14 @@ int test_decode_location() {
     AxisCode row_code, col_code;
     bm32_extract_axis_codes(&row_code, &col_code, matrix, matrix_mask);
 
+    test_assert(row_code.bits == src_row_code || inverse_bits(row_code.bits, 32) == src_row_code);
+    test_assert(col_code.bits == src_col_code || inverse_bits(col_code.bits, 32) == src_col_code);
+
+
     uint16_t row_pos, col_pos;
     CodeVerdict row_verdict = decode_axis(&row_pos, row_code, MLSQ_INDEX.code_length);
+    test_assert(src_row_pos == row_pos);
+    return 0;
     CodeVerdict col_verdict = decode_axis(&col_pos, col_code, MLSQ_INDEX.code_length);
 
     printf("col code pos verdict %d src %d recovered %d\n", col_verdict, src_col_pos, col_pos);
@@ -45,7 +52,6 @@ int test_decode_location() {
     printf("mask ");
     print_bits(row_code.mask, 32);
 
-    test_assert(src_row_pos == row_pos);
     test_assert(src_col_pos == col_pos);
     return 0;
 }
