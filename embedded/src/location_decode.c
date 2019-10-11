@@ -2,8 +2,6 @@
 #include "mls_query.h"
 #include <assert.h>
 
-#include "test_utils.h"
-
 uint8_t next_valid_code_segment(AxisCode* axis_code, uint8_t code_length) {
     assert(axis_code);
     assert(code_length <= 32);

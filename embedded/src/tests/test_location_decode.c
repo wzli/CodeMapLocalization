@@ -42,18 +42,19 @@ int test_location_decode() {
     AxisPosition row_pos = decode_axis_position(row_code, MLSQ_INDEX.code_length);
     AxisPosition col_pos = decode_axis_position(col_code, MLSQ_INDEX.code_length);
 
+    printf("%d\n", row_pos.span);
     test_assert(row_code.bits == src_row_code || invert_bits(row_code.bits, 32) == src_row_code);
     test_assert(col_code.bits == src_col_code || invert_bits(col_code.bits, 32) == src_col_code);
     test_assert(row_pos.inverted == col_pos.inverted);
-    test_assert(row_pos.span == 16);
-    test_assert(col_pos.span == 16);
+    test_assert(row_pos.span == 33 - MLSQ_INDEX.code_length);
+    test_assert(col_pos.span == 33 - MLSQ_INDEX.code_length);
     test_assert(src_row_pos == row_pos.start);
     test_assert(src_col_pos == col_pos.start);
 
     // second test, reversed axis
     src_row_code = reverse_bits(src_row_code, 32);
     src_col_code = reverse_bits(src_col_code, 32);
-    ;
+
     for (uint8_t i = 0; i < 32; ++i) {
         matrix_mask[i] = ~0;
         matrix[i] = src_row_code ^ -((src_col_code >> i) & 1);
@@ -66,8 +67,8 @@ int test_location_decode() {
     test_assert(row_pos.inverted == col_pos.inverted);
     test_assert(row_pos.reversed == 1);
     test_assert(col_pos.reversed == 1);
-    test_assert(row_pos.span == 16);
-    test_assert(col_pos.span == 16);
+    test_assert(row_pos.span == 33 - MLSQ_INDEX.code_length);
+    test_assert(col_pos.span == 33 - MLSQ_INDEX.code_length);
     test_assert(src_row_pos == row_pos.start + 1 - row_pos.span);
     test_assert(src_col_pos == col_pos.start + 1 - col_pos.span);
 

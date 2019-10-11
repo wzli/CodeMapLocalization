@@ -53,6 +53,7 @@ int main(int argc, char** argv) {
     uint32_t* sequence = new uint32_t[sequence_chunks];
     uint16_t* sorted_positions = new uint16_t[positions_length];
     uint16_t* test_lookup = new uint16_t[1 << word_length];
+    sequence[sequence_chunks-1] = 0;
 
     for (int32_t i = 0; i < (1 << word_length); i++) {
         test_lookup[i] = MLSQ_NOT_FOUND;
@@ -158,9 +159,9 @@ int main(int argc, char** argv) {
     mlsq_index_file.close();
     std::cout << "LookupTable file succesfully generated" << std::endl;
 
-    delete sequence;
-    delete sorted_positions;
-    delete test_lookup;
+    delete[] sequence;
+    delete[] sorted_positions;
+    delete[] test_lookup;
 
     CodeMap code_map;
     code_map.generate(s);
