@@ -30,3 +30,8 @@ void print_axis_position(AxisPosition position) {
     printf("start %d span %d inverted %d reversed %d\n", position.start, position.span,
             position.inverted, position.reversed);
 }
+
+void print_location(Location location) {
+    printf("x %d y %d cos %f sin %f size %d\n", location.x, location.y, location.rotation.x,
+            location.rotation.y, location.detection_size);
+}

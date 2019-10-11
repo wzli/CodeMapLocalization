@@ -84,7 +84,7 @@ AxisPosition decode_axis_position(AxisCode axis_code, uint8_t code_length) {
 
 Location deduce_location(AxisPosition row_position, AxisPosition col_position) {
     Location location = {};
-    if (row_position.inverted != col_position.inverted) {
+    if (row_position.inverted == col_position.inverted) {
         return location;
     }
     location.detection_size = row_position.span * col_position.span;
@@ -104,14 +104,14 @@ Location deduce_location(AxisPosition row_position, AxisPosition col_position) {
             location.rotation = (Vector2f){0.0f, 1.0f};
             break;
         case 2:
-            location.x = row_position.start + 1 - row_position.span / 2;
-            location.y = col_position.start + 1 - col_position.span / 2;
-            location.rotation = (Vector2f){-1.0f, 0.0f};
-            break;
-        case 3:
             location.x = col_position.start + col_position.span / 2;
             location.y = row_position.start + 1 - row_position.span / 2;
             location.rotation = (Vector2f){0.0f, -1.0f};
+            break;
+        case 3:
+            location.x = row_position.start + 1 - row_position.span / 2;
+            location.y = col_position.start + 1 - col_position.span / 2;
+            location.rotation = (Vector2f){-1.0f, 0.0f};
             break;
     }
     return location;

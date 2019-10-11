@@ -4,6 +4,8 @@ import tkinter, math, ctypes
 from PIL import Image, ImageTk, ImageDraw
 from sim_wrapper import *
 
+Image.MAX_IMAGE_PIXELS = 1000000000
+
 
 class CodeMapCanvas():
     def __init__(self,
@@ -199,8 +201,16 @@ class BitMatrixProcessor:
         libsim.bm32_extract_axis_codes(ctypes.byref(row_code),
                                        ctypes.byref(col_code), bit_matrix,
                                        bit_mask)
-        row_position = libsim.decode_axis_position(row_code, 16)
+        row_position = libsim.decode_axis_position(row_code,
+                                                   MLS_INDEX.code_length)
+        col_position = libsim.decode_axis_position(col_code,
+                                                   MLS_INDEX.code_length)
+        location = libsim.deduce_location(row_position, col_position)
+        print('')
         libsim.print_axis_position(row_position)
+        libsim.print_axis_position(col_position)
+        print('')
+        libsim.print_location(location)
         if self.update_callback:
             self.update_callback(bit_matrix_image)
 

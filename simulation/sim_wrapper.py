@@ -6,6 +6,15 @@ libsim = ctypes.CDLL("build/libsimulation.so")
 BitMatrix32 = ctypes.c_uint * 32
 
 
+class MlsIndex(ctypes.Structure):
+    _fields_ = [
+        ('sequence', ctypes.POINTER(ctypes.c_uint)),
+        ('sorted_code_positions', ctypes.POINTER(ctypes.c_ushort)),
+        ('sequence_length', ctypes.c_ushort),
+        ('code_length', ctypes.c_ubyte),
+    ]
+
+
 class AxisCode(ctypes.Structure):
     _fields_ = [('bits', ctypes.c_uint), ('mask', ctypes.c_uint)]
 
@@ -73,6 +82,8 @@ class ImageMatrix(ctypes.Structure):
 libsim.img_estimate_rotation.restype = Vector2f
 libsim.decode_axis_position.restype = AxisPosition
 libsim.deduce_location.restype = Location
+
+MLS_INDEX = MlsIndex.in_dll(libsim, "MLS_INDEX")
 
 test_image = ImageMatrix(1, 8)
 libsim.img_fill(test_image, 0xFF)
