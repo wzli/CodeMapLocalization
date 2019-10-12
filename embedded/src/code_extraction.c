@@ -15,7 +15,7 @@ Vector2f img_estimate_rotation(const ImageMatrix mat) {
 }
 
 void img_bit_matrix_conversion(BitMatrix32 dst, BitMatrix32 mask, const ImageMatrix src,
-        IMF_TYPE low_thresh, IMF_TYPE high_thresh) {
+        IMG_TYPE low_thresh, IMG_TYPE high_thresh) {
     assert(src.n_rows == 32 && src.n_cols == 32);
     assert(high_thresh >= low_thresh);
     FOR_EACH_ELEMENT(src) {

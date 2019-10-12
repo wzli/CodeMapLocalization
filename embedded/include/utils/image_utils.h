@@ -1,13 +1,13 @@
 #pragma once
 #include "math_utils.h"
 
-//#define IMF_TYPE int16_t
-#ifndef IMF_TYPE
-#define IMF_TYPE uint8_t
+//#define IMG_TYPE int16_t
+#ifndef IMG_TYPE
+#define IMG_TYPE uint8_t
 #endif
 
 typedef struct {
-    IMF_TYPE* data;
+    IMG_TYPE* data;
     int16_t n_cols;
     int16_t n_rows;
 } ImageMatrix;
@@ -35,7 +35,7 @@ extern const int8_t sobel_kernel_y[3 * 3];
             (STATEMENT);                                                    \
         }
 
-void img_fill(ImageMatrix mat, IMF_TYPE value);
-void img_threshold(ImageMatrix mat, IMF_TYPE threshold);
+void img_fill(ImageMatrix mat, IMG_TYPE value);
+void img_threshold(ImageMatrix mat, IMG_TYPE threshold);
 void img_normalize(ImageMatrix mat);
-void img_rotate(ImageMatrix dst, const ImageMatrix src, Vector2f rotation, IMF_TYPE bg_fill);
+void img_rotate(ImageMatrix dst, const ImageMatrix src, Vector2f rotation, IMG_TYPE bg_fill);

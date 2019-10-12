@@ -1,6 +1,5 @@
 #pragma once
 #include <stdint.h>
-#include <stdbool.h>
 #include <math.h>
 
 #define ABS(x) ((x) < 0 ? -(x) : (x))
@@ -23,11 +22,11 @@ typedef struct {
     float y;
 } Vector2f;
 
-static inline bool v2f_is_zero(Vector2f vec) {
+static inline uint8_t v2f_is_zero(Vector2f vec) {
     return vec.x == 0 && vec.y == 0;
 }
 
-static inline bool v2f_is_nan(Vector2f vec) {
+static inline uint8_t v2f_is_nan(Vector2f vec) {
     return isnan(vec.x) || isnan(vec.y);
 }
 
@@ -88,6 +87,6 @@ static inline Vector2f v2f_half_angle(Vector2f rot) {
     return (Vector2f){sqrtf((1.0f + rot.x) * 0.5f), copysignf(sqrtf((1.0f - rot.x) * 0.5f), rot.y)};
 }
 
-static inline Vector2f v2f_sum_angle(Vector2f rot_a, Vector2f rot_b) {
+static inline Vector2f v2f_add_angle(Vector2f rot_a, Vector2f rot_b) {
     return (Vector2f){rot_a.x * rot_b.x - rot_a.y * rot_b.y, rot_a.y * rot_b.x + rot_a.x * rot_b.y};
 }

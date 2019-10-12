@@ -207,7 +207,7 @@ class BitMatrixProcessor:
         col_position = libsim.decode_axis_position(col_code,
                                                    MLS_INDEX.code_length)
         location = libsim.deduce_location(row_position, col_position)
-        location.rotation = libsim.test_sum_angle(location.rotation,
+        location.rotation = libsim.test_add_angle(location.rotation,
                                                   image.unrotation)
         print('')
         libsim.print_axis_position(row_position)

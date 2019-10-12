@@ -44,10 +44,9 @@ class Location(ctypes.Structure):
 class ImageMatrix(ctypes.Structure):
     _fields_ = [('data', ctypes.c_char_p), ('n_cols', ctypes.c_short),
                 ('n_rows', ctypes.c_short)]
-    pixel_size = 1
 
     def __init__(self, width, height, buf=None):
-        self.buf = buf if buf else bytes(ImageMatrix.pixel_size * width *
+        self.buf = buf if buf else bytes(libsim.sizeof_img_type() * width *
                                          height)
         self.data = self.buf
         self.n_cols = width
@@ -57,17 +56,17 @@ class ImageMatrix(ctypes.Structure):
         buf = image.tobytes() * 2 if image.mode == 'L' else image.convert(
             'L').tobytes() * 2
         image_matrix = ImageMatrix(image.width, image.height, buf)
-        if ImageMatrix.pixel_size == 2:
+        if libsim.sizeof_img_type() == 2:
             libsim.img_convert_uint8_to_int16(image_matrix)
         return image_matrix
 
     def to_image(self):
         #libsim.img_normalize(self)
-        if ImageMatrix.pixel_size == 2:
+        if libsim.sizeof_img_type() == 2:
             libsim.img_convert_int16_to_uint8(self)
         image = Image.frombuffer('L', (self.n_cols, self.n_rows), self.buf,
                                  'raw', 'L', 0, 1).copy()
-        if ImageMatrix.pixel_size == 2:
+        if libsim.sizeof_img_type() == 2:
             libsim.img_convert_uint8_to_int16(self)
         return image
 
@@ -79,16 +78,9 @@ class ImageMatrix(ctypes.Structure):
             (int(self.n_cols * scale), int(self.n_rows * scale))).show()
 
 
-libsim.test_sum_angle.restype = Vector2f
+libsim.test_add_angle.restype = Vector2f
 libsim.img_estimate_rotation.restype = Vector2f
 libsim.decode_axis_position.restype = AxisPosition
 libsim.deduce_location.restype = Location
 
 MLS_INDEX = MlsIndex.in_dll(libsim, "MLS_INDEX")
-
-test_image = ImageMatrix(1, 8)
-libsim.img_fill(test_image, 0xFF)
-while test_image.buf[ImageMatrix.pixel_size] != 0xFF:
-    ImageMatrix.pixel_size += 1
-if ImageMatrix.pixel_size not in (1, 2):
-    raise AssertionError(f"unsupported pixel size {ImageMatrix.pixel_size}")

@@ -37,6 +37,12 @@ void print_location(Location location) {
             location.detection_size);
 }
 
-Vector2f test_sum_angle(Vector2f rot_a, Vector2f rot_b) {
-    return v2f_sum_angle(rot_a, rot_b);
+// below are used for python access
+
+Vector2f test_add_angle(Vector2f rot_a, Vector2f rot_b) {
+    return v2f_add_angle(rot_a, rot_b);
+}
+
+uint8_t sizeof_img_type() {
+    return sizeof(IMG_TYPE);
 }

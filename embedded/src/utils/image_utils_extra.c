@@ -18,13 +18,13 @@ void img_convolution(ImageMatrix* dst, const ImageMatrix src, const ImageMatrix 
 void img_edge_filter(ImageMatrix* dst, const ImageMatrix src) {
     dst->n_rows = src.n_rows - 2;
     dst->n_cols = src.n_cols - 2;
-    float norm_scale = 1.0f / (1 << (21 - (8 * sizeof(IMF_TYPE)) + IS_SIGNED(IMF_TYPE)));
+    float norm_scale = 1.0f / (1 << (21 - (8 * sizeof(IMG_TYPE)) + IS_SIGNED(IMG_TYPE)));
     FOR_EACH_GRADIENT(src, ELEMENT(*dst, row, col) = v2f_norm_sqr(gradient) * norm_scale);
     assert(img_count_negative(*dst) == 0);
 }
 
 void img_hough_line_transform(ImageMatrix dst, const ImageMatrix src) {
-    assert(sizeof(IMF_TYPE) > 1);
+    assert(sizeof(IMG_TYPE) > 1);
     FOR_EACH_ELEMENT(dst) { ELEMENT(dst, row, col) = 0; }
     float angle_resolution = M_PI * 0.5f / dst.n_rows;
     float scale_to_index =
@@ -56,7 +56,7 @@ void img_convert_int16_to_uint8(ImageMatrix mat) {
 }
 
 int32_t img_count_negative(ImageMatrix mat) {
-    assert(IS_SIGNED(IMF_TYPE));
+    assert(IS_SIGNED(IMG_TYPE));
     int32_t count = 0;
     FOR_EACH_ELEMENT(mat) { count += ELEMENT(mat, row, col) < 0; }
     return count;
