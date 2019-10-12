@@ -1,32 +1,19 @@
 #include "dmls_gen.hpp"
-
-uint32_t DmlsGen::invert_bits(uint32_t v) const {
-    return ~(v | (~0 << _word_length));
-}
-
-uint32_t DmlsGen::reverse_bits(uint32_t v) const {
-    uint8_t n = _word_length;
-    v &= ~(~0 << n);
-    unsigned int r = v & 1;
-    for (v >>= 1; v; v >>= 1) {
-        r <<= 1;
-        r |= v & 1;
-        n--;
-    }
-    return r << (n - 1);
+extern "C" {
+#include "bitwise_utils.h"
 }
 
 bool DmlsGen::is_word_visited(uint32_t word) const {
-    return _word_visit_ids[word] == _visit_id;
+    return _word_visit_ids[word] == _visit_id || _word_visit_ids[word] == PALINDROME;
 }
 
 void DmlsGen::set_word_visited(uint32_t word) {
     ++_word_visit_counts[word];
-    uint32_t rword = reverse_bits(word);
+    uint32_t rword = reverse_bits(word, _word_length);
     _word_visit_ids[word] = _visit_id;
     _word_visit_ids[rword] = _visit_id;
-    _word_visit_ids[invert_bits(word)] = _visit_id;
-    _word_visit_ids[invert_bits(rword)] = _visit_id;
+    _word_visit_ids[invert_bits(word, _word_length)] = _visit_id;
+    _word_visit_ids[invert_bits(rword, _word_length)] = _visit_id;
 }
 
 void DmlsGen::generate_dmls(std::vector<bool>& sequence, uint8_t word_length, uint32_t iterations,
@@ -38,6 +25,13 @@ void DmlsGen::generate_dmls(std::vector<bool>& sequence, uint8_t word_length, ui
     _word_visit_counts.clear();
     _word_visit_counts.resize(1 << _word_length);
     _word_visit_ids.resize(1 << _word_length, _visit_id);
+    for (uint32_t word = 0; word < (1u << _word_length); ++word) {
+        uint32_t rword = reverse_bits(word, _word_length);
+        if (word == rword) {
+            _word_visit_ids[word] = PALINDROME;
+            _word_visit_ids[rword] = PALINDROME;
+        }
+    }
     _start_word_selector.param(
             std::uniform_int_distribution<uint32_t>::param_type(0, (1 << _word_length) - 1));
     const uint32_t MSB = 1 << (_word_length - 1);
@@ -52,6 +46,7 @@ void DmlsGen::generate_dmls(std::vector<bool>& sequence, uint8_t word_length, ui
             _l_sequence.emplace_back(buf & 1);
         }
         ++_visit_id;
+        _visit_id += _visit_id == PALINDROME;
         set_word_visited(l_word);
         while (true) {
             uint32_t next_words[4] = {

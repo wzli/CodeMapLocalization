@@ -73,7 +73,7 @@ int main(int argc, char** argv) {
         int position = i - word_length + 1;
         if (position >= 0) {
             uint32_t rword = reverse_bits(word, word_length);
-            if (test_lookup[word] != MLSQ_NOT_FOUND) {
+            if (word == rword || test_lookup[word] != MLSQ_NOT_FOUND) {
                 std::cout << "Error: sequence doesn't satisfy dmls constraints" << std::endl;
                 return -3;
             }
