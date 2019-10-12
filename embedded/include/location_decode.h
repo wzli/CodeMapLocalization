@@ -2,7 +2,7 @@
 #include "code_extraction.h"
 
 typedef struct {
-    uint16_t start;
+    uint16_t center;
     uint8_t span : 6;
     uint8_t inverted : 1;
     uint8_t reversed : 1;

@@ -39,7 +39,7 @@ void DmlsGen::generate_dmls(std::vector<bool>& sequence, uint8_t word_length, ui
     while (--iterations) {
         _gen.seed(_rd());
         uint32_t l_word = _start_word_selector(_gen);
-        while(l_word == reverse_bits(l_word, _word_length)) {
+        while (l_word == reverse_bits(l_word, _word_length)) {
             l_word = _start_word_selector(_gen);
         }
         uint32_t r_word = l_word;

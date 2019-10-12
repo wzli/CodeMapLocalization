@@ -202,6 +202,11 @@ class BitMatrixProcessor:
         libsim.bm32_extract_axis_codes(ctypes.byref(row_code),
                                        ctypes.byref(col_code), bit_matrix,
                                        bit_mask)
+        #print('')
+        #libsim.print_bits(row_code.bits, 32)
+        #libsim.print_bits(row_code.mask, 32)
+        #libsim.print_bits(col_code.bits, 32)
+        #libsim.print_bits(col_code.mask, 32)
         row_position = libsim.decode_axis_position(row_code,
                                                    MLS_INDEX.code_length)
         col_position = libsim.decode_axis_position(col_code,
