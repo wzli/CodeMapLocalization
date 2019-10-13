@@ -41,8 +41,8 @@ void img_rotate(ImageMatrix dst, const ImageMatrix src, Vector2f rotation, IMG_T
             ELEMENT(dst, row, col) = bg_fill;
             continue;
         }
-        int16_t right = round(src_position.x);
-        int16_t bottom = round(src_position.y);
+        int16_t right = src_position.x + 0.5f;
+        int16_t bottom = src_position.y + 0.5f;
         int16_t left = MAX(right - 1, 0);
         int16_t top = MAX(bottom - 1, 0);
         right = MIN(right, src.n_cols - 1);

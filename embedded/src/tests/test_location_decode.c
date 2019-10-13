@@ -122,6 +122,5 @@ int test_location_decode() {
             test_assert(src_row_pos == row_pos.center - row_pos.span / 2 - 4);
             test_assert(src_col_pos == col_pos.center - col_pos.span / 2);
         }
-
     return 0;
 }

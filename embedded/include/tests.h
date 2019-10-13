@@ -7,3 +7,4 @@ int test_bitwise_utils();
 int test_next_valid_code_segment();
 int test_location_decode();
 int test_mls_query();
+int test_full_chain();

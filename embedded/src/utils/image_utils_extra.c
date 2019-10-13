@@ -19,7 +19,8 @@ void img_edge_filter(ImageMatrix* dst, const ImageMatrix src) {
     dst->n_rows = src.n_rows - 2;
     dst->n_cols = src.n_cols - 2;
     float norm_scale = 1.0f / (1 << (21 - (8 * sizeof(IMG_TYPE)) + IS_SIGNED(IMG_TYPE)));
-    FOR_EACH_GRADIENT(src, ELEMENT(*dst, row, col) = v2f_norm_sqr(gradient) * norm_scale);
+    FOR_EACH_GRADIENT(
+            src, ELEMENT(*dst, row, col) = v2f_norm_sqr((Vector2f){grad_x, grad_y}) * norm_scale);
     assert(img_count_negative(*dst) == 0);
 }
 
