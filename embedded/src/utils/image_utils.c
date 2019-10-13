@@ -30,7 +30,6 @@ void img_normalize(ImageMatrix mat) {
 
 void img_rotate(ImageMatrix dst, const ImageMatrix src, Vector2f rotation, IMG_TYPE bg_fill) {
     assert(!v2f_is_zero(rotation) && !v2f_is_nan(rotation));
-    assert(!isnan(rotation.x) && !isnan(rotation.y));
     Vector2f src_center = {0.5f * src.n_cols, 0.5f * src.n_rows};
     Vector2f dst_center = {0.5f * dst.n_cols, 0.5f * dst.n_rows};
     rotation = v2f_flip_rotation(rotation);
@@ -42,8 +41,8 @@ void img_rotate(ImageMatrix dst, const ImageMatrix src, Vector2f rotation, IMG_T
             ELEMENT(dst, row, col) = bg_fill;
             continue;
         }
-        int16_t right = round(src_position.x);
-        int16_t bottom = round(src_position.y);
+        int16_t right = src_position.x + 0.5f;
+        int16_t bottom = src_position.y + 0.5f;
         int16_t left = MAX(right - 1, 0);
         int16_t top = MAX(bottom - 1, 0);
         right = MIN(right, src.n_cols - 1);

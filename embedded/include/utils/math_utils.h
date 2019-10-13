@@ -4,6 +4,7 @@
 
 #define ABS(x) ((x) < 0 ? -(x) : (x))
 #define SQR(x) ((x) * (x))
+#define CUBE(x) (SQR(x) * (x))
 #define MAX(x, y) ((x) > (y) ? (x) : (y))
 #define MIN(x, y) ((x) < (y) ? (x) : (y))
 #define CLAMP(x, min, max) ((x) < (min) ? (min) : (x) > (max) ? (max) : (x))

@@ -26,8 +26,14 @@ void print_image_matrix(ImageMatrix src) {
     puts("");
 }
 
+void print_axis_code(AxisCode axis_code) {
+    uint8_t leading_zeros = first_set_bit(reverse_bits(axis_code.mask, 32));
+    printf("samples %d errors %d\n", axis_code.n_samples, axis_code.n_errors);
+    print_bits(axis_code.bits, 32 - leading_zeros);
+}
+
 void print_axis_position(AxisPosition position) {
-    printf("start %d span %d inverted %d reversed %d\n", position.start, position.span,
+    printf("center %d span %d inverted %d reversed %d\n", position.center, position.span,
             position.inverted, position.reversed);
 }
 
@@ -41,6 +47,10 @@ void print_location(Location location) {
 
 Vector2f test_add_angle(Vector2f rot_a, Vector2f rot_b) {
     return v2f_add_angle(rot_a, rot_b);
+}
+
+uint8_t test_diff_bits(uint32_t a, uint32_t b) {
+    return MIN(sum_bits(a ^ b), sum_bits(~a ^ b));
 }
 
 uint8_t sizeof_img_type() {

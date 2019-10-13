@@ -3,8 +3,8 @@
 
 Vector2f img_estimate_rotation(const ImageMatrix mat) {
     Vector2f gradient_sum = {};
-    FOR_EACH_GRADIENT(mat,
-            gradient_sum = v2f_add(gradient_sum, v2f_double_angle(v2f_double_angle(gradient))));
+    FOR_EACH_GRADIENT(mat, gradient_sum = v2f_add(gradient_sum,
+                                   v2f_double_angle(v2f_double_angle((Vector2f){grad_x, grad_y}))));
     if (!v2f_is_zero(gradient_sum)) {
         gradient_sum = v2f_normalize(gradient_sum);
         gradient_sum = v2f_half_angle(gradient_sum);
@@ -18,44 +18,50 @@ void img_bit_matrix_conversion(BitMatrix32 dst, BitMatrix32 mask, const ImageMat
         IMG_TYPE low_thresh, IMG_TYPE high_thresh) {
     assert(src.n_rows == 32 && src.n_cols == 32);
     assert(high_thresh >= low_thresh);
+    for (uint8_t row = 0; row < 32; ++row) {
+        dst[row] = 0;
+        mask[row] = ~0;
+    }
     FOR_EACH_ELEMENT(src) {
         if (ELEMENT(src, row, col) >= high_thresh) {
             bm32_set_bit(dst, row, col);
-        } else if (ELEMENT(src, row, col) <= low_thresh) {
-            bm32_clear_bit(dst, row, col);
-        } else {
+        } else if (ELEMENT(src, row, col) > low_thresh) {
             bm32_clear_bit(mask, row, col);
-            continue;
         }
-        bm32_set_bit(mask, row, col);
     }
 }
 
-AxisCode bm32_extract_column_code(
-        uint32_t row_code_bits, const BitMatrix32 matrix, const BitMatrix32 mask) {
+AxisCode bm32_extract_column_code(uint32_t row_code_bits, const BitMatrix32 matrix,
+        const BitMatrix32 mask, uint8_t min_samples) {
     AxisCode column_code = {};
     for (uint8_t i = 0; i < 32; ++i) {
         uint8_t mask_sum = sum_bits(mask[i]);
-        if (mask_sum == 0) {
+        if (mask_sum < min_samples) {
             continue;
         }
         uint8_t row_diff = sum_bits((row_code_bits ^ matrix[i]) & mask[i]);
-        uint32_t inv_bits = -(2 * row_diff > mask_sum);
-        column_code.bits |= (inv_bits & 1) << i;
-        column_code.mask |= 1 << i;
         row_code_bits &= ~mask[i];
-        row_code_bits |= (inv_bits ^ matrix[i]) & mask[i];
+        if (row_diff > mask_sum / 2) {
+            column_code.bits |= 1 << i;
+            row_code_bits |= ~matrix[i] & mask[i];
+            column_code.n_errors += mask_sum - row_diff;
+        } else {
+            row_code_bits |= matrix[i] & mask[i];
+            column_code.n_errors += row_diff;
+        }
+        column_code.n_samples += mask_sum;
+        column_code.mask |= 1 << i;
     }
     return column_code;
 }
 
-void bm32_extract_axis_codes(
-        AxisCode* row_code, AxisCode* col_code, BitMatrix32 matrix, BitMatrix32 mask) {
+void bm32_extract_axis_codes(AxisCode* row_code, AxisCode* col_code, BitMatrix32 matrix,
+        BitMatrix32 mask, uint8_t min_samples) {
     assert(row_code && col_code);
-    *col_code = bm32_extract_column_code(0, matrix, mask);
-    bm32_transpose32(matrix);
-    bm32_transpose32(mask);
-    *row_code = bm32_extract_column_code(col_code->bits, matrix, mask);
+    *col_code = bm32_extract_column_code(0, matrix, mask, min_samples);
+    bm32_transpose(matrix);
+    bm32_transpose(mask);
+    *row_code = bm32_extract_column_code(col_code->bits, matrix, mask, min_samples);
     uint8_t offset = first_set_bit(col_code->mask);
     col_code->bits >>= offset;
     col_code->mask >>= offset;

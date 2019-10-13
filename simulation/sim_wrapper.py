@@ -16,7 +16,12 @@ class MlsIndex(ctypes.Structure):
 
 
 class AxisCode(ctypes.Structure):
-    _fields_ = [('bits', ctypes.c_uint), ('mask', ctypes.c_uint)]
+    _fields_ = [
+        ('bits', ctypes.c_uint),
+        ('mask', ctypes.c_uint),
+        ('n_errors', ctypes.c_ushort),
+        ('n_samples', ctypes.c_ushort),
+    ]
 
 
 class Vector2f(ctypes.Structure):
