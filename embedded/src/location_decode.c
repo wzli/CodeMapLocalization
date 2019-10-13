@@ -24,7 +24,6 @@ AxisPosition decode_axis_position(AxisCode axis_code, uint8_t code_length) {
             valid_segment_length > 0;
             valid_segment_length = next_valid_code_segment(&axis_code, code_length)) {
         uint32_t code = axis_code.bits & code_mask;
-        int8_t next_offset = 1;
         AxisPosition position = {};
         position.center = mlsq_position_from_code(MLS_INDEX, code);
         if (position.center == MLSQ_NOT_FOUND) {
@@ -43,7 +42,7 @@ AxisPosition decode_axis_position(AxisCode axis_code, uint8_t code_length) {
             position.center = mlsq_position_from_code(MLS_INDEX, code);
         }
         position.span = position.center != MLSQ_NOT_FOUND;
-        if (position.span && valid_segment_length != code_length) {
+        if (position.span && valid_segment_length > code_length) {
             uint32_t extended_code = position.inverted
                                              ? invert_bits(axis_code.bits, valid_segment_length)
                                              : axis_code.bits & mask_bits(valid_segment_length);
@@ -56,19 +55,18 @@ AxisPosition decode_axis_position(AxisCode axis_code, uint8_t code_length) {
                                       valid_segment_length)
                             : mlsq_code_from_position(
                                       MLS_INDEX.sequence, valid_segment_length, position.center);
-            uint32_t diff_code = extended_code ^ expected_code;
-            next_offset += first_set_bit(diff_code) - code_length;
-            position.span += valid_segment_length - sum_bits(diff_code) - code_length;
+            uint8_t first_diff = first_set_bit(extended_code ^ expected_code);
+            position.span += MIN(first_diff, valid_segment_length) - code_length;
         }
         if (position.span > best_position.span) {
             best_position = position;
         }
-        assert(next_offset >= 0);
-        if (next_offset >= 32) {
+        if (position.span >= 32) {
             break;
         }
-        axis_code.bits >>= next_offset;
-        axis_code.mask >>= next_offset;
+        position.span += !position.span;
+        axis_code.bits >>= position.span;
+        axis_code.mask >>= position.span;
     }
     best_position.center +=
             best_position.reversed ? 1 - best_position.span / 2 : best_position.span / 2;

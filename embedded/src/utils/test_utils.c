@@ -49,6 +49,10 @@ Vector2f test_add_angle(Vector2f rot_a, Vector2f rot_b) {
     return v2f_add_angle(rot_a, rot_b);
 }
 
+uint8_t test_diff_bits(uint32_t a, uint32_t b) {
+    return MIN(sum_bits(a ^ b), sum_bits(~a ^ b));
+}
+
 uint8_t sizeof_img_type() {
     return sizeof(IMG_TYPE);
 }
