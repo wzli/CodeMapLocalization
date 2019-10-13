@@ -12,7 +12,7 @@ void CodeMap::generate(const std::string& sequence) {
     data.reserve(dmls.size() * dmls.size());
     for (size_t y = 0; y < dmls.size(); ++y) {
         for (size_t x = 0; x < dmls.size(); ++x) {
-            data.emplace_back(dmls[x] ^ dmls[y]);
+            data.emplace_back(dmls[x] == dmls[y]);
         }
     }
     sequence_hash = std::hash<std::string>{}(sequence);

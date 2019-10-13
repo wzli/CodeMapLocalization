@@ -169,6 +169,8 @@ class ImageProcessor:
         matrix = ImageMatrix.from_image(image)
         # estimate rotation
         rotation = libsim.img_estimate_rotation(matrix)
+        if (rotation.x == 0 and rotation.y == 0):
+            return
         rotation.x *= self.bits_per_pixel
         rotation.y *= -self.bits_per_pixel
         # reverse rotation
@@ -200,11 +202,6 @@ class BitMatrixProcessor:
         libsim.bm32_extract_axis_codes(ctypes.byref(row_code),
                                        ctypes.byref(col_code), bit_matrix,
                                        bit_mask, 3)
-        #print('')
-        #libsim.print_bits(row_code.bits, 32)
-        #libsim.print_bits(row_code.mask, 32)
-        #libsim.print_bits(col_code.bits, 32)
-        #libsim.print_bits(col_code.mask, 32)
         row_position = libsim.decode_axis_position(row_code,
                                                    MLS_INDEX.code_length)
         col_position = libsim.decode_axis_position(col_code,
@@ -214,11 +211,29 @@ class BitMatrixProcessor:
         libsim.bm32_transpose(bit_mask)
         libsim.bm32_transpose(bit_matrix)
         image_rotation = ((image.camera_rotation + 45) // 90 % 4) * 90
-        image.view_image = image.view_image.rotate(image_rotation)
+        image.view_image = image.view_image.rotate(image_rotation).convert('L')
+        for row in range(32):
+            for col in range(32):
+                if (bit_mask[row] >> col) & 1 == 0:
+                    image.view_image.putpixel((col, row), 127)
+        actual_image = ImageMatrix.from_image(image.view_image)
+        actual_bit_matrix = BitMatrix32()
+        actual_bit_mask = BitMatrix32()
+        libsim.img_bit_matrix_conversion(actual_bit_matrix, actual_bit_mask,
+                                         actual_image, 125, 130)
+        actual_row_code = AxisCode()
+        actual_col_code = AxisCode()
+        libsim.bm32_extract_axis_codes(ctypes.byref(actual_row_code),
+                                       ctypes.byref(actual_col_code),
+                                       actual_bit_matrix, actual_bit_mask, 3)
 
         print('')
         libsim.print_axis_code(row_code)
+        libsim.print_axis_code(actual_row_code)
+        print(libsim.test_diff_bits(row_code.bits, actual_row_code.bits))
         libsim.print_axis_code(col_code)
+        libsim.print_axis_code(actual_col_code)
+        print(libsim.test_diff_bits(col_code.bits, actual_col_code.bits))
         print('')
         libsim.print_axis_position(row_position)
         libsim.print_axis_position(col_position)
@@ -240,7 +255,7 @@ class BitMatrixProcessor:
 code_map_image = Image.open("code_map.pbm")
 view_size = (32, 32)
 camera_resolution = (30, 30)
-camera_size = (22, 22)
+camera_size = (20, 20)
 scale = 10
 
 root = tkinter.Tk()

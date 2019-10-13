@@ -30,7 +30,6 @@ void img_normalize(ImageMatrix mat) {
 
 void img_rotate(ImageMatrix dst, const ImageMatrix src, Vector2f rotation, IMG_TYPE bg_fill) {
     assert(!v2f_is_zero(rotation) && !v2f_is_nan(rotation));
-    assert(!isnan(rotation.x) && !isnan(rotation.y));
     Vector2f src_center = {0.5f * src.n_cols, 0.5f * src.n_rows};
     Vector2f dst_center = {0.5f * dst.n_cols, 0.5f * dst.n_rows};
     rotation = v2f_flip_rotation(rotation);

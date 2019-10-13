@@ -75,7 +75,7 @@ AxisPosition decode_axis_position(AxisCode axis_code, uint8_t code_length) {
 
 Location deduce_location(AxisPosition row_position, AxisPosition col_position) {
     Location location = {};
-    if (row_position.inverted == col_position.inverted) {
+    if (row_position.inverted != col_position.inverted) {
         return location;
     }
     location.detection_size = row_position.span * col_position.span;
