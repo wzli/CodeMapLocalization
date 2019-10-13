@@ -38,7 +38,7 @@ int test_location_decode() {
             }
 
             AxisCode row_code, col_code;
-            bm32_extract_axis_codes(&row_code, &col_code, matrix, matrix_mask);
+            bm32_extract_axis_codes(&row_code, &col_code, matrix, matrix_mask, 3);
             AxisPosition row_pos = decode_axis_position(row_code, MLS_INDEX.code_length);
             AxisPosition col_pos = decode_axis_position(col_code, MLS_INDEX.code_length);
 
@@ -61,7 +61,7 @@ int test_location_decode() {
                 matrix[i] = src_row_code ^ -((src_col_code >> i) & 1);
             }
 
-            bm32_extract_axis_codes(&row_code, &col_code, matrix, matrix_mask);
+            bm32_extract_axis_codes(&row_code, &col_code, matrix, matrix_mask, 3);
             row_pos = decode_axis_position(row_code, MLS_INDEX.code_length);
             col_pos = decode_axis_position(col_code, MLS_INDEX.code_length);
 
@@ -91,7 +91,7 @@ int test_location_decode() {
                 matrix[i] &= matrix_mask[i];
             }
 
-            bm32_extract_axis_codes(&row_code, &col_code, matrix, matrix_mask);
+            bm32_extract_axis_codes(&row_code, &col_code, matrix, matrix_mask, 3);
             row_pos = decode_axis_position(row_code, MLS_INDEX.code_length);
             col_pos = decode_axis_position(col_code, MLS_INDEX.code_length);
 
@@ -110,7 +110,7 @@ int test_location_decode() {
                 matrix[i] &= matrix_mask[i];
             }
 
-            bm32_extract_axis_codes(&row_code, &col_code, matrix, matrix_mask);
+            bm32_extract_axis_codes(&row_code, &col_code, matrix, matrix_mask, 3);
             row_pos = decode_axis_position(row_code, MLS_INDEX.code_length);
             col_pos = decode_axis_position(col_code, MLS_INDEX.code_length);
 

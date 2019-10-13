@@ -31,7 +31,7 @@ static inline void bm32_clear_bit(BitMatrix32 matrix, uint8_t row, uint8_t col) 
     matrix[row] &= ~(1u << col);
 };
 
-void bm32_transpose32(BitMatrix32 matrix);
+void bm32_transpose(BitMatrix32 matrix);
 
 // bitwise operations
 

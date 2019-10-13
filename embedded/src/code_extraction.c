@@ -31,31 +31,37 @@ void img_bit_matrix_conversion(BitMatrix32 dst, BitMatrix32 mask, const ImageMat
     }
 }
 
-AxisCode bm32_extract_column_code(
-        uint32_t row_code_bits, const BitMatrix32 matrix, const BitMatrix32 mask) {
+AxisCode bm32_extract_column_code(uint32_t row_code_bits, const BitMatrix32 matrix,
+        const BitMatrix32 mask, uint8_t min_samples) {
     AxisCode column_code = {};
     for (uint8_t i = 0; i < 32; ++i) {
         uint8_t mask_sum = sum_bits(mask[i]);
-        if (mask_sum == 0) {
+        if (mask_sum < min_samples) {
             continue;
         }
         uint8_t row_diff = sum_bits((row_code_bits ^ matrix[i]) & mask[i]);
-        uint32_t inv_bits = -(2 * row_diff > mask_sum);
-        column_code.bits |= (inv_bits & 1) << i;
-        column_code.mask |= 1 << i;
         row_code_bits &= ~mask[i];
-        row_code_bits |= (inv_bits ^ matrix[i]) & mask[i];
+        if (row_diff > mask_sum / 2) {
+            column_code.bits |= 1 << i;
+            row_code_bits |= ~matrix[i] & mask[i];
+            column_code.n_errors += mask_sum - row_diff;
+        } else {
+            row_code_bits |= matrix[i] & mask[i];
+            column_code.n_errors += row_diff;
+        }
+        column_code.n_samples += mask_sum;
+        column_code.mask |= 1 << i;
     }
     return column_code;
 }
 
-void bm32_extract_axis_codes(
-        AxisCode* row_code, AxisCode* col_code, BitMatrix32 matrix, BitMatrix32 mask) {
+void bm32_extract_axis_codes(AxisCode* row_code, AxisCode* col_code, BitMatrix32 matrix,
+        BitMatrix32 mask, uint8_t min_samples) {
     assert(row_code && col_code);
-    *col_code = bm32_extract_column_code(0, matrix, mask);
-    bm32_transpose32(matrix);
-    bm32_transpose32(mask);
-    *row_code = bm32_extract_column_code(col_code->bits, matrix, mask);
+    *col_code = bm32_extract_column_code(0, matrix, mask, min_samples);
+    bm32_transpose(matrix);
+    bm32_transpose(mask);
+    *row_code = bm32_extract_column_code(col_code->bits, matrix, mask, min_samples);
     uint8_t offset = first_set_bit(col_code->mask);
     col_code->bits >>= offset;
     col_code->mask >>= offset;

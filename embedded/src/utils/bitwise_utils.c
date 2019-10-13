@@ -4,7 +4,7 @@
 // bunch of bit twiddling hacks
 // see https://graphics.stanford.edu/~seander/bithacks.html
 
-void bm32_transpose32(BitMatrix32 A) {
+void bm32_transpose(BitMatrix32 A) {
     uint32_t m = 0xFFFF0000;
     for (uint32_t j = 16; j != 0; j = j >> 1, m = m ^ (m >> j)) {
         for (uint32_t k = 0; k < 32; k = (k + j + 1) & ~j) {
