@@ -5,6 +5,10 @@
 #include <sstream>
 
 int main(int argc, char** argv) {
+    if (argc < 2) {
+        std::cout << "enter word length as the argument" << std::endl;
+        return -1;
+    }
     std::cout << "Generating ...\n" << std::endl;
     DmlsGen dmls_gen;
     std::vector<bool> sequence;

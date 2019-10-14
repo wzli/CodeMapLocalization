@@ -7,13 +7,32 @@ extern "C" {
 #include <fstream>
 #include <iostream>
 
+enum Error {
+    SUCCESS = 0,
+    ERROR_INVALID_ARGUMENT,
+    ERROR_OPENING_FILE,
+    ERROR_WRITING_FILE,
+    ERROR_INVALID_SEQUENCE_CHARACTER,
+    ERROR_DMLS_CONSTRAINS_UNSATISFIED,
+    INTERNAL_ERROR_SEQUENCE_VECTOR_MISMATCH,
+    INTERNAL_ERROR_POSITION_LOOKUP_MISMATCH,
+    INTERNAL_ERROR_SORTED_POSITIONS_LENGTH_MISMATCH,
+    INTERNAL_ERROR_CODE_POSITION_LOOKUP_MISMATCH,
+    INTERNAL_ERROR_MISSING_CODE_POSITION_ENTRY,
+};
+
 int main(int argc, char** argv) {
+    if (argc < 2) {
+        std::cout << "provide path dmls yaml file as argument" << std::endl;
+        return ERROR_INVALID_ARGUMENT;
+    }
+
     std::string s;
     std::ifstream file(argv[1]);
 
     if (!file.is_open()) {
         std::cout << "Unable to open the dmls yaml file" << std::endl;
-        return -1;
+        return ERROR_OPENING_FILE;
     }
 
     std::getline(file, s, ' ');
@@ -69,14 +88,14 @@ int main(int argc, char** argv) {
             bv32_clear_bit(sequence.get(), i);
         } else {
             std::cout << "Error: sequence contains invalid character " << s[i] << std::endl;
-            return -2;
+            return ERROR_INVALID_SEQUENCE_CHARACTER;
         }
         int position = i - word_length + 1;
         if (position >= 0) {
             uint32_t rword = reverse_bits(word, word_length);
             if (word == rword || test_lookup[word] != MLSQ_NOT_FOUND) {
                 std::cout << "Error: sequence doesn't satisfy dmls constraints" << std::endl;
-                return -3;
+                return ERROR_DMLS_CONSTRAINS_UNSATISFIED;
             }
             test_lookup[word] = position;
             test_lookup[rword] = position;
@@ -90,7 +109,7 @@ int main(int argc, char** argv) {
         if (new_bit != bv32_get_bit(sequence.get(), i)) {
             std::cout << "Internal Error: sequence bit array doesn't match source string"
                       << std::endl;
-            return -4;
+            return INTERNAL_ERROR_SEQUENCE_VECTOR_MISMATCH;
         }
         word >>= 1;
         word |= new_bit << (word_length - 1);
@@ -99,7 +118,7 @@ int main(int argc, char** argv) {
             if (word != mlsq_code_from_position(sequence.get(), word_length, position)) {
                 std::cout << "Internal Error: position lookup doesn't match expected word"
                           << std::endl;
-                return -4;
+                return INTERNAL_ERROR_POSITION_LOOKUP_MISMATCH;
             }
         }
     }
@@ -107,9 +126,9 @@ int main(int argc, char** argv) {
     MlsIndex query_index = {sequence.get(), sorted_positions.get(), static_cast<uint16_t>(s.size()),
             static_cast<uint8_t>(word_length)};
     if (mlsq_sort_code_positions(query_index) != positions_length) {
-        std::cout << "Internal Error: sorted position length doesn't match expected length"
+        std::cout << "Internal Error: sorted positions length doesn't match expected length"
                   << std::endl;
-        return -5;
+        return INTERNAL_ERROR_SORTED_POSITIONS_LENGTH_MISMATCH;
     }
     uint32_t match_count = 0;
     for (uint32_t word = 0; word < (1u << word_length); ++word) {
@@ -119,19 +138,19 @@ int main(int argc, char** argv) {
                          "original word"
                       << word << " position " << position << " expected position "
                       << test_lookup[word] << std::endl;
-            return -6;
+            return INTERNAL_ERROR_CODE_POSITION_LOOKUP_MISMATCH;
         }
         match_count += position != MLSQ_NOT_FOUND;
     }
     if (match_count != positions_length) {
         std::cout << "Internal Error: Not all code to position lookups were found" << std::endl;
-        return -7;
+        return INTERNAL_ERROR_MISSING_CODE_POSITION_ENTRY;
     }
 
     std::ofstream mlsq_index_file("mls_index.c");
     if (!mlsq_index_file.is_open()) {
         std::cout << "Unable to write MLS index file" << std::endl;
-        return -8;
+        return ERROR_WRITING_FILE;
     }
     mlsq_index_file << "#include \"mls_query.h\"\n";
 
@@ -165,5 +184,5 @@ int main(int argc, char** argv) {
     code_map.save_pbm("code_map.pbm");
     std::cout << "CodeMap file succesfully generated" << std::endl;
 
-    return 0;
+    return SUCCESS;
 }
