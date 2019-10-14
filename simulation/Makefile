@@ -17,7 +17,7 @@ CXXOPTIMIZATION = -O2 -fomit-frame-pointer -funroll-loops -ffast-math -fno-finit
 CXXFLAGS ?= -std=c++11 $(CXXWARNING) $(CXXERROR) $(CXXOPTIMIZATION)
 CXX ?= g++
 
-CFLAGS ?= -fPIC -O3 -Wall -Werror -std=c99
+CFLAGS ?= -fPIC -O3 -Wall -Werror -std=c99 -DDEBUG -g
 CC ?= gcc
 
 CPPFLAGS ?= $(INC_FLAGS) -MMD -MP 

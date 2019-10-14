@@ -31,22 +31,37 @@ void img_bit_matrix_conversion(BitMatrix32 dst, BitMatrix32 mask, const ImageMat
     }
 }
 
-AxisCode bm32_extract_column_code(uint32_t row_code_bits, const BitMatrix32 matrix,
-        const BitMatrix32 mask, uint8_t min_samples) {
+AxisCode bm32_extract_column_code(uint32_t initial_row_guess, const BitMatrix32 matrix,
+        const BitMatrix32 mask, uint8_t min_row_samples) {
+    assert(min_row_samples > 0);
+    assert(matrix && mask);
+    if (!initial_row_guess) {
+        initial_row_guess = matrix[15] & mask[15];
+    }
+    static const uint8_t FILTER_SIZE = 4;
+    uint32_t row_code_bits[FILTER_SIZE];
+    for (int j = 0; j < FILTER_SIZE; ++j) {
+        row_code_bits[j] = initial_row_guess;
+    }
     AxisCode column_code = {};
     for (uint8_t i = 0; i < 32; ++i) {
         uint8_t mask_sum = sum_bits(mask[i]);
-        if (mask_sum < min_samples) {
+        if (mask_sum < min_row_samples) {
             continue;
         }
-        uint8_t row_diff = sum_bits((row_code_bits ^ matrix[i]) & mask[i]);
-        row_code_bits &= ~mask[i];
+        mask_sum *= FILTER_SIZE;
+        uint8_t row_diff = 0;
+        for (int j = 0; j < FILTER_SIZE; ++j) {
+            row_diff += sum_bits((row_code_bits[j] ^ matrix[i]) & mask[i]);
+        }
+        uint8_t j = i & (FILTER_SIZE - 1);
+        row_code_bits[j] &= ~mask[i];
         if (row_diff > mask_sum / 2) {
             column_code.bits |= 1 << i;
-            row_code_bits |= ~matrix[i] & mask[i];
+            row_code_bits[j] |= ~matrix[i] & mask[i];
             column_code.n_errors += mask_sum - row_diff;
         } else {
-            row_code_bits |= matrix[i] & mask[i];
+            row_code_bits[j] |= matrix[i] & mask[i];
             column_code.n_errors += row_diff;
         }
         column_code.n_samples += mask_sum;

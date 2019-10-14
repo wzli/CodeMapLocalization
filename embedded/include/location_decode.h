@@ -12,7 +12,7 @@ typedef struct {
     uint16_t x;
     uint16_t y;
     Vector2f rotation;
-    int16_t detection_size;
+    int16_t match_size;
 } Location;
 
 uint8_t next_valid_code_segment(AxisCode* axis_code, uint8_t code_length);

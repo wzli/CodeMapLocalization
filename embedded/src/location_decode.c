@@ -18,8 +18,8 @@ uint8_t next_valid_code_segment(AxisCode* axis_code, uint8_t code_length) {
 };
 
 AxisPosition decode_axis_position(AxisCode axis_code, uint8_t code_length) {
-    const uint32_t code_mask = mask_bits(code_length);
     AxisPosition best_position = {};
+    const uint32_t code_mask = mask_bits(code_length);
     for (uint8_t valid_segment_length = next_valid_code_segment(&axis_code, code_length);
             valid_segment_length > 0;
             valid_segment_length = next_valid_code_segment(&axis_code, code_length)) {
@@ -49,12 +49,11 @@ AxisPosition decode_axis_position(AxisCode axis_code, uint8_t code_length) {
             uint32_t expected_code =
                     position.reversed
                             ? reverse_bits(
-                                      mlsq_code_from_position(MLS_INDEX.sequence,
-                                              valid_segment_length,
+                                      mlsq_code_from_position_indexed(valid_segment_length,
                                               position.center + code_length - valid_segment_length),
                                       valid_segment_length)
-                            : mlsq_code_from_position(
-                                      MLS_INDEX.sequence, valid_segment_length, position.center);
+                            : mlsq_code_from_position_indexed(
+                                      valid_segment_length, position.center);
             uint8_t first_diff = first_set_bit(extended_code ^ expected_code);
             position.span += MIN(first_diff, valid_segment_length) - code_length;
         }
@@ -70,19 +69,18 @@ AxisPosition decode_axis_position(AxisCode axis_code, uint8_t code_length) {
     }
     best_position.center +=
             best_position.reversed ? 1 - best_position.span / 2 : best_position.span / 2;
+    if (axis_code.n_errors * 4 > axis_code.n_samples) {
+        best_position.span = 0;
+    }
     return best_position;
 }
 
 Location deduce_location(AxisPosition row_position, AxisPosition col_position) {
-    Location location = {};
-    if (row_position.inverted != col_position.inverted) {
-        return location;
-    }
-    location.detection_size = row_position.span * col_position.span;
-    assert(location.detection_size >= 0);
-    if (location.detection_size == 0) {
-        return location;
-    }
+    Location location;
+    location.match_size = row_position.inverted == col_position.inverted
+                                  ? row_position.span * col_position.span
+                                  : 0;
+    assert(location.match_size >= 0);
     float z = 1 - 2 * row_position.reversed;
     if (row_position.reversed ^ col_position.reversed) {
         location.x = col_position.center;
