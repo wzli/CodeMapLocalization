@@ -9,7 +9,7 @@ DEPS := $(OBJS:.o=.d)
 INC_DIRS := $(shell find -L $(INC_DIR) -type d)
 INC_FLAGS := $(addprefix -I,$(INC_DIRS))
 
-COMMONFLAGS =  -Wall -Wextra -Ofast #-Og -g -DDEBUG
+COMMONFLAGS =  -Wall -Wextra -Ofast -DNDEBUG #-Og -g -DDEBUG
 CXXFLAGS ?= -std=c++11 $(COMMONFLAGS)
 CXX ?= g++
 
@@ -17,7 +17,7 @@ CFLAGS ?= -std=c99 -Werror=double-promotion $(COMMONFLAGS)
 CC ?= gcc
 
 CPPFLAGS ?= $(INC_FLAGS) -MMD -MP 
-LDLIBS += #-lm
+LDLIBS += -lm
 
 -include $(DEPS)
 MKDIR_P ?= mkdir -p
