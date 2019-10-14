@@ -42,7 +42,7 @@ class Location(ctypes.Structure):
         ('x', ctypes.c_ushort),
         ('y', ctypes.c_ushort),
         ('rotation', Vector2f),
-        ('detection_size', ctypes.c_short),
+        ('match_size', ctypes.c_short),
     ]
 
 

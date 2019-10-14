@@ -38,9 +38,8 @@ void print_axis_position(AxisPosition position) {
 }
 
 void print_location(Location location) {
-    printf("x %d y %d rot %f size %d\n", location.x, location.y,
-            atan2f(location.rotation.y, location.rotation.x) * 180.f / M_PI,
-            location.detection_size);
+    printf("x %d y %d rot %f match %d\n", location.x, location.y,
+            atan2f(location.rotation.y, location.rotation.x) * 180.f / M_PI, location.match_size);
 }
 
 // below are used for python access

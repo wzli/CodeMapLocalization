@@ -79,7 +79,7 @@ class CodeMapCanvas():
             draw.line((x1 + width / 2, y1 + height / 2, x2 + width / 2,
                        y2 + height / 2),
                       fill=(0, 255, 0),
-                      width=20)
+                      width=10)
         self.code_map_view = ImageTk.PhotoImage(image=display_image)
         self.canvas.itemconfig(self.image_area, image=self.code_map_view)
         camera_image = view_image.convert('L').resize((
@@ -195,7 +195,7 @@ class BitMatrixProcessor:
         bit_matrix = BitMatrix32()
         bit_mask = BitMatrix32()
         libsim.img_bit_matrix_conversion(bit_matrix, bit_mask,
-                                         image.unrotated_matrix, 125, 130)
+                                         image.unrotated_matrix, 120, 135)
         # extract row and column code
         row_code = AxisCode()
         col_code = AxisCode()
@@ -228,7 +228,7 @@ class BitMatrixProcessor:
         libsim.bm32_extract_axis_codes(ctypes.byref(actual_row_code),
                                        ctypes.byref(actual_col_code),
                                        actual_bit_matrix, actual_bit_mask, 3)
-
+        ''' print
         print('')
         libsim.print_axis_code(row_code)
         libsim.print_axis_code(actual_row_code)
@@ -240,16 +240,22 @@ class BitMatrixProcessor:
         libsim.print_axis_position(row_position)
         libsim.print_axis_position(col_position)
         print('')
+        ''' and 0
+        print(libsim.test_diff_bits(row_code.bits, actual_row_code.bits),
+              libsim.test_diff_bits(col_code.bits,
+                                    actual_col_code.bits), row_code.n_errors,
+              col_code.n_errors, row_code.n_samples, col_code.n_samples)
         libsim.print_location(location)
 
-        bit_matrix_image = Image.new('L', (32, 32), 127)
+        bit_matrix_image = Image.new('RGB', (32, 32), (127, 127, 127))
         for row in range(32):
             for col in range(32):
                 if (bit_mask[row] >> col) & 1 != 0:
-                    val = (((bit_matrix[row] >> col) & 1) *
-                           255 == image.view_image.getpixel((col, row))) * 255
-                    #val = ((bit_matrix[row] >> col) & 1) * 255
-                    bit_matrix_image.putpixel((col, row), val)
+                    val = ((bit_matrix[row] >> col) & 1) * 255
+                    actual_val = image.view_image.getpixel((col, row))
+                    bit_matrix_image.putpixel(
+                        (col, row), (val, val, val) if val == actual_val else
+                        (128 + val // 2, 0, 0))
         if self.update_callback:
             self.update_callback(bit_matrix_image)
 
@@ -257,7 +263,7 @@ class BitMatrixProcessor:
 code_map_image = Image.open("code_map.pbm")
 view_size = (32, 32)
 camera_resolution = (30, 30)
-camera_size = (20, 20)
+camera_size = (28, 28)
 scale = 10
 
 root = tkinter.Tk()
@@ -281,8 +287,8 @@ for key in ('<q>', '<e>', '<w>', '<a>', '<s>', '<d>'):
     root.bind(key, code_map_canvas.on_key)
 
 code_map_canvas.canvas.grid(row=0, column=0)
-camera_view_canvas.canvas.grid(row=0, column=1)
+thresholded_canvas.canvas.grid(row=0, column=1)
+camera_view_canvas.canvas.grid(row=1, column=0)
 unrotated_canvas.canvas.grid(row=1, column=1)
-thresholded_canvas.canvas.grid(row=1, column=0)
 
 root.mainloop()
