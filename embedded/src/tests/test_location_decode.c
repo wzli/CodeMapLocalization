@@ -3,7 +3,7 @@
 #include "mls_query.h"
 
 int test_next_valid_code_segment() {
-    AxisCode test_code = {0xFFFF00FF, 0xFFFF00FF};
+    AxisCode test_code = {0xFFFF00FF, 0xFFFF00FF, 0, 1};
     uint8_t valid_segment_length;
     valid_segment_length = next_valid_code_segment(&test_code, 1);
     test_assert(test_code.bits == 0xFFFF00FF);
@@ -13,11 +13,11 @@ int test_next_valid_code_segment() {
     test_assert(valid_segment_length == 16);
     test_assert(test_code.bits == 0x0000FFFF);
     test_assert(test_code.mask == 0x0000FFFF);
-    test_code = (AxisCode){~0, ~0};
+    test_code = (AxisCode){~0, ~0, 0, 1};
     test_assert(next_valid_code_segment(&test_code, 15) == 32);
-    test_assert(test_code.bits == ~0);
-    test_assert(test_code.mask == ~0);
-    test_code = (AxisCode){0, 0};
+    test_assert(test_code.bits == ~0u);
+    test_assert(test_code.mask == ~0u);
+    test_code = (AxisCode){0, 0, 0, 1};
     test_assert(next_valid_code_segment(&test_code, 15) == 0);
     test_assert(test_code.bits == 0);
     test_assert(test_code.mask == 0);
@@ -49,8 +49,8 @@ int test_location_decode() {
             test_assert(row_pos.inverted == col_pos.inverted);
             test_assert(row_pos.span == 33 - MLS_INDEX.code_length);
             test_assert(col_pos.span == 33 - MLS_INDEX.code_length);
-            test_assert(src_row_pos == row_pos.center - row_pos.span / 2);
-            test_assert(src_col_pos == col_pos.center - col_pos.span / 2);
+            test_assert(src_row_pos + row_pos.span / 2 == row_pos.center);
+            test_assert(src_col_pos + col_pos.span / 2 == col_pos.center);
 
             // second test, reversed axis
             src_row_code = reverse_bits(src_row_code, 32);
@@ -78,8 +78,8 @@ int test_location_decode() {
             test_assert(col_pos.reversed == 1);
             test_assert(row_pos.span == 33 - MLS_INDEX.code_length);
             test_assert(col_pos.span == 33 - MLS_INDEX.code_length);
-            test_assert(src_row_pos == row_pos.center - row_pos.span / 2);
-            test_assert(src_col_pos == col_pos.center - col_pos.span / 2);
+            test_assert(src_row_pos + row_pos.span / 2 == row_pos.center);
+            test_assert(src_col_pos + col_pos.span / 2 == col_pos.center);
 
             // third test, normal axis with invalid segments
             src_row_code = reverse_bits(src_row_code, 32);
@@ -98,10 +98,10 @@ int test_location_decode() {
             test_assert(row_pos.inverted == col_pos.inverted);
             test_assert(row_pos.reversed == 0);
             test_assert(col_pos.reversed == 0);
-            test_assert(row_pos.span == 33 - MLS_INDEX.code_length - 4);
-            test_assert(col_pos.span == 33 - MLS_INDEX.code_length);
-            test_assert(src_row_pos == row_pos.center - row_pos.span / 2 - 4);
-            test_assert(src_col_pos == col_pos.center - col_pos.span / 2);
+            test_assert(row_pos.span + MLS_INDEX.code_length == 33 - 4);
+            test_assert(col_pos.span + MLS_INDEX.code_length == 33);
+            test_assert(src_row_pos + row_pos.span / 2 + 4 == row_pos.center);
+            test_assert(src_col_pos + col_pos.span / 2 == col_pos.center);
 
             // 4th test, normal axis with invalid segments and boundaries
             for (uint8_t i = 0; i < 32; ++i) {
@@ -119,8 +119,8 @@ int test_location_decode() {
             test_assert(col_pos.reversed == 0);
             test_assert(row_pos.span == 33 - MLS_INDEX.code_length - 10);
             test_assert(col_pos.span == 33 - MLS_INDEX.code_length);
-            test_assert(src_row_pos == row_pos.center - row_pos.span / 2 - 4);
-            test_assert(src_col_pos == col_pos.center - col_pos.span / 2);
+            test_assert(src_row_pos + row_pos.span / 2 + 4 == row_pos.center);
+            test_assert(src_col_pos + col_pos.span / 2 == col_pos.center);
         }
     return 0;
 }
