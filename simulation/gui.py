@@ -97,8 +97,7 @@ class CodeMapCanvas():
         ]
         camera_image = camera_image.convert('L').rotate(
             self.camera_rotation, Image.BILINEAR).crop(crop_box)
-        camera_image.view_image = view_image
-        camera_image.camera_rotation = self.camera_rotation
+        camera_image.view_image = view_image.resize((32, 32))
         self.text.configure(
             text=
             f"Actual ({(self.view_box[0] + self.view_box[2] - MLS_INDEX.code_length + 1)//2}, {(self.view_box[1] + self.view_box[3] - MLS_INDEX.code_length + 1)//2}, {((self.camera_rotation + 180) % 360) - 180})"
@@ -186,7 +185,6 @@ class ImageProcessor:
         new_image.unrotated_matrix = unrotated_matrix
         new_image.unrotation = rotation
         new_image.view_image = image.view_image
-        new_image.camera_rotation = image.camera_rotation
         if self.update_callback:
             self.update_callback(new_image)
 
@@ -218,7 +216,9 @@ class BitMatrixProcessor:
 
         libsim.bm32_transpose(bit_mask)
         libsim.bm32_transpose(bit_matrix)
-        image_rotation = ((image.camera_rotation + 45) // 90 % 4) * 90
+        image_rotation = (
+            (180 * math.atan2(location.rotation.y, location.rotation.x) /
+             math.pi + 45) // 90 % 4) * 90
         image.view_image = image.view_image.rotate(image_rotation).convert('L')
         for row in range(32):
             for col in range(32):
@@ -246,7 +246,6 @@ class BitMatrixProcessor:
         libsim.print_axis_position(row_position)
         libsim.print_axis_position(col_position)
         print('')
-        libsim.print_location(location)
         ''' and 0
         print(
             f"row err {libsim.test_diff_bits(row_code.bits, actual_row_code.bits)} {row_code.n_errors} {row_code.n_samples}"
@@ -256,7 +255,7 @@ class BitMatrixProcessor:
         )
         self.text.configure(
             text=
-            f"Estimate ({location.x}, {location.y}, {math.atan2(location.rotation.y, location.rotation.x) * 180 / math.pi:0.1f})  Match Size {location.match_size}"
+            f"Est ({location.x}, {location.y}, {math.atan2(location.rotation.y, location.rotation.x) * 180 / math.pi:0.1f}) Match {location.match_size}"
         )
 
         bit_matrix_image = Image.new('RGB', (32, 32), (127, 127, 127))
@@ -274,8 +273,8 @@ class BitMatrixProcessor:
 
 code_map_image = Image.open("code_map.pbm")
 view_size = (32, 32)
-camera_resolution = (30, 30)
-camera_size = (25, 25)
+camera_resolution = (24, 24)
+camera_size = (20, 20)
 scale = 10
 
 root = tkinter.Tk()
@@ -298,8 +297,10 @@ root.bind("<Escape>", lambda e: root.destroy())
 for key in ('<q>', '<e>', '<w>', '<a>', '<s>', '<d>'):
     root.bind(key, code_map_canvas.on_key)
 
+code_map_canvas.text.config(font=(None, 14))
 code_map_canvas.text.grid(row=0, column=0)
 code_map_canvas.canvas.grid(row=1, column=0)
+bit_array_filter.text.config(font=(None, 14))
 bit_array_filter.text.grid(row=0, column=1)
 thresholded_canvas.canvas.grid(row=1, column=1)
 camera_view_canvas.canvas.grid(row=2, column=0)

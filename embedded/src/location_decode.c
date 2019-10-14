@@ -85,11 +85,11 @@ Location deduce_location(AxisPosition row_position, AxisPosition col_position) {
     if (row_position.reversed ^ col_position.reversed) {
         location.x = col_position.center;
         location.y = row_position.center;
-        location.rotation.y = z;
+        location.rotation = (Vector2f){0, z};
     } else {
         location.x = row_position.center;
         location.y = col_position.center;
-        location.rotation.x = z;
+        location.rotation = (Vector2f){z, 0};
     }
     return location;
 }

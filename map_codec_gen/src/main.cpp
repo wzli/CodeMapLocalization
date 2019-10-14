@@ -2,6 +2,7 @@ extern "C" {
 #include "mls_query.h"
 }
 #include "code_map.hpp"
+#include <memory>
 #include <cstdlib>
 #include <fstream>
 #include <iostream>
@@ -50,9 +51,9 @@ int main(int argc, char** argv) {
 
     const size_t positions_length = s.size() - word_length + 1;
     const uint16_t sequence_chunks = (s.size() / 32) + ((s.size() % 32) > 0);
-    uint32_t* sequence = new uint32_t[sequence_chunks];
-    uint16_t* sorted_positions = new uint16_t[positions_length];
-    uint16_t* test_lookup = new uint16_t[1 << word_length];
+    std::unique_ptr<uint32_t[]> sequence(new uint32_t[sequence_chunks]);
+    std::unique_ptr<uint16_t[]> sorted_positions(new uint16_t[positions_length]);
+    std::unique_ptr<uint16_t[]> test_lookup(new uint16_t[1 << word_length]);
     sequence[sequence_chunks - 1] = 0;
 
     for (int32_t i = 0; i < (1 << word_length); i++) {
@@ -63,9 +64,9 @@ int main(int argc, char** argv) {
         word >>= 1;
         if (s[i] == '1') {
             word |= 1 << (word_length - 1);
-            bv32_set_bit(sequence, i);
+            bv32_set_bit(sequence.get(), i);
         } else if (s[i] == '0') {
-            bv32_clear_bit(sequence, i);
+            bv32_clear_bit(sequence.get(), i);
         } else {
             std::cout << "Error: sequence contains invalid character " << s[i] << std::endl;
             return -2;
@@ -86,7 +87,7 @@ int main(int argc, char** argv) {
 
     for (uint32_t i = 0, word = 0; i < s.size(); ++i) {
         uint32_t new_bit = s[i] - '0';
-        if (new_bit != bv32_get_bit(sequence, i)) {
+        if (new_bit != bv32_get_bit(sequence.get(), i)) {
             std::cout << "Internal Error: sequence bit array doesn't match source string"
                       << std::endl;
             return -4;
@@ -95,7 +96,7 @@ int main(int argc, char** argv) {
         word |= new_bit << (word_length - 1);
         int position = i - word_length + 1;
         if (position >= 0) {
-            if (word != mlsq_code_from_position(sequence, word_length, position)) {
+            if (word != mlsq_code_from_position(sequence.get(), word_length, position)) {
                 std::cout << "Internal Error: position lookup doesn't match expected word"
                           << std::endl;
                 return -4;
@@ -103,7 +104,7 @@ int main(int argc, char** argv) {
         }
     }
 
-    MlsIndex query_index = {sequence, sorted_positions, static_cast<uint16_t>(s.size()),
+    MlsIndex query_index = {sequence.get(), sorted_positions.get(), static_cast<uint16_t>(s.size()),
             static_cast<uint8_t>(word_length)};
     if (mlsq_sort_code_positions(query_index) != positions_length) {
         std::cout << "Internal Error: sorted position length doesn't match expected length"
@@ -158,10 +159,6 @@ int main(int argc, char** argv) {
     mlsq_index_file << "    " << std::dec << word_length << ",\n};\n";
     mlsq_index_file.close();
     std::cout << "LookupTable file succesfully generated" << std::endl;
-
-    delete[] sequence;
-    delete[] sorted_positions;
-    delete[] test_lookup;
 
     CodeMap code_map;
     code_map.generate(s);
