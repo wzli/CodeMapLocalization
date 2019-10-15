@@ -1,4 +1,5 @@
 #include "dmls_gen.hpp"
+#include "roulette.hpp"
 extern "C" {
 #include "bitwise_utils.h"
 }
@@ -32,15 +33,13 @@ void DmlsGen::generate_dmls(std::vector<bool>& sequence, uint8_t word_length, ui
             _word_visit_ids[rword] = PALINDROME;
         }
     }
-    _start_word_selector.param(
-            std::uniform_int_distribution<uint32_t>::param_type(0, (1 << _word_length) - 1));
     const uint32_t MSB = 1 << (_word_length - 1);
-    std::vector<double> next_word_weights(4);
+    std::vector<float> next_word_weights(4);
     while (--iterations) {
         _gen.seed(_rd());
-        uint32_t l_word = _start_word_selector(_gen);
+        uint32_t l_word = _gen() & mask_bits(_word_length);
         while (l_word == reverse_bits(l_word, _word_length)) {
-            l_word = _start_word_selector(_gen);
+            l_word = _gen() & mask_bits(_word_length);
         }
         uint32_t r_word = l_word;
         _l_sequence.clear();
@@ -58,19 +57,17 @@ void DmlsGen::generate_dmls(std::vector<bool>& sequence, uint8_t word_length, ui
                     (r_word & ~MSB) << 1,
                     ((r_word & ~MSB) << 1) | 1,
             };
-            double weight_sum = 0;
+            float weight_sum = 0.0f;
             for (uint8_t i = 0; i < 4; ++i) {
                 next_word_weights[i] = is_word_visited(next_words[i])
-                                               ? 0.0
-                                               : 1.0 / (_word_visit_counts[next_words[i]] + 1);
+                                               ? 0.0f
+                                               : 1.0f / (_word_visit_counts[next_words[i]] + 1);
                 weight_sum += next_word_weights[i];
             }
-            if (weight_sum == 0.0) {
+            if (weight_sum == 0.0f) {
                 break;
             }
-            _next_word_selector.param(std::discrete_distribution<uint16_t>::param_type(
-                    next_word_weights.begin(), next_word_weights.end()));
-            int next_word_index = _next_word_selector(_gen);
+            uint8_t next_word_index = roulette(next_word_weights, _gen());
             if (next_word_index & 2) {
                 r_word = next_words[next_word_index];
                 _r_sequence.emplace_back(next_word_index & 1);

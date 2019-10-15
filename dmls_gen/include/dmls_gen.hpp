@@ -20,8 +20,6 @@ private:
     std::vector<bool> _l_sequence, _r_sequence;
     std::random_device _rd;
     std::mt19937 _gen;
-    std::discrete_distribution<uint16_t> _next_word_selector;
-    std::uniform_int_distribution<uint32_t> _start_word_selector;
     uint32_t _visit_id = 0;
     uint8_t _word_length;
 };
