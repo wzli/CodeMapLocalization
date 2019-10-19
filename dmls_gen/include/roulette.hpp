@@ -10,10 +10,11 @@ size_t roulette(const WEIGHT_CONTAINER& weights, uint32_t random_number) {
     float scaled_num = total * random_number / ~0u;
     size_t i = 0;
     size_t j = weights.size();
-    while(weights[--j] == 0);
+    while (weights[--j] == 0)
+        ;
     do {
         scaled_num -= weights[i];
-    } while((scaled_num > 0 || weights[i] == 0) && (++i < j));
+    } while ((scaled_num > 0 || weights[i] == 0) && (++i < j));
     assert(i >= 0);
     assert(i < weights.size());
     assert(weights[i] != 0);
