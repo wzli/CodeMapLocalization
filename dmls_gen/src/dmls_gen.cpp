@@ -36,7 +36,7 @@ void DmlsGen::generate_dmls(std::vector<bool>& sequence, uint8_t word_length, ui
     const uint32_t MSB = 1 << (_word_length - 1);
     std::vector<float> next_word_weights(4);
     while (--iterations) {
-        _gen.seed(_rd());
+        _gen.seed((static_cast<uint64_t>(_rd()) << 32) | (_rd() & 0xFFFFFFFF));
         uint32_t l_word = _gen() & mask_bits(_word_length);
         while (l_word == reverse_bits(l_word, _word_length)) {
             l_word = _gen() & mask_bits(_word_length);
