@@ -23,6 +23,12 @@ typedef struct {
     float y;
 } Vector2f;
 
+typedef union {
+    float elements[4];
+    Vector2f rows[2];
+} Matrix2f;
+
+// vector operations
 static inline uint8_t v2f_is_zero(Vector2f vec) {
     return vec.x == 0 && vec.y == 0;
 }
@@ -90,4 +96,49 @@ static inline Vector2f v2f_half_angle(Vector2f rot) {
 
 static inline Vector2f v2f_add_angle(Vector2f rot_a, Vector2f rot_b) {
     return (Vector2f){rot_a.x * rot_b.x - rot_a.y * rot_b.y, rot_a.y * rot_b.x + rot_a.x * rot_b.y};
+}
+
+static inline Vector2f v2f_transform(Matrix2f mat, Vector2f vec) {
+    return (Vector2f){v2f_dot(mat.rows[0], vec), v2f_dot(mat.rows[1], vec)};
+}
+
+// matrix operations
+static inline uint8_t m2f_is_zero(Matrix2f mat) {
+    return v2f_is_zero(mat.rows[0]) && v2f_is_zero(mat.rows[1]);
+}
+
+static inline uint8_t m2f_is_nan(Matrix2f mat) {
+    return v2f_is_nan(mat.rows[0]) && v2f_is_nan(mat.rows[1]);
+}
+
+static inline float m2f_determinant(Matrix2f mat) {
+    return mat.elements[0] * mat.elements[3] - mat.elements[1] * mat.elements[2];
+}
+
+static inline Matrix2f m2f_transpose(Matrix2f mat) {
+    return (Matrix2f){{mat.elements[0], mat.elements[2], mat.elements[1], mat.elements[3]}};
+}
+
+static inline Matrix2f m2f_scale(Matrix2f mat, float scale) {
+    return (Matrix2f){.rows = {v2f_scale(mat.rows[0], scale), v2f_scale(mat.rows[1], scale)}};
+}
+
+static inline Matrix2f m2f_inverse(Matrix2f mat) {
+    float inv_det = 1.0f / m2f_determinant(mat);
+    return (Matrix2f){{
+            mat.elements[3] * inv_det,
+            -mat.elements[1] * inv_det,
+            -mat.elements[2] * inv_det,
+            mat.elements[0] * inv_det,
+    }};
+}
+
+static inline Matrix2f m2f_multiply(Matrix2f a, Matrix2f b) {
+    Matrix2f b_t = m2f_transpose(b);
+    return (Matrix2f){{
+            v2f_dot(a.rows[0], b_t.rows[0]),
+            v2f_dot(a.rows[0], b_t.rows[1]),
+            v2f_dot(a.rows[1], b_t.rows[0]),
+            v2f_dot(a.rows[1], b_t.rows[1]),
+    }};
 }
