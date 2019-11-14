@@ -49,8 +49,8 @@ int test_location_decode() {
             test_assert(row_pos.inverted == col_pos.inverted);
             test_assert(row_pos.span == 33 - MLS_INDEX.code_length);
             test_assert(col_pos.span == 33 - MLS_INDEX.code_length);
-            test_assert(src_row_pos + row_pos.span/ 2 == row_pos.center);
-            test_assert(src_col_pos + col_pos.span/ 2 == col_pos.center);
+            test_assert(src_row_pos + row_pos.span / 2 == row_pos.center);
+            test_assert(src_col_pos + col_pos.span / 2 == col_pos.center);
 
             // second test, reversed axis
             src_row_code = reverse_bits(src_row_code, 32);

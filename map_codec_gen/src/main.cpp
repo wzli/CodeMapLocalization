@@ -6,6 +6,7 @@ extern "C" {
 #include <cstdlib>
 #include <fstream>
 #include <iostream>
+#include <bitset>
 
 enum Error {
     SUCCESS = 0,
@@ -96,6 +97,10 @@ int main(int argc, char** argv) {
             if (word == rword || test_lookup[word] != MLSQ_NOT_FOUND) {
                 std::cout << "Error: sequence doesn't satisfy dmls constraints" << std::endl;
                 return ERROR_DMLS_CONSTRAINS_UNSATISFIED;
+            }
+            if (word == invert_bits(rword, word_length)) {
+                std::cout << "Warning: word " << std::bitset<32>(word) << " at position "
+                          << std::dec << position << " has reverse invert ambiguity" << std::endl;
             }
             test_lookup[word] = position;
             test_lookup[rword] = position;

@@ -28,9 +28,9 @@ void DmlsGen::generate_dmls(std::vector<bool>& sequence, uint8_t word_length, ui
     _word_visit_ids.resize(1 << _word_length, _visit_id);
     for (uint32_t word = 0; word < (1u << _word_length); ++word) {
         uint32_t rword = reverse_bits(word, _word_length);
-        if (word == rword) {
+        uint32_t irword = invert_bits(rword, _word_length);
+        if (word == rword || word == irword) {
             _word_visit_ids[word] = PALINDROME;
-            _word_visit_ids[rword] = PALINDROME;
         }
     }
     const uint32_t MSB = 1 << (_word_length - 1);
