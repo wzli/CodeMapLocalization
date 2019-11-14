@@ -15,6 +15,25 @@ Vector2f img_estimate_rotation(const ImageMatrix mat) {
     return gradient_sum;
 }
 
+void img_estimate_transform(const ImageMatrix mat, float gradient_sqr_thresh) {
+    assert(gradient_sqr_thresh > 0);
+    uint32_t gradient_counts[2] = {};
+    Vector2f gradient_sums[2] = {};
+    Vector2f gradient_averages[2] = {{1, 0}, {0, 1}};
+    FOR_EACH_GRADIENT(mat) {
+        gradient = v2f_double_angle(gradient);
+        if (v2f_norm_sqr(gradient) < gradient_sqr_thresh) {
+            continue;
+        }
+        uint8_t nearest = v2f_distance_sqr(gradient, gradient_averages[0]) >
+                          v2f_distance_sqr(gradient, gradient_averages[1]);
+        float inv_gradient_count = 1.0f / ++gradient_counts[nearest];
+        gradient_sums[nearest] = v2f_add(gradient_sums[nearest], gradient);
+        gradient_averages[nearest] =
+                v2f_normalize(v2f_scale(gradient_sums[nearest], inv_gradient_count));
+    }
+}
+
 void img_bit_matrix_conversion(BitMatrix32 dst, BitMatrix32 mask, const ImageMatrix src,
         IMG_TYPE low_thresh, IMG_TYPE high_thresh) {
     assert(src.n_rows == 32 && src.n_cols == 32);
