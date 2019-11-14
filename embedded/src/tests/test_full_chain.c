@@ -36,8 +36,8 @@ int test_full_chain() {
         Location loc = deduce_location(row_pos, col_pos);
 
         // expect a valid location
-        test_assert(loc.x == i + MLS_INDEX.code_length / 2);
-        test_assert(loc.y == i + MLS_INDEX.code_length / 2);
+        test_assert(loc.x == i + row_pos.span / 2);
+        test_assert(loc.y == i + col_pos.span / 2);
     }
     return 0;
 }
