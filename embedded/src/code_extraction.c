@@ -3,8 +3,9 @@
 
 Vector2f img_estimate_rotation(const ImageMatrix mat) {
     Vector2f gradient_sum = {};
-    FOR_EACH_GRADIENT(mat, gradient_sum = v2f_add(gradient_sum,
-                                   v2f_double_angle(v2f_double_angle((Vector2f){grad_x, grad_y}))));
+    FOR_EACH_GRADIENT(mat) {
+        gradient_sum = v2f_add(gradient_sum, v2f_double_angle(v2f_double_angle(gradient)));
+    }
     if (!v2f_is_zero(gradient_sum)) {
         gradient_sum = v2f_normalize(gradient_sum);
         gradient_sum = v2f_half_angle(gradient_sum);
