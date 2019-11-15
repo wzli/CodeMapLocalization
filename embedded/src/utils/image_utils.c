@@ -1,28 +1,31 @@
 #include "image_utils.h"
 #include <assert.h>
 
+const int8_t edge_detect_kernel[3 * 3] = {-1, -1, -1, -1, 8, -1, -1, -1, -1};
 const int8_t sobel_kernel_x[3 * 3] = {-1, 0, 1, -2, 0, 2, -1, 0, 1};
 const int8_t sobel_kernel_y[3 * 3] = {-1, -2, -1, 0, 0, 0, 1, 2, 1};
 
 void img_fill(ImageMatrix mat, IMG_TYPE value) {
-    FOR_EACH_ELEMENT(mat) { ELEMENT(mat, row, col) = value; }
+    FOR_EACH_ELEMENT(mat, ) { ELEMENT(mat, row, col) = value; }
 }
 
 void img_threshold(ImageMatrix mat, IMG_TYPE threshold) {
-    FOR_EACH_ELEMENT(mat) { ELEMENT(mat, row, col) = (ELEMENT(mat, row, col) >= threshold) * 255; }
+    FOR_EACH_ELEMENT(mat, ) {
+        ELEMENT(mat, row, col) = (ELEMENT(mat, row, col) >= threshold) * 255;
+    }
 }
 
 void img_normalize(ImageMatrix mat) {
     IMG_TYPE max_element = ELEMENT(mat, 0, 0);
     IMG_TYPE min_element = ELEMENT(mat, 0, 0);
-    FOR_EACH_ELEMENT(mat) {
+    FOR_EACH_ELEMENT(mat, ) {
         max_element = MAX(max_element, ELEMENT(mat, row, col));
         min_element = MIN(min_element, ELEMENT(mat, row, col));
     }
     if (max_element == min_element) {
         return;
     }
-    FOR_EACH_ELEMENT(mat) {
+    FOR_EACH_ELEMENT(mat, ) {
         ELEMENT(mat, row, col) =
                 ((ELEMENT(mat, row, col) - min_element) * 255) / (max_element - min_element);
     }
@@ -33,7 +36,7 @@ void img_rotate(ImageMatrix dst, const ImageMatrix src, Vector2f rotation, IMG_T
     Vector2f src_center = {0.5f * src.n_cols, 0.5f * src.n_rows};
     Vector2f dst_center = {0.5f * dst.n_cols, 0.5f * dst.n_rows};
     rotation = v2f_flip_rotation(rotation);
-    FOR_EACH_ELEMENT(dst) {
+    FOR_EACH_ELEMENT(dst, ) {
         Vector2f from_center = {0.5f + col - dst_center.x, 0.5f + row - dst_center.y};
         Vector2f src_position = v2f_add(src_center, v2f_rotate(from_center, rotation));
         if (src_position.x < 0.0f || src_position.x >= src.n_cols || src_position.y < 0.0f ||
@@ -55,4 +58,14 @@ void img_rotate(ImageMatrix dst, const ImageMatrix src, Vector2f rotation, IMG_T
                 progress.x * (ELEMENT(src, bottom, right) - ELEMENT(src, bottom, left));
         ELEMENT(dst, row, col) = top_average + progress.y * (bottom_average - top_average);
     }
+}
+
+void img_edge_filter(ImageMatrix* dst, const ImageMatrix src) {
+    dst->n_rows = src.n_rows - 2;
+    dst->n_cols = src.n_cols - 2;
+    FOR_EACH_ELEMENT(*dst, ) {
+        int32_t val = img_apply_kernel(src, edge_detect_kernel, 3, row, col);
+        ELEMENT(*dst, row, col) = CLAMP(val, 0, INT_TYPE_MAX(IMG_TYPE));
+    }
+    assert(img_count_negative(*dst) == 0);
 }

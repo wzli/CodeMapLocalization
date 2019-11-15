@@ -12,36 +12,28 @@ typedef struct {
     int16_t n_rows;
 } ImageMatrix;
 
+extern const int8_t edge_detect_kernel[3 * 3];
 extern const int8_t sobel_kernel_x[3 * 3];
 extern const int8_t sobel_kernel_y[3 * 3];
 
 #define ELEMENT(MATRIX, ROW, COL) ((MATRIX).data[(ROW) * (MATRIX).n_cols + (COL)])
 
-#define FOR_EACH_ELEMENT(MAT)                        \
-    for (int16_t row = 0; row < (MAT).n_rows; ++row) \
-        for (int16_t col = 0; col < (MAT).n_cols; ++col)
+#define FOR_EACH_ELEMENT(MAT, CH)                                \
+    for (int16_t CH##row = 0; CH##row < (MAT).n_rows; ++CH##row) \
+        for (int16_t CH##col = 0; CH##col < (MAT).n_cols; ++CH##col)
 
-#define FOR_EACH_GRADIENT(MAT)                                                                 \
-    Vector2f gradient = {};                                                                    \
-    for (int16_t row = 0; row < (MAT).n_rows - 2; row++)                                       \
-        for (int16_t col = 0;                                                                  \
-                (col < (MAT).n_cols - 2) && (gradient = compute_gradient((MAT), row, col), 1); \
-                col++)
-
-static inline Vector2f compute_gradient(ImageMatrix mat, int16_t row, int16_t col) {
-    Vector2f gradient = {};
-    for (int16_t k_row = 0; k_row < 3; k_row++) {
-        for (int16_t k_col = 0; k_col < 3; k_col++) {
-            gradient.x +=
-                    sobel_kernel_x[(k_row * 3) + k_col] * ELEMENT(mat, k_row + row, k_col + col);
-            gradient.y +=
-                    sobel_kernel_y[(k_row * 3) + k_col] * ELEMENT(mat, k_row + row, k_col + col);
-        }
+static inline int32_t img_apply_kernel(
+        ImageMatrix mat, const int8_t* kernel, uint8_t kernel_size, int16_t row, int16_t col) {
+    int32_t sum = 0;
+    ImageMatrix bounds = {0, kernel_size, kernel_size};
+    FOR_EACH_ELEMENT(bounds, k_) {
+        sum += kernel[(k_row * kernel_size) + k_col] * ELEMENT(mat, k_row + row, k_col + col);
     }
-    return gradient;
+    return sum;
 }
 
 void img_fill(ImageMatrix mat, IMG_TYPE value);
 void img_threshold(ImageMatrix mat, IMG_TYPE threshold);
 void img_normalize(ImageMatrix mat);
 void img_rotate(ImageMatrix dst, const ImageMatrix src, Vector2f rotation, IMG_TYPE bg_fill);
+void img_edge_filter(ImageMatrix* dst, const ImageMatrix src);

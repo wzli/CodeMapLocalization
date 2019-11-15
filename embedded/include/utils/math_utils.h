@@ -1,5 +1,6 @@
 #pragma once
 #include <stdint.h>
+#include <limits.h>
 #include <math.h>
 
 #define ABS(x) ((x) < 0 ? -(x) : (x))
@@ -8,7 +9,11 @@
 #define MAX(x, y) ((x) > (y) ? (x) : (y))
 #define MIN(x, y) ((x) < (y) ? (x) : (y))
 #define CLAMP(x, min, max) ((x) < (min) ? (min) : (x) > (max) ? (max) : (x))
-#define IS_SIGNED(Type) ((Type) 0 - 1 <= 0)
+#define IS_SIGNED(Type) ((Type) -1 < 0x7F)
+#define INT_TYPE_MAX(Type) \
+    (Type)((Type) ~0 ^ ((uint64_t) IS_SIGNED(Type) << ((CHAR_BIT * sizeof(Type)) - 1)))
+#define INT_TYPE_MIN(Type) ((Type) ~INT_TYPE_MAX(Type))
+#define CLAMP_INT_RANGE(x, Type) CLAMP(x, INT_TYPE_MIN(Type), INT_TYPE_MAX(Type))
 
 #ifndef M_PI
 #define M_PI (3.1415926f)
@@ -51,6 +56,10 @@ static inline Vector2f v2f_scale(Vector2f vec, float scale) {
 
 static inline float v2f_dot(Vector2f a, Vector2f b) {
     return a.x * b.x + a.y * b.y;
+}
+
+static inline float v2f_norm_l1(Vector2f vec) {
+    return ABS(vec.x) + ABS(vec.y);
 }
 
 static inline float v2f_norm_sqr(Vector2f vec) {

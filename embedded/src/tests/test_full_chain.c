@@ -7,7 +7,7 @@ int test_full_chain() {
         // src image setup
         static IMG_TYPE src_img_buf[30 * 30];
         static ImageMatrix src_img = {src_img_buf, 30, 30};
-        FOR_EACH_ELEMENT(src_img) { ELEMENT(src_img, row, col) = row + col; }
+        FOR_EACH_ELEMENT(src_img, ) { ELEMENT(src_img, row, col) = row + col; }
 
         // unrotate image
         static IMG_TYPE img_buf[32 * 32];
