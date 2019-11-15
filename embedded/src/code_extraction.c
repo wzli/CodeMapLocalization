@@ -4,7 +4,7 @@
 Vector2f img_estimate_rotation(const ImageMatrix mat) {
     Vector2f gradient_sum = {};
     ImageMatrix bounds = {0, mat.n_cols - 2, mat.n_rows - 2};
-    FOR_EACH_ELEMENT(bounds, ) {
+    FOR_EACH_PIXEL(bounds, ) {
         Vector2f gradient = {img_apply_kernel(mat, sobel_kernel_x, 3, row, col),
                 img_apply_kernel(mat, sobel_kernel_y, 3, row, col)};
         gradient_sum = v2f_add(gradient_sum, v2f_double_angle(v2f_double_angle(gradient)));
@@ -19,17 +19,17 @@ Vector2f img_estimate_rotation(const ImageMatrix mat) {
 }
 
 void img_bit_matrix_conversion(BitMatrix32 dst, BitMatrix32 mask, const ImageMatrix src,
-        IMG_TYPE low_thresh, IMG_TYPE high_thresh) {
+        PIXEL_TYPE low_thresh, PIXEL_TYPE high_thresh) {
     assert(src.n_rows == 32 && src.n_cols == 32);
     assert(high_thresh >= low_thresh);
     for (uint8_t row = 0; row < 32; ++row) {
         dst[row] = 0;
         mask[row] = ~0;
     }
-    FOR_EACH_ELEMENT(src, ) {
-        if (ELEMENT(src, row, col) >= high_thresh) {
+    FOR_EACH_PIXEL(src, ) {
+        if (PIXEL(src, row, col) >= high_thresh) {
             bm32_set_bit(dst, row, col);
-        } else if (ELEMENT(src, row, col) > low_thresh) {
+        } else if (PIXEL(src, row, col) > low_thresh) {
             bm32_clear_bit(mask, row, col);
         }
     }

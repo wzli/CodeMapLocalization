@@ -19,7 +19,7 @@ void print_bit_matrix(BitMatrix32 matrix) {
 void print_image_matrix(ImageMatrix src) {
     for (int16_t row = 0; row < src.n_rows; ++row) {
         for (int16_t col = 0; col < src.n_cols; ++col) {
-            printf("%6d ", ELEMENT(src, row, col));
+            printf("%6d ", PIXEL(src, row, col));
         }
         puts("");
     }
@@ -53,5 +53,5 @@ uint8_t test_diff_bits(uint32_t a, uint32_t b) {
 }
 
 uint8_t sizeof_img_type() {
-    return sizeof(IMG_TYPE);
+    return sizeof(PIXEL_TYPE);
 }
