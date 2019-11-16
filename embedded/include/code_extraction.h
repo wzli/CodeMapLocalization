@@ -11,6 +11,8 @@ typedef struct {
 
 Vector2f img_estimate_rotation(const ImageMatrix mat);
 
+float img_estimate_scale(const ImageMatrix mat);
+
 void img_bit_matrix_conversion(BitMatrix32 dst, BitMatrix32 mask, const ImageMatrix src,
         PIXEL_TYPE low_thresh, PIXEL_TYPE high_thresh);
 
