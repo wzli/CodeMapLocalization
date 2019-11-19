@@ -3,7 +3,6 @@
 
 void img_convolution(ImageMatrix* dst, const ImageMatrix src, const ImageMatrix kernel);
 
-void img_edge_filter(ImageMatrix* dst, const ImageMatrix src);
 void img_hough_line_transform(ImageMatrix dst, const ImageMatrix src);
 
 void img_convert_uint8_to_int16(ImageMatrix mat);

@@ -3,8 +3,12 @@
 
 Vector2f img_estimate_rotation(const ImageMatrix mat) {
     Vector2f gradient_sum = {};
-    FOR_EACH_GRADIENT(mat, gradient_sum = v2f_add(gradient_sum,
-                                   v2f_double_angle(v2f_double_angle((Vector2f){grad_x, grad_y}))));
+    ImageMatrix bounds = {0, mat.n_cols - 2, mat.n_rows - 2};
+    FOR_EACH_PIXEL(bounds, ) {
+        Vector2f gradient = {img_apply_kernel(mat, sobel_kernel_x, 3, row, col),
+                img_apply_kernel(mat, sobel_kernel_y, 3, row, col)};
+        gradient_sum = v2f_add(gradient_sum, v2f_double_angle(v2f_double_angle(gradient)));
+    }
     if (!v2f_is_zero(gradient_sum)) {
         gradient_sum = v2f_normalize(gradient_sum);
         gradient_sum = v2f_half_angle(gradient_sum);
@@ -14,18 +18,32 @@ Vector2f img_estimate_rotation(const ImageMatrix mat) {
     return gradient_sum;
 }
 
+float img_estimate_scale(const ImageMatrix mat) {
+    int32_t sum = 0, max_val = 0;
+    ImageMatrix bounds = {0, mat.n_cols - 2, mat.n_rows - 2};
+    FOR_EACH_PIXEL(bounds, ) {
+        int32_t val = img_apply_kernel(mat, edge_detect_kernel, 3, row, col);
+        if (val > 0) {
+            sum += val;
+            max_val = MAX(max_val, val);
+        }
+    }
+    assert(sum >= 0);
+    return bounds.n_rows * bounds.n_cols * max_val / (2 * sum + 0.00001f) - 1;
+}
+
 void img_bit_matrix_conversion(BitMatrix32 dst, BitMatrix32 mask, const ImageMatrix src,
-        IMG_TYPE low_thresh, IMG_TYPE high_thresh) {
+        PIXEL_TYPE low_thresh, PIXEL_TYPE high_thresh) {
     assert(src.n_rows == 32 && src.n_cols == 32);
     assert(high_thresh >= low_thresh);
     for (uint8_t row = 0; row < 32; ++row) {
         dst[row] = 0;
         mask[row] = ~0;
     }
-    FOR_EACH_ELEMENT(src) {
-        if (ELEMENT(src, row, col) >= high_thresh) {
+    FOR_EACH_PIXEL(src, ) {
+        if (PIXEL(src, row, col) >= high_thresh) {
             bm32_set_bit(dst, row, col);
-        } else if (ELEMENT(src, row, col) > low_thresh) {
+        } else if (PIXEL(src, row, col) > low_thresh) {
             bm32_clear_bit(mask, row, col);
         }
     }
