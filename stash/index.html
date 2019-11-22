@@ -151,7 +151,7 @@
 
             .save {
                 position: absolute;
-                right: 25px;
+                right: 0px;
                 top: 0px;
                 height: 16px;
                 line-height: 16px;
@@ -323,23 +323,9 @@
                 border-radius: 5px
             }
 
-            .image-container {
+            .image {
                 position: relative;
                 min-width: 160px
-            }
-
-            .close {
-                position: absolute;
-                right: 5px;
-                top: 5px;
-                background: #ff3034;
-                width: 16px;
-                height: 16px;
-                border-radius: 100px;
-                color: #fff;
-                text-align: center;
-                line-height: 18px;
-                cursor: pointer
             }
 
             .hidden {
@@ -538,18 +524,28 @@
                           <div class="range-max">255</div>
                         </div>
                         <section id="buttons">
-                            <button id="get-still">Get Still</button>
+                            <button id="get-still-0">Get Still 0</button>
+                            <button id="get-still-1">Get Still 1</button>
                             <button id="toggle-stream">Start Stream</button>
                         </section>
                     </nav>
                 </div>
-                <figure>
-                    <div id="stream-container" class="image-container hidden">
-                        <a id="save-still" href="#" class="button save" download="capture.jpg">Save</a>
-                        <div class="close" id="close-stream">×</div>
-                        <img id="stream" src="" crossorigin>
-                    </div>
-                </figure>
+                <Table>
+                    <tr>
+                        <td>
+                            <figure>
+                                <img id="stream-0" class="image" src="" crossorigin>
+                            </figure>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <figure>
+                                <img id="stream-1" class="image" src="" crossorigin>
+                            </figure>
+                        </td>
+                    </tr>
+                </Table>
             </div>
         </section>
         <script>
@@ -589,7 +585,7 @@ document.addEventListener('DOMContentLoaded', function (event) {
     }
 
     if (updateRemote && initialValue !== value) {
-      updateConfig(el);
+      updateConfig(el)
     } else if(!updateRemote){
       if(el.id === "aec"){
         value ? hide(exposure) : show(exposure)
@@ -635,14 +631,6 @@ document.addEventListener('DOMContentLoaded', function (event) {
       })
   }
 
-  document
-    .querySelectorAll('.close')
-    .forEach(el => {
-      el.onclick = () => {
-        hide(el.parentNode)
-      }
-    })
-
   // read initial values
   fetch(`${baseHost}/status`)
     .then(function (response) {
@@ -656,35 +644,32 @@ document.addEventListener('DOMContentLoaded', function (event) {
         })
     })
 
-  const view = document.getElementById('stream')
-  const viewContainer = document.getElementById('stream-container')
-  const stillButton = document.getElementById('get-still')
+  const view0 = document.getElementById('stream-0')
+  const view1 = document.getElementById('stream-1')
+  const stillButton0 = document.getElementById('get-still-0')
+  const stillButton1 = document.getElementById('get-still-1')
   const streamButton = document.getElementById('toggle-stream')
-  const closeButton = document.getElementById('close-stream')
-  const saveButton = document.getElementById('save-still')
   const ledGroup = document.getElementById('led-group')
 
   const stopStream = () => {
-    window.stop();
+    window.stop()
     streamButton.innerHTML = 'Start Stream'
   }
 
   const startStream = () => {
-    view.src = `${streamUrl}/stream`
-    show(viewContainer)
+    view1.src = `${streamUrl}/stream`
     streamButton.innerHTML = 'Stop Stream'
   }
 
   // Attach actions to buttons
-  stillButton.onclick = () => {
+  stillButton0.onclick = () => {
     stopStream()
-    view.src = `${baseHost}/capture?_cb=${Date.now()}`
-    show(viewContainer)
+    view0.src = `${baseHost}/capture?_cb=${Date.now()}`
   }
 
-  closeButton.onclick = () => {
+  stillButton1.onclick = () => {
     stopStream()
-    hide(viewContainer)
+    view1.src = `${baseHost}/capture?_cb=${Date.now()}`
   }
 
   streamButton.onclick = () => {
@@ -694,24 +679,6 @@ document.addEventListener('DOMContentLoaded', function (event) {
     } else {
       startStream()
     }
-  }
-
-  saveButton.onclick = () => {
-    var canvas = document.createElement("canvas");
-    canvas.width = view.width;
-    canvas.height = view.height;
-    document.body.appendChild(canvas);
-    var context = canvas.getContext('2d');
-    context.drawImage(view,0,0);
-    try {
-      var dataURL = canvas.toDataURL('image/jpeg');
-      saveButton.href = dataURL;
-      var d = new Date();
-      saveButton.download = d.getFullYear() + ("0"+(d.getMonth()+1)).slice(-2) + ("0" + d.getDate()).slice(-2) + ("0" + d.getHours()).slice(-2) + ("0" + d.getMinutes()).slice(-2) + ("0" + d.getSeconds()).slice(-2) + ".jpg";
-    } catch (e) {
-      console.error(e);
-    }
-    canvas.parentNode.removeChild(canvas);
   }
 
   // Attach default on change action
