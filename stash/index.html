@@ -149,17 +149,6 @@
                 outline: 0
             }
 
-            .save {
-                position: absolute;
-                right: 0px;
-                top: 0px;
-                height: 16px;
-                line-height: 16px;
-                padding: 0 4px;
-                text-decoration: none;
-                cursor: pointer
-            }
-
             button:hover {
                 background: #ff494d
             }
@@ -562,47 +551,32 @@ document.addEventListener('DOMContentLoaded', function (event) {
     el.classList.remove('hidden')
   }
 
-  const disable = el => {
-    el.classList.add('disabled')
-    el.disabled = true
+  const updateHidden = (el, value) => {
+    if(el.id === "aec"){
+      value ? hide(exposure) : show(exposure)
+    } else if(el.id === "agc"){
+      if (value) {
+        show(gainCeiling)
+        hide(agcGain)
+      } else {
+        hide(gainCeiling)
+        show(agcGain)
+      }
+    } else if(el.id === "awb_gain"){
+      value ? show(wb) : hide(wb)
+    } else if(el.id == "led_intensity"){
+      value > -1 ? show(ledGroup) : hide(ledGroup)
+    }
   }
 
-  const enable = el => {
-    el.classList.remove('disabled')
-    el.disabled = false
-  }
-
-  const updateValue = (el, value, updateRemote) => {
-    updateRemote = updateRemote == null ? true : updateRemote
-    let initialValue
+  const updateValue = (el, value) => {
     if (el.type === 'checkbox') {
-      initialValue = el.checked
       value = !!value
-      el.checked = value
+      el.checked = !!value
     } else {
-      initialValue = el.value
       el.value = value
     }
-
-    if (updateRemote && initialValue !== value) {
-      updateConfig(el)
-    } else if(!updateRemote){
-      if(el.id === "aec"){
-        value ? hide(exposure) : show(exposure)
-      } else if(el.id === "agc"){
-        if (value) {
-          show(gainCeiling)
-          hide(agcGain)
-        } else {
-          hide(gainCeiling)
-          show(agcGain)
-        }
-      } else if(el.id === "awb_gain"){
-        value ? show(wb) : hide(wb)
-      } else if(el.id == "led_intensity"){
-        value > -1 ? show(ledGroup) : hide(ledGroup)
-      }
-    }
+    updateHidden(el, value)
   }
 
   function updateConfig (el) {
@@ -622,6 +596,7 @@ document.addEventListener('DOMContentLoaded', function (event) {
       default:
         return
     }
+    updateHidden(el, value)
 
     const query = `${baseHost}/control?var=${el.id}&val=${value}`
 
@@ -640,10 +615,24 @@ document.addEventListener('DOMContentLoaded', function (event) {
       document
         .querySelectorAll('.default-action')
         .forEach(el => {
-          updateValue(el, state[el.id], false)
+          updateValue(el, state[el.id])
         })
     })
 
+  // Gain
+  const agc = document.getElementById('agc')
+  const agcGain = document.getElementById('agc_gain-group')
+  const gainCeiling = document.getElementById('gainceiling-group')
+
+  // Exposure
+  const aec = document.getElementById('aec')
+  const exposure = document.getElementById('aec_value-group')
+
+  // AWB
+  const awb = document.getElementById('awb_gain')
+  const wb = document.getElementById('wb_mode-group')
+
+  // Image Streams
   const view0 = document.getElementById('stream-0')
   const view1 = document.getElementById('stream-1')
   const stillButton0 = document.getElementById('get-still-0')
@@ -654,11 +643,6 @@ document.addEventListener('DOMContentLoaded', function (event) {
   const stopStream = () => {
     window.stop()
     streamButton.innerHTML = 'Start Stream'
-  }
-
-  const startStream = () => {
-    view1.src = `${streamUrl}/stream`
-    streamButton.innerHTML = 'Stop Stream'
   }
 
   // Attach actions to buttons
@@ -677,7 +661,8 @@ document.addEventListener('DOMContentLoaded', function (event) {
     if (streamEnabled) {
       stopStream()
     } else {
-      startStream()
+      view1.src = `${streamUrl}/stream`
+      streamButton.innerHTML = 'Stop Stream'
     }
   }
 
@@ -687,45 +672,6 @@ document.addEventListener('DOMContentLoaded', function (event) {
     .forEach(el => {
       el.onchange = () => updateConfig(el)
     })
-
-  // Custom actions
-  // Gain
-  const agc = document.getElementById('agc')
-  const agcGain = document.getElementById('agc_gain-group')
-  const gainCeiling = document.getElementById('gainceiling-group')
-  agc.onchange = () => {
-    updateConfig(agc)
-    if (agc.checked) {
-      show(gainCeiling)
-      hide(agcGain)
-    } else {
-      hide(gainCeiling)
-      show(agcGain)
-    }
-  }
-
-  // Exposure
-  const aec = document.getElementById('aec')
-  const exposure = document.getElementById('aec_value-group')
-  aec.onchange = () => {
-    updateConfig(aec)
-    aec.checked ? hide(exposure) : show(exposure)
-  }
-
-  // AWB
-  const awb = document.getElementById('awb_gain')
-  const wb = document.getElementById('wb_mode-group')
-  awb.onchange = () => {
-    updateConfig(awb)
-    awb.checked ? show(wb) : hide(wb)
-  }
-
-  // Detection and framesize
-  const framesize = document.getElementById('framesize')
-
-  framesize.onchange = () => {
-    updateConfig(framesize)
-  }
 
 })
 
