@@ -95,7 +95,7 @@ void app_camera_main ()
     config.pin_pwdn = PWDN_GPIO_NUM;
     config.pin_reset = RESET_GPIO_NUM;
     config.xclk_freq_hz = 10000000;
-    config.pixel_format = PIXFORMAT_JPEG;
+    config.pixel_format = PIXFORMAT_GRAYSCALE;
     //init with high specs to pre-allocate larger buffers
     config.frame_size = FRAMESIZE_UXGA;
     config.jpeg_quality = 10;
