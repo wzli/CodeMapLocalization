@@ -1,17 +1,17 @@
 /* ESPRESSIF MIT License
- * 
+ *
  * Copyright (c) 2018 <ESPRESSIF SYSTEMS (SHANGHAI) PTE LTD>
- * 
+ *
  * Permission is hereby granted for use on all ESPRESSIF SYSTEMS products, in which case,
  * it is free of charge, to any person obtaining a copy of this software and associated
  * documentation files (the "Software"), to deal in the Software without restriction, including
  * without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the Software is furnished
  * to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in all copies or
  * substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
  * FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
@@ -25,11 +25,9 @@
 #include "camera_pins.h"
 #include "sdkconfig.h"
 
+static const char* TAG = "camera";
 
-static const char *TAG = "camera";
-
-void app_camera_main ()
-{
+void app_camera_main() {
 #if CONFIG_CAMERA_MODEL_ESP_EYE
     /* IO13, IO14 is designed for JTAG by default,
      * to use it as generalized input,
@@ -46,32 +44,38 @@ void app_camera_main ()
 #endif
 
 #ifdef CONFIG_LED_ILLUMINATOR_ENABLED
-    gpio_set_direction(CONFIG_LED_LEDC_PIN,GPIO_MODE_OUTPUT);
+    gpio_set_direction(CONFIG_LED_LEDC_PIN, GPIO_MODE_OUTPUT);
     ledc_timer_config_t ledc_timer = {
-        .duty_resolution = LEDC_TIMER_8_BIT,            // resolution of PWM duty
-        .freq_hz         = 1000,                        // frequency of PWM signal
-        .speed_mode      = LEDC_LOW_SPEED_MODE,  // timer mode
-        .timer_num       = CONFIG_LED_LEDC_TIMER        // timer index
+            .duty_resolution = LEDC_TIMER_8_BIT,  // resolution of PWM duty
+            .freq_hz = 1000,                      // frequency of PWM signal
+            .speed_mode = LEDC_LOW_SPEED_MODE,    // timer mode
+            .timer_num = CONFIG_LED_LEDC_TIMER    // timer index
     };
-    ledc_channel_config_t ledc_channel = {
-        .channel    = CONFIG_LED_LEDC_CHANNEL,
-        .duty       = 0,
-        .gpio_num   = CONFIG_LED_LEDC_PIN,
-        .speed_mode = LEDC_LOW_SPEED_MODE,
-        .hpoint     = 0,
-        .timer_sel  = CONFIG_LED_LEDC_TIMER
-    };
-    #ifdef CONFIG_LED_LEDC_HIGH_SPEED_MODE
+    ledc_channel_config_t ledc_channel = {.channel = CONFIG_LED_LEDC_CHANNEL,
+            .duty = 0,
+            .gpio_num = CONFIG_LED_LEDC_PIN,
+            .speed_mode = LEDC_LOW_SPEED_MODE,
+            .hpoint = 0,
+            .timer_sel = CONFIG_LED_LEDC_TIMER};
+#ifdef CONFIG_LED_LEDC_HIGH_SPEED_MODE
     ledc_timer.speed_mode = ledc_channel.speed_mode = LEDC_HIGH_SPEED_MODE;
-    #endif
+#endif
     switch (ledc_timer_config(&ledc_timer)) {
-        case ESP_ERR_INVALID_ARG: ESP_LOGE(TAG, "ledc_timer_config() parameter error"); break;
-        case ESP_FAIL: ESP_LOGE(TAG, "ledc_timer_config() Can not find a proper pre-divider number base on the given frequency and the current duty_resolution"); break;
-        case ESP_OK: if (ledc_channel_config(&ledc_channel) == ESP_ERR_INVALID_ARG) {
-            ESP_LOGE(TAG, "ledc_channel_config() parameter error");
-          }
-          break;
-        default: break;
+        case ESP_ERR_INVALID_ARG:
+            ESP_LOGE(TAG, "ledc_timer_config() parameter error");
+            break;
+        case ESP_FAIL:
+            ESP_LOGE(TAG,
+                    "ledc_timer_config() Can not find a proper pre-divider number base on the "
+                    "given frequency and the current duty_resolution");
+            break;
+        case ESP_OK:
+            if (ledc_channel_config(&ledc_channel) == ESP_ERR_INVALID_ARG) {
+                ESP_LOGE(TAG, "ledc_channel_config() parameter error");
+            }
+            break;
+        default:
+            break;
     }
 #endif
 
@@ -96,7 +100,7 @@ void app_camera_main ()
     config.pin_reset = RESET_GPIO_NUM;
     config.xclk_freq_hz = 10000000;
     config.pixel_format = PIXFORMAT_GRAYSCALE;
-    //init with high specs to pre-allocate larger buffers
+    // init with high specs to pre-allocate larger buffers
     config.frame_size = FRAMESIZE_UXGA;
     config.jpeg_quality = 10;
     config.fb_count = 2;
@@ -108,13 +112,13 @@ void app_camera_main ()
         return;
     }
 
-    sensor_t * s = esp_camera_sensor_get();
-    //initial sensors are flipped vertically and colors are a bit saturated
+    sensor_t* s = esp_camera_sensor_get();
+    // initial sensors are flipped vertically and colors are a bit saturated
     if (s->id.PID == OV3660_PID) {
-        s->set_vflip(s, 1);//flip it back
-        s->set_brightness(s, 1);//up the blightness just a bit
-        s->set_saturation(s, -2);//lower the saturation
+        s->set_vflip(s, 1);        // flip it back
+        s->set_brightness(s, 1);   // up the blightness just a bit
+        s->set_saturation(s, -2);  // lower the saturation
     }
-    //drop down frame size for higher initial frame rate
+    // drop down frame size for higher initial frame rate
     s->set_framesize(s, FRAMESIZE_QVGA);
 }
