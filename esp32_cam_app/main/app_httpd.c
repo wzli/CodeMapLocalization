@@ -349,11 +349,54 @@ static esp_err_t index_handler(httpd_req_t* req) {
     }
 }
 
+static int print_heap_info(char* buf, const char* name, uint32_t capabilities) {
+    multi_heap_info_t heap_info;
+    heap_caps_get_info(&heap_info, capabilities);
+    return sprintf(buf,
+            "\n%s Heap Info\n"
+            "total free bytes \t\t%d\n"
+            "total allocated bytes \t\t%d\n"
+            "largest free block \t\t%d\n"
+            "minimum free bytes \t\t%d\n"
+            "allocated blocks \t\t%d\n"
+            "free blocks \t\t\t%d\n"
+            "total blocks \t\t\t%d\n",
+            name, heap_info.total_free_bytes, heap_info.total_allocated_bytes,
+            heap_info.largest_free_block, heap_info.minimum_free_bytes, heap_info.allocated_blocks,
+            heap_info.free_blocks, heap_info.total_blocks);
+}
+
+static char* stats_buf;
+static esp_err_t stats_handler(httpd_req_t* req) {
+    httpd_resp_set_type(req, "text/plain");
+#if defined(CONFIG_FREERTOS_GENERATE_RUN_TIME_STATS) && \
+        defined(CONFIG_FREERTOS_USE_STATS_FORMATTING_FUNCTIONS)
+    static const char TASK_LIST_HEADER[] =
+            "Task Name       State   Pri     Stack   Num     CoreId\n";
+    static const char TASK_RUNTIME_STATS_HEADER[] = "\nTask Name       Abs Time        % Time\n";
+    httpd_resp_send_chunk(req, TASK_LIST_HEADER, sizeof(TASK_LIST_HEADER) - 1);
+    vTaskList(stats_buf);
+    httpd_resp_send_chunk(req, stats_buf, strlen(stats_buf));
+    httpd_resp_send_chunk(req, TASK_RUNTIME_STATS_HEADER, sizeof(TASK_RUNTIME_STATS_HEADER) - 1);
+    vTaskGetRunTimeStats(stats_buf);
+    httpd_resp_send_chunk(req, stats_buf, strlen(stats_buf));
+#endif
+    int stat_len = print_heap_info(stats_buf, "Internal", MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
+    httpd_resp_send_chunk(req, stats_buf, stat_len);
+    stat_len = print_heap_info(stats_buf, "SPIRAM", MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+    httpd_resp_send_chunk(req, stats_buf, stat_len);
+    return httpd_resp_send_chunk(req, NULL, 0);
+}
+
 void app_httpd_main() {
     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
 
     httpd_uri_t index_uri = {
             .uri = "/", .method = HTTP_GET, .handler = index_handler, .user_ctx = NULL};
+
+    stats_buf = heap_caps_malloc(1024, MALLOC_CAP_SPIRAM);
+    httpd_uri_t stats_uri = {
+            .uri = "/stats", .method = HTTP_GET, .handler = stats_handler, .user_ctx = NULL};
 
     httpd_uri_t status_uri = {
             .uri = "/status", .method = HTTP_GET, .handler = status_handler, .user_ctx = NULL};
@@ -373,6 +416,7 @@ void app_httpd_main() {
         httpd_register_uri_handler(camera_httpd, &cmd_uri);
         httpd_register_uri_handler(camera_httpd, &status_uri);
         httpd_register_uri_handler(camera_httpd, &capture_uri);
+        httpd_register_uri_handler(camera_httpd, &stats_uri);
     }
 
     config.server_port += 1;
