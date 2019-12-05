@@ -63,5 +63,4 @@ void img_edge_filter(ImageMatrix* dst, const ImageMatrix src) {
         int32_t val = img_apply_kernel(src, edge_detect_kernel, 3, row, col);
         PIXEL(*dst, row, col) = CLAMP(val, 0, INT_TYPE_MAX(PIXEL_TYPE));
     }
-    assert(img_count_negative(*dst) == 0);
 }
