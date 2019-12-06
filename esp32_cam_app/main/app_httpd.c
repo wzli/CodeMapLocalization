@@ -7,6 +7,7 @@
 #include "esp_log.h"
 
 static const char* TAG = "web_ui";
+static char* parse_buf;
 
 #ifdef CONFIG_LED_ILLUMINATOR_ENABLED
 int led_duty = 0;
@@ -92,7 +93,7 @@ static esp_err_t capture_handler(httpd_req_t* req) {
     return res;
 }
 
-static esp_err_t cmd_handler(httpd_req_t* req) {
+static esp_err_t control_handler(httpd_req_t* req) {
     char* buf;
     size_t buf_len;
     char variable[32] = {
@@ -278,7 +279,6 @@ static int print_heap_info(char* buf, const char* name, uint32_t capabilities) {
             heap_info.free_blocks, heap_info.total_blocks);
 }
 
-static char* stats_buf;
 static esp_err_t stats_handler(httpd_req_t* req) {
     httpd_resp_set_type(req, "text/plain");
 #if defined(CONFIG_FREERTOS_GENERATE_RUN_TIME_STATS) && \
@@ -287,30 +287,55 @@ static esp_err_t stats_handler(httpd_req_t* req) {
             "Task Name       State   Pri     Stack   Num     CoreId\n";
     static const char TASK_RUNTIME_STATS_HEADER[] = "\nTask Name       Abs Time        % Time\n";
     httpd_resp_send_chunk(req, TASK_LIST_HEADER, sizeof(TASK_LIST_HEADER) - 1);
-    vTaskList(stats_buf);
-    httpd_resp_send_chunk(req, stats_buf, strlen(stats_buf));
+    vTaskList(parse_buf);
+    httpd_resp_send_chunk(req, parse_buf, strlen(parse_buf));
     httpd_resp_send_chunk(req, TASK_RUNTIME_STATS_HEADER, sizeof(TASK_RUNTIME_STATS_HEADER) - 1);
-    vTaskGetRunTimeStats(stats_buf);
-    httpd_resp_send_chunk(req, stats_buf, strlen(stats_buf));
+    vTaskGetRunTimeStats(parse_buf);
+    httpd_resp_send_chunk(req, parse_buf, strlen(parse_buf));
 #endif
-    int stat_len = print_heap_info(stats_buf, "Internal", MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
-    httpd_resp_send_chunk(req, stats_buf, stat_len);
-    stat_len = print_heap_info(stats_buf, "SPIRAM", MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
-    httpd_resp_send_chunk(req, stats_buf, stat_len);
+    int stat_len = print_heap_info(parse_buf, "Internal", MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
+    httpd_resp_send_chunk(req, parse_buf, stat_len);
+    stat_len = print_heap_info(parse_buf, "SPIRAM", MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+    httpd_resp_send_chunk(req, parse_buf, stat_len);
     return httpd_resp_send_chunk(req, NULL, 0);
 }
 
+static esp_err_t command_handler(httpd_req_t* req) {
+    size_t buf_len = httpd_req_get_url_query_len(req) + 1;
+    char value_buf[32] = {};
+    if (buf_len < 2 ||
+        (httpd_req_get_url_query_str(req, parse_buf, buf_len) != ESP_OK) ||
+        (httpd_query_key_value(parse_buf, "val", value_buf, sizeof(value_buf)) != ESP_OK)
+        ) {
+        httpd_resp_send_404(req);
+        return ESP_FAIL;
+    }
+    ESP_LOGI(TAG, "%s", parse_buf);
+    int val = atoi(value_buf);
+    sensor_t* s = esp_camera_sensor_get();
+    if((*(int (*)(sensor_t*, int))req->user_ctx)(s, val)){
+        return httpd_resp_send_500(req);
+    }
+    httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*");
+    return httpd_resp_send(req, NULL, 0);
+}
+
 void app_httpd_main() {
+    parse_buf = heap_caps_malloc(1024, MALLOC_CAP_SPIRAM);
+
     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
 
-    stats_buf = heap_caps_malloc(1024, MALLOC_CAP_SPIRAM);
-
+    sensor_t* s = esp_camera_sensor_get();
     httpd_uri_t index_uris[] = { 
-        {.uri = "/", .method = HTTP_GET, .handler = index_handler, .user_ctx = NULL},
+       {.uri = "/", .method = HTTP_GET, .handler = index_handler, .user_ctx = NULL},
         {.uri = "/stats", .method = HTTP_GET, .handler = stats_handler, .user_ctx = NULL},
         {.uri = "/status", .method = HTTP_GET, .handler = status_handler, .user_ctx = NULL},
-        {.uri = "/control", .method = HTTP_GET, .handler = cmd_handler, .user_ctx = NULL},
-        {.uri = "/capture", .method = HTTP_GET, .handler = capture_handler, .user_ctx = NULL}};
+        {.uri = "/control", .method = HTTP_GET, .handler = control_handler, .user_ctx = NULL},
+        {.uri = "/capture", .method = HTTP_GET, .handler = capture_handler, .user_ctx = NULL},
+
+        {.uri = "/contrast", .method = HTTP_GET, .handler = command_handler, .user_ctx = s->set_contrast}
+        
+        };
 
     ESP_LOGI(TAG, "Starting web server on port: '%d'", config.server_port);
     if (httpd_start(&httpd, &config) == ESP_OK) {
