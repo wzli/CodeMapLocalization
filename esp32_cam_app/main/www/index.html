@@ -314,7 +314,7 @@
 
             .image {
                 position: relative;
-                min-width: 160px
+                min-width: 480px
             }
 
             .hidden {
@@ -528,11 +528,21 @@
                                 <img id="stream-0" class="image" src="" crossorigin>
                             </figure>
                         </td>
+                        <td>
+                            <figure>
+                                <img id="stream-1" class="image" src="" crossorigin>
+                            </figure>
+                        </td>
                     </tr>
                     <tr>
                         <td>
                             <figure>
-                                <img id="stream-1" class="image" src="" crossorigin>
+                                <img id="stream-2" class="image" src="" crossorigin>
+                            </figure>
+                        </td>
+                        <td>
+                            <figure>
+                                <img id="stream-3" class="image" src="" crossorigin>
                             </figure>
                         </td>
                     </tr>
@@ -543,7 +553,7 @@
 document.addEventListener('DOMContentLoaded', function (event) {
   var baseHost = document.location.origin
   // TEMP
-  //baseHost = 'http://192.168.10.108'
+  baseHost = 'http://192.168.10.108'
 
   const hide = el => {
     el.classList.add('hidden')
@@ -640,8 +650,8 @@ document.addEventListener('DOMContentLoaded', function (event) {
   const streamButton1 = document.getElementById('toggle-stream-1')
   const ledGroup = document.getElementById('led-group')
 
-  const update_view0 = () => { view0.src = `${baseHost}/capture?_cb=${Date.now()}` }
-  const update_view1 = () => { view1.src = `${baseHost}/capture?_cb=${Date.now()}` }
+  const update_view0 = () => { view0.src = `${baseHost}/capture0?_cb=${Date.now()}` }
+  const update_view1 = () => { view1.src = `${baseHost}/capture1?_cb=${Date.now()}` }
 
   // Attach actions to buttons
   streamButton0.onclick = () => {
@@ -649,8 +659,10 @@ document.addEventListener('DOMContentLoaded', function (event) {
     if (streamEnabled) {
       streamButton0.innerHTML = 'Start Stream'
       view0.removeEventListener("load", update_view0)
+      view0.removeEventListener("error", update_view0)
     } else {
       view0.addEventListener("load", update_view0)
+      view0.addEventListener("error", update_view0)
       update_view0()
       streamButton0.innerHTML = 'Stop Stream'
     }
@@ -662,8 +674,10 @@ document.addEventListener('DOMContentLoaded', function (event) {
     if (streamEnabled) {
       streamButton1.innerHTML = 'Start Stream'
       view1.removeEventListener("load", update_view1)
+      view1.removeEventListener("error", update_view1)
     } else {
       view1.addEventListener("load", update_view1)
+      view1.addEventListener("error", update_view1)
       update_view1()
       streamButton1.innerHTML = 'Stop Stream'
     }

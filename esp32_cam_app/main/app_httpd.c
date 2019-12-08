@@ -9,14 +9,30 @@
 
 /* global variables */
 
-httpd_handle_t httpd = NULL;
-QueueHandle_t raw_frame_queue;
+QueueHandle_t frame_queues[2];
 
 static const char* TAG = "web_ui";
 static char* text_buf;
 static int led_duty = -1;
 
 /* helper functions */
+
+typedef struct {
+    httpd_req_t* req;
+    size_t len;
+} jpg_chunking_t;
+
+static size_t jpg_encode_stream(void* arg, size_t index, const void* data, size_t len) {
+    jpg_chunking_t* j = (jpg_chunking_t*) arg;
+    if (!index) {
+        j->len = 0;
+    }
+    if (httpd_resp_send_chunk(j->req, (const char*) data, len) != ESP_OK) {
+        return 0;
+    }
+    j->len += len;
+    return len;
+}
 
 void set_led(int duty) {
 #ifdef CONFIG_LED_ILLUMINATOR_ENABLED
@@ -104,35 +120,48 @@ static esp_err_t stats_handler(httpd_req_t* req) {
 }
 
 static esp_err_t capture_handler(httpd_req_t* req) {
-    camera_fb_t* fb = NULL;
-    esp_err_t res = ESP_OK;
     int64_t fr_start = esp_timer_get_time();
-    if (pdTRUE != xQueueReceive(raw_frame_queue, &fb, 50)) {
-        ESP_LOGE(TAG, "Camera capture failed");
+    camera_fb_t* fb = NULL;
+    int queue_index = (int) req->user_ctx;
+    if (pdTRUE != xQueueReceive(frame_queues[queue_index], &fb, 20) && fb) {
+        ESP_LOGE(TAG, "Frame Queue Timeout");
         httpd_resp_send_500(req);
         return ESP_FAIL;
     }
-    assert(fb);
-    size_t fb_len = 0;
-    assert(fb->format == PIXFORMAT_JPEG);
-    fb_len = fb->len;
-    httpd_resp_set_type(req, "image/jpeg");
-    httpd_resp_set_hdr(req, "Content-Disposition", "inline; filename=capture.jpg");
+    size_t fb_len = fb->len;
     httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*");
-    res = httpd_resp_send(req, (const char*) fb->buf, fb->len);
-    esp_camera_fb_return(fb);
+    esp_err_t res = ESP_OK;
+    if (fb->format == PIXFORMAT_JPEG) {
+        httpd_resp_set_type(req, "image/jpeg");
+        httpd_resp_set_hdr(req, "Content-Disposition", "inline; filename=capture.jpg");
+        res = httpd_resp_send(req, (const char*) fb->buf, fb->len);
+        esp_camera_fb_return(fb);
+    } else {
+#if 0
+        httpd_resp_set_type(req, "image/x-portable-graymap");
+        httpd_resp_set_hdr(req, "Content-Disposition", "inline; filename=capture.pgm");
+        sprintf(text_buf, "P5\n%u %u\n%u\n", fb->width, fb->height, 255);
+        res = httpd_resp_send_chunk(req, text_buf, strlen(text_buf));
+        res = httpd_resp_send_chunk(req, (char*)fb->buf, fb->width * fb->height);
+#else
+        httpd_resp_set_type(req, "image/jpeg");
+        httpd_resp_set_hdr(req, "Content-Disposition", "inline; filename=capture.jpg");
+        jpg_chunking_t jchunk = {req, 0};
+        res = frame2jpg_cb(fb, 80, jpg_encode_stream, &jchunk) ? ESP_OK : ESP_FAIL;
+        fb_len = jchunk.len;
+#endif
+        xQueueOverwrite(frame_queues[queue_index], &fb);
+        httpd_resp_send_chunk(req, NULL, 0);
+    }
     int64_t fr_end = esp_timer_get_time();
-    ESP_LOGI(TAG, "JPG: %uB %ums", (uint32_t)(fb_len), (uint32_t)((fr_end - fr_start) / 1000));
+    ESP_LOGD(TAG, "JPG: %uB %ums", (uint32_t)(fb_len), (uint32_t)((fr_end - fr_start) / 1000));
     return res;
 }
 
 static esp_err_t cam_params_handler(httpd_req_t* req) {
-    static char json_response[1024];
-
     sensor_t* s = esp_camera_sensor_get();
-    char* p = json_response;
+    char* p = text_buf;
     *p++ = '{';
-
     p += sprintf(p, "\"framesize\":%u,", s->status.framesize);
     p += sprintf(p, "\"quality\":%u,", s->status.quality);
     p += sprintf(p, "\"brightness\":%d,", s->status.brightness);
@@ -162,7 +191,7 @@ static esp_err_t cam_params_handler(httpd_req_t* req) {
     *p++ = 0;
     httpd_resp_set_type(req, "application/json");
     httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*");
-    return httpd_resp_send(req, json_response, strlen(json_response));
+    return httpd_resp_send(req, text_buf, strlen(text_buf));
 }
 
 static esp_err_t set_led_intensity_handler(httpd_req_t* req) {
@@ -194,19 +223,21 @@ static esp_err_t set_cam_param_handler(httpd_req_t* req) {
 void app_httpd_main() {
     // allocate required objects
     text_buf = heap_caps_malloc(1024, MALLOC_CAP_SPIRAM);
-    raw_frame_queue = xQueueCreate(1, sizeof(camera_fb_t*));
+    for (int i = 0; i < sizeof(frame_queues) / sizeof(QueueHandle_t); ++i) {
+        frame_queues[i] = xQueueCreate(1, sizeof(camera_fb_t*));
+    }
 
     sensor_t* s = esp_camera_sensor_get();
     httpd_uri_t uris[] = {
             {"/", HTTP_GET, index_handler, NULL},
             {"/stats", HTTP_GET, stats_handler, NULL},
-            {"/capture", HTTP_GET, capture_handler, NULL},
+            {"/capture0", HTTP_GET, capture_handler, (void*) 0},
+            {"/capture1", HTTP_GET, capture_handler, (void*) 1},
             {"/set_led_intensity", HTTP_GET, set_led_intensity_handler, NULL},
             {"/cam_params", HTTP_GET, cam_params_handler, NULL},
             // uris for setting camera params
             {"/set_framesize", HTTP_GET, set_cam_param_handler, s->set_framesize},
             {"/set_quality", HTTP_GET, set_cam_param_handler, s->set_quality},
-            {"/set_dcw", HTTP_GET, set_cam_param_handler, s->set_dcw},
             {"/set_brightness", HTTP_GET, set_cam_param_handler, s->set_brightness},
             {"/set_contrast", HTTP_GET, set_cam_param_handler, s->set_contrast},
             {"/set_saturation", HTTP_GET, set_cam_param_handler, s->set_saturation},
@@ -225,12 +256,15 @@ void app_httpd_main() {
             {"/set_lenc", HTTP_GET, set_cam_param_handler, s->set_lenc},
             {"/set_bpc", HTTP_GET, set_cam_param_handler, s->set_bpc},
             {"/set_wpc", HTTP_GET, set_cam_param_handler, s->set_wpc},
+            {"/set_dcw", HTTP_GET, set_cam_param_handler, s->set_dcw},
             {"/set_hmirror", HTTP_GET, set_cam_param_handler, s->set_hmirror},
             {"/set_vflip", HTTP_GET, set_cam_param_handler, s->set_vflip},
             {"/set_colorbar", HTTP_GET, set_cam_param_handler, s->set_colorbar},
     };
     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
+    config.core_id = 0;
     config.max_uri_handlers = sizeof(uris) / sizeof(httpd_uri_t);
+    httpd_handle_t httpd;
     if (httpd_start(&httpd, &config) == ESP_OK) {
         ESP_LOGI(TAG, "Starting web server on port: '%d'", config.server_port);
         for (uint8_t i = 0; i < config.max_uri_handlers; ++i) {

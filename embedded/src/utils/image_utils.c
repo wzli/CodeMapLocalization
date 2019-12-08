@@ -64,3 +64,13 @@ void img_edge_filter(ImageMatrix* dst, const ImageMatrix src) {
         PIXEL(*dst, row, col) = CLAMP(val, 0, INT_TYPE_MAX(PIXEL_TYPE));
     }
 }
+
+void img_convert_from_rgb888(ImageMatrix* dst, const ImageMatrix src) {
+    const rgb888_t* data_rgb888 = (rgb888_t*) src.data;
+    int32_t data_len = src.n_rows * src.n_cols;
+    for (int32_t i = 0; i < data_len; ++i) {
+        dst->data[i] = (data_rgb888[i].r + data_rgb888[i].g + data_rgb888[i].b) / 3;
+    }
+    dst->n_cols = src.n_cols;
+    dst->n_rows = src.n_rows;
+}
