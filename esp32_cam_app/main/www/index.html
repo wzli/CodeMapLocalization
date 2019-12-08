@@ -516,9 +516,8 @@
                           <div class="range-max">255</div>
                         </div>
                         <section id="buttons">
-                            <button id="get-still-0">Get Still 0</button>
-                            <button id="get-still-1">Get Still 1</button>
-                            <button id="toggle-stream">Start Stream</button>
+                            <button id="toggle-stream-0">Start Stream</button>
+                            <button id="toggle-stream-1">Start Stream</button>
                         </section>
                     </nav>
                 </div>
@@ -545,7 +544,6 @@ document.addEventListener('DOMContentLoaded', function (event) {
   var baseHost = document.location.origin
   // TEMP
   //baseHost = 'http://192.168.10.108'
-  var streamUrl = baseHost + ':81'
 
   const hide = el => {
     el.classList.add('hidden')
@@ -638,38 +636,36 @@ document.addEventListener('DOMContentLoaded', function (event) {
   // Image Streams
   const view0 = document.getElementById('stream-0')
   const view1 = document.getElementById('stream-1')
-  const stillButton0 = document.getElementById('get-still-0')
-  const stillButton1 = document.getElementById('get-still-1')
-  const streamButton = document.getElementById('toggle-stream')
+  const streamButton0 = document.getElementById('toggle-stream-0')
+  const streamButton1 = document.getElementById('toggle-stream-1')
   const ledGroup = document.getElementById('led-group')
 
-  const stopStream = () => {
-    window.stop()
-    streamButton.innerHTML = 'Start Stream'
-  }
+  const update_view0 = () => { view0.src = `${baseHost}/capture?_cb=${Date.now()}` }
+  const update_view1 = () => { view1.src = `${baseHost}/capture?_cb=${Date.now()}` }
 
-  view0.addEventListener("load", () => {
-    view0.src = `${baseHost}/capture?_cb=${Date.now()}`
-    //alert("loaded")
-  })
   // Attach actions to buttons
-  stillButton0.onclick = () => {
-    stopStream()
-    view0.src = `${baseHost}/capture?_cb=${Date.now()}`
-  }
-
-  stillButton1.onclick = () => {
-    stopStream()
-    view1.src = `${baseHost}/capture?_cb=${Date.now()}`
-  }
-
-  streamButton.onclick = () => {
-    const streamEnabled = streamButton.innerHTML === 'Stop Stream'
+  streamButton0.onclick = () => {
+    const streamEnabled = streamButton0.innerHTML === 'Stop Stream'
     if (streamEnabled) {
-      stopStream()
+      streamButton0.innerHTML = 'Start Stream'
+      view0.removeEventListener("load", update_view0)
     } else {
-      view1.src = `${streamUrl}/stream`
-      streamButton.innerHTML = 'Stop Stream'
+      view0.addEventListener("load", update_view0)
+      update_view0()
+      streamButton0.innerHTML = 'Stop Stream'
+    }
+  }
+
+  // Attach actions to buttons
+  streamButton1.onclick = () => {
+    const streamEnabled = streamButton1.innerHTML === 'Stop Stream'
+    if (streamEnabled) {
+      streamButton1.innerHTML = 'Start Stream'
+      view1.removeEventListener("load", update_view1)
+    } else {
+      view1.addEventListener("load", update_view1)
+      update_view1()
+      streamButton1.innerHTML = 'Stop Stream'
     }
   }
 
