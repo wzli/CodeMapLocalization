@@ -33,23 +33,6 @@ void set_led(int duty) {
 #endif
 }
 
-typedef struct {
-    httpd_req_t* req;
-    size_t len;
-} jpg_chunking_t;
-
-static size_t jpg_encode_stream(void* arg, size_t index, const void* data, size_t len) {
-    jpg_chunking_t* j = (jpg_chunking_t*) arg;
-    if (!index) {
-        j->len = 0;
-    }
-    if (httpd_resp_send_chunk(j->req, (const char*) data, len) != ESP_OK) {
-        return 0;
-    }
-    j->len += len;
-    return len;
-}
-
 static int print_heap_info(char* buf, const char* name, uint32_t capabilities) {
     multi_heap_info_t heap_info;
     heap_caps_get_info(&heap_info, capabilities);
@@ -135,15 +118,9 @@ static esp_err_t capture_handler(httpd_req_t* req) {
     httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*");
 
     size_t fb_len = 0;
-    if (fb->format == PIXFORMAT_JPEG) {
-        fb_len = fb->len;
-        res = httpd_resp_send(req, (const char*) fb->buf, fb->len);
-    } else {
-        jpg_chunking_t jchunk = {req, 0};
-        res = frame2jpg_cb(fb, 80, jpg_encode_stream, &jchunk) ? ESP_OK : ESP_FAIL;
-        httpd_resp_send_chunk(req, NULL, 0);
-        fb_len = jchunk.len;
-    }
+    assert(fb->format == PIXFORMAT_JPEG);
+    fb_len = fb->len;
+    res = httpd_resp_send(req, (const char*) fb->buf, fb->len);
     esp_camera_fb_return(fb);
     int64_t fr_end = esp_timer_get_time();
     ESP_LOGI(TAG, "JPG: %uB %ums", (uint32_t)(fb_len), (uint32_t)((fr_end - fr_start) / 1000));
