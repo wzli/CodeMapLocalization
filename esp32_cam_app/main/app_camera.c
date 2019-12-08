@@ -103,7 +103,7 @@ void app_camera_main() {
     // init with high specs to pre-allocate larger buffers
     config.frame_size = FRAMESIZE_UXGA;
     config.jpeg_quality = 10;
-    config.fb_count = 2;
+    config.fb_count = 3;
 
     // camera init
     esp_err_t err = esp_camera_init(&config);

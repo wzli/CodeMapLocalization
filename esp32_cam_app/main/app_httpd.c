@@ -5,10 +5,12 @@
 #include "driver/ledc.h"
 #include "sdkconfig.h"
 #include "esp_log.h"
+#include "freertos/queue.h"
 
 /* global variables */
 
 httpd_handle_t httpd = NULL;
+QueueHandle_t raw_frame_queue;
 
 static const char* TAG = "web_ui";
 static char* text_buf;
@@ -105,21 +107,18 @@ static esp_err_t capture_handler(httpd_req_t* req) {
     camera_fb_t* fb = NULL;
     esp_err_t res = ESP_OK;
     int64_t fr_start = esp_timer_get_time();
-    fb = esp_camera_fb_get();
-
-    if (!fb) {
+    if (pdTRUE != xQueueReceive(raw_frame_queue, &fb, 50)) {
         ESP_LOGE(TAG, "Camera capture failed");
         httpd_resp_send_500(req);
         return ESP_FAIL;
     }
-
-    httpd_resp_set_type(req, "image/jpeg");
-    httpd_resp_set_hdr(req, "Content-Disposition", "inline; filename=capture.jpg");
-    httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*");
-
+    assert(fb);
     size_t fb_len = 0;
     assert(fb->format == PIXFORMAT_JPEG);
     fb_len = fb->len;
+    httpd_resp_set_type(req, "image/jpeg");
+    httpd_resp_set_hdr(req, "Content-Disposition", "inline; filename=capture.jpg");
+    httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*");
     res = httpd_resp_send(req, (const char*) fb->buf, fb->len);
     esp_camera_fb_return(fb);
     int64_t fr_end = esp_timer_get_time();
@@ -193,7 +192,10 @@ static esp_err_t set_cam_param_handler(httpd_req_t* req) {
 /* http server init */
 
 void app_httpd_main() {
+    // allocate required objects
     text_buf = heap_caps_malloc(1024, MALLOC_CAP_SPIRAM);
+    raw_frame_queue = xQueueCreate(1, sizeof(camera_fb_t*));
+
     sensor_t* s = esp_camera_sensor_get();
     httpd_uri_t uris[] = {
             {"/", HTTP_GET, index_handler, NULL},
