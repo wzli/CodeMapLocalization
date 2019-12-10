@@ -15,8 +15,10 @@ void img_fill(ImageMatrix mat, PIXEL_TYPE value) {
     FOR_EACH_PIXEL(mat, ) { PIXEL(mat, row, col) = value; }
 }
 
-void img_threshold(ImageMatrix mat, PIXEL_TYPE threshold) {
-    FOR_EACH_PIXEL(mat, ) { PIXEL(mat, row, col) = (PIXEL(mat, row, col) >= threshold) * 255; }
+void img_threshold(ImageMatrix* dst, const ImageMatrix src, PIXEL_TYPE threshold) {
+    dst->n_cols = src.n_cols;
+    dst->n_rows = src.n_rows;
+    FOR_EACH_PIXEL(src, ) { PIXEL(*dst, row, col) = (PIXEL(src, row, col) >= threshold) * 255; }
 }
 
 void img_normalize(ImageMatrix* dst, const ImageMatrix src) {
