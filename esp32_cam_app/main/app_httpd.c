@@ -9,7 +9,7 @@
 
 /* global variables */
 
-#define N_FRAME_QUEUES 2
+#define N_FRAME_QUEUES 3
 QueueHandle_t frame_queues[N_FRAME_QUEUES];
 
 static const char* TAG = "web_ui";
@@ -128,7 +128,7 @@ static esp_err_t capture_handler(httpd_req_t* req) {
     int64_t fr_start = esp_timer_get_time();
     camera_fb_t* fb = NULL;
     if (pdTRUE != xQueueReceive(frame_queues[stream], &fb, 20) && fb) {
-        ESP_LOGE(TAG, "Frame Queue Timeout");
+        ESP_LOGE(TAG, "Frame Queue %d Timeout", stream);
         httpd_resp_send_500(req);
         return ESP_FAIL;
     }
@@ -149,10 +149,8 @@ static esp_err_t capture_handler(httpd_req_t* req) {
     fb_len = jchunk.len;
 #endif
     httpd_resp_send_chunk(req, NULL, 0);
-    if (stream == 0) {
-        esp_camera_fb_return(fb);
-    } else {
-        xQueueOverwrite(frame_queues[stream], &fb);
+    if (pdTRUE != xQueueSendToBack(frame_queues[stream], &fb, 0)) {
+        ESP_LOGE(TAG, "Frame Queue %d Overflow", stream);
     }
     int64_t fr_end = esp_timer_get_time();
     ESP_LOGD(TAG, "JPG: %uB %ums", (uint32_t)(fb_len), (uint32_t)((fr_end - fr_start) / 1000));
@@ -220,15 +218,10 @@ static esp_err_t set_cam_param_handler(httpd_req_t* req) {
 /* http server init */
 
 void app_httpd_main() {
-    // allocate required objects
-    camera_fb_t* null_fb = NULL;
+    // create queues
     for (int i = 0; i < N_FRAME_QUEUES; ++i) {
-        frame_queues[i] = xQueueCreate(1, sizeof(camera_fb_t*));
-        if (i > 0) {
-            xQueueSendToFront(frame_queues[i], &null_fb, 0);
-        }
+        frame_queues[i] = xQueueCreate(2, sizeof(camera_fb_t*));
     }
-
     sensor_t* s = esp_camera_sensor_get();
     httpd_uri_t uris[] = {
             {"/", HTTP_GET, index_handler, NULL},
@@ -265,9 +258,9 @@ void app_httpd_main() {
     httpd_handle_t httpd;
     if (httpd_start(&httpd, &config) == ESP_OK) {
         ESP_LOGI(TAG, "Starting web server on port: '%d'", config.server_port);
-        for (uint8_t i = 0; i < config.max_uri_handlers; ++i) {
+        for (int i = 0; i < config.max_uri_handlers; ++i) {
             int err = httpd_register_uri_handler(httpd, uris + i);
-            ESP_LOGI(TAG, "%d %d\n", i, err);
+            ESP_LOGI(TAG, "registered URI handler at  %s, err %d\n", uris[i].uri, err);
         }
     }
     set_led(0);

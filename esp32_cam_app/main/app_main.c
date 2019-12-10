@@ -12,78 +12,97 @@
 
 /* externals */
 void app_camera_main();
-void app_httpd_main();
 void app_wifi_main();
+void app_httpd_main();
 
 extern QueueHandle_t frame_queues[];
 
-/* typedefs */
-typedef struct {
-    QueueHandle_t* frame_queue;
-    uint8_t* data[2];
-    camera_fb_t fb[2];
-    uint8_t cur;
-} DoubleBuffer;
-
 /* static data */
 static const char* TAG = "main_loop";
-static camera_fb_t* stale_fb = NULL;
-static uint8_t db0_data[2][64 * 64];
-static DoubleBuffer db0 = {&frame_queues[1], {db0_data[0], db0_data[1]}, {}, 0};
+
+static uint8_t buf_64x64[2][64*64];
+static uint8_t buf_32x32[4][32*32];
+
+static camera_fb_t double_buffers[][2] = {
+    {
+        {buf_64x64[0], 64 * 64, 64, 64, PIXFORMAT_GRAYSCALE},
+        {buf_64x64[1], 64 * 64, 64, 64, PIXFORMAT_GRAYSCALE},
+    },
+    {
+        {buf_32x32[0], 32 * 32, 32, 32, PIXFORMAT_GRAYSCALE},
+        {buf_32x32[1], 32 * 32, 32, 32, PIXFORMAT_GRAYSCALE},
+    },
+    {
+        {buf_32x32[2], 32 * 32, 32, 32, PIXFORMAT_GRAYSCALE},
+        {buf_32x32[3], 32 * 32, 32, 32, PIXFORMAT_GRAYSCALE},
+    },
+};
 
 /* helper functions */
-static inline camera_fb_t img_to_fb(const ImageMatrix img) {
-    return (camera_fb_t){
-            img.data, img.n_cols * img.n_rows, img.n_cols, img.n_rows, PIXFORMAT_GRAYSCALE};
+static inline ImageMatrix fb_to_img(camera_fb_t fb) {
+    return (ImageMatrix){fb.buf, fb.width, fb.height};
 }
 
-static inline ImageMatrix db_take_frame(const DoubleBuffer* db) {
-    return (ImageMatrix){db->data[db->cur], 0, 0};
+static inline camera_fb_t* queue_fb_get(QueueHandle_t frame_queue) {
+    camera_fb_t* fb_ptr = NULL;
+    xQueueReceive(frame_queue, &fb_ptr, 0);
+    assert(fb_ptr);
+    return fb_ptr;
 }
 
-static inline void db_give_frame(DoubleBuffer* db, const ImageMatrix mat) {
-    if (pdTRUE != xQueueReceive(*db->frame_queue, &stale_fb, 0)) {
-        return;
-    }
-    camera_fb_t* fb = &db->fb[db->cur];
-    *fb = img_to_fb(mat);
-    xQueueSendToFront(*db->frame_queue, &fb, 0);
-    db->cur ^= 1;
+static inline int queue_fb_return(QueueHandle_t frame_queue, const camera_fb_t* fb_ptr) {
+    int success = xQueueSendToBack(frame_queue, &fb_ptr, 0);
+    assert(success == pdTRUE);
+    return success;
 }
 
 /* run */
 void main_loop(void* pvParameters) {
+    int64_t start_time = esp_timer_get_time();
     for (;;) {
-        int64_t fr_start = esp_timer_get_time();
-        camera_fb_t* fb = esp_camera_fb_get();
-
-        if (!fb) {
+        // get 0 
+        esp_camera_fb_return(queue_fb_get(frame_queues[0]));
+        camera_fb_t* fb_ptr_0 = esp_camera_fb_get();
+        while(!fb_ptr_0) {
             ESP_LOGE(TAG, "Camera capture failed");
-            continue;
+            fb_ptr_0 = esp_camera_fb_get();
         }
 
-        // process frame
-        ImageMatrix img = {fb->buf, fb->width, fb->height};
+        // process 0
+        ImageMatrix img = fb_to_img(*fb_ptr_0);
         Vector2f rot = img_estimate_rotation(img);
-        ImageMatrix copy_img = db_take_frame(&db0);
+
+        // get 1
+        camera_fb_t* fb_ptr_1 = queue_fb_get(frame_queues[1]);
+
+        // process 0 -> 1
+        ImageMatrix copy_img = fb_to_img(*fb_ptr_1); 
         img_copy(&copy_img, img);
 
-        // add original frame to queue
-        if (pdTRUE == xQueueReceive(frame_queues[0], &stale_fb, 0)) {
-            esp_camera_fb_return(stale_fb);
-        }
-        xQueueSendToFront(frame_queues[0], &fb, 0);
-        db_give_frame(&db0, copy_img);
+        // return 0
+        queue_fb_return(frame_queues[0], fb_ptr_0);
+        // return 1
+        queue_fb_return(frame_queues[1], fb_ptr_1);
+
         // end loop
-        int64_t fr_end = esp_timer_get_time();
-        ESP_LOGI(TAG, "%ums %f", (uint32_t)((fr_end - fr_start) / 1000),
+        int64_t end_time = esp_timer_get_time();
+        ESP_LOGI(TAG, "%ums %f", (uint32_t)((end_time - start_time) / 1000),
                 180 * atan2(rot.y, rot.x) / M_PI);
+        start_time = end_time;
     }
 }
 
 void app_main() {
     // assert(!run_all_tests());
     // ESP_LOGI(TAG, "%s\ntests ran: %d\n", test_error, test_count);
+
+    // initialize queues
+    for(int i = -1; i < sizeof(double_buffers)/sizeof(double_buffers[0]); ++i) {
+        for(int j = 0; j < 2; ++j) {
+            camera_fb_t* fb_ptr = i < 0 ? esp_camera_fb_get(): &double_buffers[i][j] ;
+            xQueueSendToBack(frame_queues[i + 1], &fb_ptr, 0);
+        }
+    }
 
     app_wifi_main();
     app_camera_main();
