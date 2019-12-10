@@ -35,6 +35,6 @@ static inline int32_t img_apply_kernel(
 void img_copy(ImageMatrix* dst, const ImageMatrix src);
 void img_fill(ImageMatrix mat, PIXEL_TYPE value);
 void img_threshold(ImageMatrix mat, PIXEL_TYPE threshold);
-void img_normalize(ImageMatrix mat);
+void img_normalize(ImageMatrix* dst, const ImageMatrix src);
 void img_rotate(ImageMatrix dst, const ImageMatrix src, Vector2f rotation, PIXEL_TYPE bg_fill);
 void img_edge_filter(ImageMatrix* dst, const ImageMatrix src);

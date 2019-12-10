@@ -66,7 +66,7 @@ class ImageMatrix(ctypes.Structure):
         return image_matrix
 
     def to_image(self):
-        #libsim.img_normalize(self)
+        #libsim.img_normalize(ctypes.byref(self), self)
         if libsim.sizeof_img_type() == 2:
             libsim.img_convert_int16_to_uint8(self)
         image = Image.frombuffer('L', (self.n_cols, self.n_rows), self.buf,
