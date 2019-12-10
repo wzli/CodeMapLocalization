@@ -1,4 +1,4 @@
-set(COMPONENT_SRCS
+set(srcs
   src/code_extraction.c
   src/location_decode.c
   src/mls_index.c
@@ -14,11 +14,21 @@ set(COMPONENT_SRCS
   src/tests/test_location_decode.c
   src/tests/test_math_utils.c
   src/tests/test_mls_query.c
-  )
+)
 
-set(COMPONENT_ADD_INCLUDEDIRS
+set(includes
   include
   include/utils
-  )
+)
 
-register_component()
+idf_component_register(
+  SRCS ${srcs}
+  INCLUDE_DIRS ${includes}
+)
+
+target_compile_options(${COMPONENT_LIB} PRIVATE
+  -Wall
+  -Wextra
+  -Werror=double-promotion
+  -Ofast
+)
