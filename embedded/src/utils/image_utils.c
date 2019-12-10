@@ -5,6 +5,12 @@ const int8_t edge_detect_kernel[3 * 3] = {-1, -1, -1, -1, 8, -1, -1, -1, -1};
 const int8_t sobel_kernel_x[3 * 3] = {-1, 0, 1, -2, 0, 2, -1, 0, 1};
 const int8_t sobel_kernel_y[3 * 3] = {-1, -2, -1, 0, 0, 0, 1, 2, 1};
 
+void img_copy(ImageMatrix* dst, const ImageMatrix src) {
+    dst->n_cols = src.n_cols;
+    dst->n_rows = src.n_rows;
+    FOR_EACH_PIXEL(src, ) { PIXEL(*dst, row, col) = PIXEL(src, row, col); }
+}
+
 void img_fill(ImageMatrix mat, PIXEL_TYPE value) {
     FOR_EACH_PIXEL(mat, ) { PIXEL(mat, row, col) = value; }
 }
@@ -63,14 +69,4 @@ void img_edge_filter(ImageMatrix* dst, const ImageMatrix src) {
         int32_t val = img_apply_kernel(src, edge_detect_kernel, 3, row, col);
         PIXEL(*dst, row, col) = CLAMP(val, 0, INT_TYPE_MAX(PIXEL_TYPE));
     }
-}
-
-void img_convert_from_rgb888(ImageMatrix* dst, const ImageMatrix src) {
-    const rgb888_t* data_rgb888 = (rgb888_t*) src.data;
-    int32_t data_len = src.n_rows * src.n_cols;
-    for (int32_t i = 0; i < data_len; ++i) {
-        dst->data[i] = (data_rgb888[i].r + data_rgb888[i].g + data_rgb888[i].b) / 3;
-    }
-    dst->n_cols = src.n_cols;
-    dst->n_rows = src.n_rows;
 }

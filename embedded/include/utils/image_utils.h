@@ -32,15 +32,9 @@ static inline int32_t img_apply_kernel(
     return sum;
 }
 
+void img_copy(ImageMatrix* dst, const ImageMatrix src);
 void img_fill(ImageMatrix mat, PIXEL_TYPE value);
 void img_threshold(ImageMatrix mat, PIXEL_TYPE threshold);
 void img_normalize(ImageMatrix mat);
 void img_rotate(ImageMatrix dst, const ImageMatrix src, Vector2f rotation, PIXEL_TYPE bg_fill);
 void img_edge_filter(ImageMatrix* dst, const ImageMatrix src);
-
-// convert to grayscale assuming data buffer is in following format
-typedef struct {
-    uint8_t r, g, b;
-} rgb888_t;
-
-void img_convert_from_rgb888(ImageMatrix* dst, const ImageMatrix src);

@@ -331,29 +331,6 @@
                 <div id="sidebar">
                     <input type="checkbox" id="nav-toggle-cb" checked="checked">
                     <nav id="menu">
-                        <div class="input-group" id="framesize-group">
-                            <label for="framesize">Resolution</label>
-                            <select id="framesize" class="default-action">
-                                <option value="11">UXGA(1600x1200)</option>
-                                <option value="10">SXGA(1280x1024)</option>
-                                <option value="9">XGA(1024x768)</option>
-                                <option value="8">SVGA(800x600)</option>
-                                <option value="7">VGA(640x480)</option>
-                                <option value="6" selected="selected">CIF(400x296)</option>
-                                <option value="5">QVGA(320x240)</option>
-                                <option value="4">HQVGA(240x176)</option>
-                                <option value="3">QCIF(176x144)</option>
-                                <!--option value="2">QQVGA2(128x160)</option-->
-                                <option value="1">QQVGA(160x120)</option>
-                                <!--option value="0">(96x96)</option-->
-                            </select>
-                        </div>
-                        <div class="input-group" id="quality-group">
-                            <label for="quality">Quality</label>
-                            <div class="range-min">10</div>
-                            <input type="range" id="quality" min="10" max="63" value="10" class="default-action">
-                            <div class="range-max">63</div>
-                        </div>
                         <div class="input-group" id="brightness-group">
                             <label for="brightness">Brightness</label>
                             <div class="range-min">-2</div>
@@ -479,13 +456,6 @@
                             <div class="switch">
                                 <input id="wpc" type="checkbox" class="default-action" checked="checked">
                                 <label class="slider" for="wpc"></label>
-                            </div>
-                        </div>
-                        <div class="input-group" id="dcw-group">
-                            <label for="dcw">DCW (Downsize EN)</label>
-                            <div class="switch">
-                                <input id="dcw" type="checkbox" class="default-action" checked="checked">
-                                <label class="slider" for="dcw"></label>
                             </div>
                         </div>
                         <div class="input-group" id="hmirror-group">
@@ -650,8 +620,8 @@ document.addEventListener('DOMContentLoaded', function (event) {
   const streamButton1 = document.getElementById('toggle-stream-1')
   const ledGroup = document.getElementById('led-group')
 
-  const update_view0 = () => { view0.src = `${baseHost}/capture0?_cb=${Date.now()}` }
-  const update_view1 = () => { view1.src = `${baseHost}/capture1?_cb=${Date.now()}` }
+  const update_view0 = () => { view0.src = `${baseHost}/capture?stream=0&_cb=${Date.now()}` }
+  const update_view1 = () => { view1.src = `${baseHost}/capture?stream=1&_cb=${Date.now()}` }
 
   // Attach actions to buttons
   streamButton0.onclick = () => {

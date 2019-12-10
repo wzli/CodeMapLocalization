@@ -9,10 +9,11 @@
 
 /* global variables */
 
-QueueHandle_t frame_queues[2];
+#define N_FRAME_QUEUES 2
+QueueHandle_t frame_queues[N_FRAME_QUEUES];
 
 static const char* TAG = "web_ui";
-static char* text_buf;
+static char text_buf[1024];
 static int led_duty = -1;
 
 /* helper functions */
@@ -68,15 +69,14 @@ static int print_heap_info(char* buf, const char* name, uint32_t capabilities) {
             heap_info.free_blocks, heap_info.total_blocks);
 }
 
-static esp_err_t parse_request_value(httpd_req_t* req, int* value) {
-    ESP_LOGI(TAG, "received uri request: %s", text_buf);
+static esp_err_t parse_request_param(httpd_req_t* req, const char* param_name, int* param) {
+    ESP_LOGD(TAG, "received uri request: %s", text_buf);
     size_t buf_len = httpd_req_get_url_query_len(req) + 1;
-    char value_buf[32] = {};
     if (buf_len < 2 || (httpd_req_get_url_query_str(req, text_buf, buf_len) != ESP_OK) ||
-            (httpd_query_key_value(text_buf, "val", value_buf, sizeof(value_buf)) != ESP_OK)) {
+            (httpd_query_key_value(text_buf, param_name, text_buf, 32) != ESP_OK)) {
         return ESP_FAIL;
     }
-    *value = atoi(value_buf);
+    *param = atoi(text_buf);
     return ESP_OK;
 }
 
@@ -104,10 +104,10 @@ static esp_err_t stats_handler(httpd_req_t* req) {
         defined(CONFIG_FREERTOS_USE_STATS_FORMATTING_FUNCTIONS)
     static const char TASK_LIST_HEADER[] =
             "Task Name       State   Pri     Stack   Num     CoreId\n";
-    static const char TASK_RUNTIME_STATS_HEADER[] = "\nTask Name       Abs Time        % Time\n";
     httpd_resp_send_chunk(req, TASK_LIST_HEADER, sizeof(TASK_LIST_HEADER) - 1);
     vTaskList(text_buf);
     httpd_resp_send_chunk(req, text_buf, strlen(text_buf));
+    static const char TASK_RUNTIME_STATS_HEADER[] = "\nTask Name       Abs Time        % Time\n";
     httpd_resp_send_chunk(req, TASK_RUNTIME_STATS_HEADER, sizeof(TASK_RUNTIME_STATS_HEADER) - 1);
     vTaskGetRunTimeStats(text_buf);
     httpd_resp_send_chunk(req, text_buf, strlen(text_buf));
@@ -120,38 +120,39 @@ static esp_err_t stats_handler(httpd_req_t* req) {
 }
 
 static esp_err_t capture_handler(httpd_req_t* req) {
+    int stream;
+    if (ESP_OK != parse_request_param(req, "stream", &stream) || stream < 0 ||
+            stream >= N_FRAME_QUEUES) {
+        stream = 0;
+    }
     int64_t fr_start = esp_timer_get_time();
     camera_fb_t* fb = NULL;
-    int queue_index = (int) req->user_ctx;
-    if (pdTRUE != xQueueReceive(frame_queues[queue_index], &fb, 20) && fb) {
+    if (pdTRUE != xQueueReceive(frame_queues[stream], &fb, 20) && fb) {
         ESP_LOGE(TAG, "Frame Queue Timeout");
         httpd_resp_send_500(req);
         return ESP_FAIL;
     }
     size_t fb_len = fb->len;
     httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*");
-    esp_err_t res = ESP_OK;
-    if (fb->format == PIXFORMAT_JPEG) {
-        httpd_resp_set_type(req, "image/jpeg");
-        httpd_resp_set_hdr(req, "Content-Disposition", "inline; filename=capture.jpg");
-        res = httpd_resp_send(req, (const char*) fb->buf, fb->len);
+    assert(fb->format != PIXFORMAT_JPEG);
+#if 0
+    httpd_resp_set_type(req, "image/x-portable-graymap");
+    httpd_resp_set_hdr(req, "Content-Disposition", "inline; filename=capture.pgm");
+    sprintf(text_buf, "P5\n%u %u\n%u\n", fb->width, fb->height, 255);
+    res = httpd_resp_send_chunk(req, text_buf, strlen(text_buf));
+    res = httpd_resp_send_chunk(req, (char*)fb->buf, fb->width * fb->height);
+#else
+    httpd_resp_set_type(req, "image/jpeg");
+    httpd_resp_set_hdr(req, "Content-Disposition", "inline; filename=capture.jpg");
+    jpg_chunking_t jchunk = {req, 0};
+    esp_err_t res = frame2jpg_cb(fb, 80, jpg_encode_stream, &jchunk) ? ESP_OK : ESP_FAIL;
+    fb_len = jchunk.len;
+#endif
+    httpd_resp_send_chunk(req, NULL, 0);
+    if (stream == 0) {
         esp_camera_fb_return(fb);
     } else {
-#if 0
-        httpd_resp_set_type(req, "image/x-portable-graymap");
-        httpd_resp_set_hdr(req, "Content-Disposition", "inline; filename=capture.pgm");
-        sprintf(text_buf, "P5\n%u %u\n%u\n", fb->width, fb->height, 255);
-        res = httpd_resp_send_chunk(req, text_buf, strlen(text_buf));
-        res = httpd_resp_send_chunk(req, (char*)fb->buf, fb->width * fb->height);
-#else
-        httpd_resp_set_type(req, "image/jpeg");
-        httpd_resp_set_hdr(req, "Content-Disposition", "inline; filename=capture.jpg");
-        jpg_chunking_t jchunk = {req, 0};
-        res = frame2jpg_cb(fb, 80, jpg_encode_stream, &jchunk) ? ESP_OK : ESP_FAIL;
-        fb_len = jchunk.len;
-#endif
-        xQueueOverwrite(frame_queues[queue_index], &fb);
-        httpd_resp_send_chunk(req, NULL, 0);
+        xQueueOverwrite(frame_queues[stream], &fb);
     }
     int64_t fr_end = esp_timer_get_time();
     ESP_LOGD(TAG, "JPG: %uB %ums", (uint32_t)(fb_len), (uint32_t)((fr_end - fr_start) / 1000));
@@ -163,7 +164,6 @@ static esp_err_t cam_params_handler(httpd_req_t* req) {
     char* p = text_buf;
     *p++ = '{';
     p += sprintf(p, "\"framesize\":%u,", s->status.framesize);
-    p += sprintf(p, "\"quality\":%u,", s->status.quality);
     p += sprintf(p, "\"brightness\":%d,", s->status.brightness);
     p += sprintf(p, "\"contrast\":%d,", s->status.contrast);
     p += sprintf(p, "\"saturation\":%d,", s->status.saturation);
@@ -182,7 +182,6 @@ static esp_err_t cam_params_handler(httpd_req_t* req) {
     p += sprintf(p, "\"lenc\":%u,", s->status.lenc);
     p += sprintf(p, "\"bpc\":%u,", s->status.bpc);
     p += sprintf(p, "\"wpc\":%u,", s->status.wpc);
-    p += sprintf(p, "\"dcw\":%u,", s->status.dcw);
     p += sprintf(p, "\"hmirror\":%u,", s->status.hmirror);
     p += sprintf(p, "\"vflip\":%u,", s->status.vflip);
     p += sprintf(p, "\"colorbar\":%u,", s->status.colorbar);
@@ -196,7 +195,7 @@ static esp_err_t cam_params_handler(httpd_req_t* req) {
 
 static esp_err_t set_led_intensity_handler(httpd_req_t* req) {
     int val;
-    if (ESP_OK != parse_request_value(req, &val)) {
+    if (ESP_OK != parse_request_param(req, "val", &val)) {
         httpd_resp_send_404(req);
         return ESP_FAIL;
     }
@@ -206,7 +205,7 @@ static esp_err_t set_led_intensity_handler(httpd_req_t* req) {
 
 static esp_err_t set_cam_param_handler(httpd_req_t* req) {
     int val;
-    if (ESP_OK != parse_request_value(req, &val)) {
+    if (ESP_OK != parse_request_param(req, "val", &val)) {
         httpd_resp_send_404(req);
         return ESP_FAIL;
     }
@@ -222,22 +221,22 @@ static esp_err_t set_cam_param_handler(httpd_req_t* req) {
 
 void app_httpd_main() {
     // allocate required objects
-    text_buf = heap_caps_malloc(1024, MALLOC_CAP_SPIRAM);
-    for (int i = 0; i < sizeof(frame_queues) / sizeof(QueueHandle_t); ++i) {
+    camera_fb_t* null_fb = NULL;
+    for (int i = 0; i < N_FRAME_QUEUES; ++i) {
         frame_queues[i] = xQueueCreate(1, sizeof(camera_fb_t*));
+        if (i > 0) {
+            xQueueSendToFront(frame_queues[i], &null_fb, 0);
+        }
     }
 
     sensor_t* s = esp_camera_sensor_get();
     httpd_uri_t uris[] = {
             {"/", HTTP_GET, index_handler, NULL},
             {"/stats", HTTP_GET, stats_handler, NULL},
-            {"/capture0", HTTP_GET, capture_handler, (void*) 0},
-            {"/capture1", HTTP_GET, capture_handler, (void*) 1},
+            {"/capture", HTTP_GET, capture_handler, NULL},
             {"/set_led_intensity", HTTP_GET, set_led_intensity_handler, NULL},
             {"/cam_params", HTTP_GET, cam_params_handler, NULL},
             // uris for setting camera params
-            {"/set_framesize", HTTP_GET, set_cam_param_handler, s->set_framesize},
-            {"/set_quality", HTTP_GET, set_cam_param_handler, s->set_quality},
             {"/set_brightness", HTTP_GET, set_cam_param_handler, s->set_brightness},
             {"/set_contrast", HTTP_GET, set_cam_param_handler, s->set_contrast},
             {"/set_saturation", HTTP_GET, set_cam_param_handler, s->set_saturation},
@@ -256,7 +255,6 @@ void app_httpd_main() {
             {"/set_lenc", HTTP_GET, set_cam_param_handler, s->set_lenc},
             {"/set_bpc", HTTP_GET, set_cam_param_handler, s->set_bpc},
             {"/set_wpc", HTTP_GET, set_cam_param_handler, s->set_wpc},
-            {"/set_dcw", HTTP_GET, set_cam_param_handler, s->set_dcw},
             {"/set_hmirror", HTTP_GET, set_cam_param_handler, s->set_hmirror},
             {"/set_vflip", HTTP_GET, set_cam_param_handler, s->set_vflip},
             {"/set_colorbar", HTTP_GET, set_cam_param_handler, s->set_colorbar},
