@@ -57,8 +57,17 @@ static inline int queue_fb_return(QueueHandle_t frame_queue, const camera_fb_t* 
 }
 
 /* run */
-void main_loop(void* pvParameters) {
+static void main_loop(void* pvParameters) {
+    // initialize queues
+    for(int i = 0; i <= sizeof(double_buffers)/sizeof(double_buffers[0]); ++i) {
+        for(int j = 0; j < 2; ++j) {
+            camera_fb_t* fb_ptr = i ? &double_buffers[i-1][j] : esp_camera_fb_get();
+            xQueueSendToBack(frame_queues[i], &fb_ptr, 0);
+        }
+        assert(!uxQueueSpacesAvailable(frame_queues[i]));
+    }
     int64_t start_time = esp_timer_get_time();
+    // main loop
     for (;;) {
         // get 0 
         esp_camera_fb_return(queue_fb_get(frame_queues[0]));
@@ -95,14 +104,6 @@ void main_loop(void* pvParameters) {
 void app_main() {
     // assert(!run_all_tests());
     // ESP_LOGI(TAG, "%s\ntests ran: %d\n", test_error, test_count);
-
-    // initialize queues
-    for(int i = -1; i < sizeof(double_buffers)/sizeof(double_buffers[0]); ++i) {
-        for(int j = 0; j < 2; ++j) {
-            camera_fb_t* fb_ptr = i < 0 ? esp_camera_fb_get(): &double_buffers[i][j] ;
-            xQueueSendToBack(frame_queues[i + 1], &fb_ptr, 0);
-        }
-    }
 
     app_wifi_main();
     app_camera_main();

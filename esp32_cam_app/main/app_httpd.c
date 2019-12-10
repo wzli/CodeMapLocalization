@@ -9,8 +9,8 @@
 
 /* global variables */
 
-#define N_FRAME_QUEUES 3
-QueueHandle_t frame_queues[N_FRAME_QUEUES];
+#define N_FRAME_QUEUES 4
+QueueHandle_t frame_queues[N_FRAME_QUEUES] = {};
 
 static const char* TAG = "web_ui";
 static char text_buf[1024];
@@ -221,6 +221,7 @@ void app_httpd_main() {
     // create queues
     for (int i = 0; i < N_FRAME_QUEUES; ++i) {
         frame_queues[i] = xQueueCreate(2, sizeof(camera_fb_t*));
+        assert(frame_queues[i]);
     }
     sensor_t* s = esp_camera_sensor_get();
     httpd_uri_t uris[] = {
@@ -260,7 +261,7 @@ void app_httpd_main() {
         ESP_LOGI(TAG, "Starting web server on port: '%d'", config.server_port);
         for (int i = 0; i < config.max_uri_handlers; ++i) {
             int err = httpd_register_uri_handler(httpd, uris + i);
-            ESP_LOGI(TAG, "registered URI handler at  %s, err %d\n", uris[i].uri, err);
+            ESP_LOGI(TAG, "registered URI handler at %s err %d\n", uris[i].uri, err);
         }
     }
     set_led(0);
