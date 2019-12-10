@@ -5,8 +5,8 @@
 typedef struct {
     uint32_t bits;
     uint32_t mask;
-    uint16_t n_errors;
-    uint16_t n_samples;
+    uint32_t n_errors;
+    uint32_t n_samples;
 } AxisCode;
 
 Vector2f img_estimate_rotation(const ImageMatrix mat);

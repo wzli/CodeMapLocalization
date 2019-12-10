@@ -8,8 +8,8 @@
 
 typedef struct {
     PIXEL_TYPE* data;
-    int16_t n_cols;
-    int16_t n_rows;
+    int32_t n_cols;
+    int32_t n_rows;
 } ImageMatrix;
 
 extern const int8_t edge_detect_kernel[3 * 3];

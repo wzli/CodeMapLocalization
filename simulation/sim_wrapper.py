@@ -19,8 +19,8 @@ class AxisCode(ctypes.Structure):
     _fields_ = [
         ('bits', ctypes.c_uint),
         ('mask', ctypes.c_uint),
-        ('n_errors', ctypes.c_ushort),
-        ('n_samples', ctypes.c_ushort),
+        ('n_errors', ctypes.c_uint),
+        ('n_samples', ctypes.c_uint),
     ]
 
 
@@ -47,8 +47,8 @@ class Location(ctypes.Structure):
 
 
 class ImageMatrix(ctypes.Structure):
-    _fields_ = [('data', ctypes.c_char_p), ('n_cols', ctypes.c_short),
-                ('n_rows', ctypes.c_short)]
+    _fields_ = [('data', ctypes.c_char_p), ('n_cols', ctypes.c_int),
+                ('n_rows', ctypes.c_int)]
 
     def __init__(self, width, height, buf=None):
         self.buf = buf if buf else bytes(libsim.sizeof_img_type() * width *
