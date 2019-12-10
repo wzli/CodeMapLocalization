@@ -34,7 +34,8 @@ void img_normalize(ImageMatrix* dst, const ImageMatrix src) {
     dst->n_cols = src.n_cols;
     dst->n_rows = src.n_rows;
     FOR_EACH_PIXEL(src, ) {
-        PIXEL(*dst, row, col) = ((PIXEL(src, row, col) - min_pixel) * 255) / (max_pixel - min_pixel);
+        PIXEL(*dst, row, col) =
+                ((PIXEL(src, row, col) - min_pixel) * 255) / (max_pixel - min_pixel);
     }
 }
 

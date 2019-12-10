@@ -20,22 +20,22 @@ extern QueueHandle_t frame_queues[];
 /* static data */
 static const char* TAG = "main_loop";
 
-static uint8_t buf_64x64[2][64*64];
-static uint8_t buf_32x32[4][32*32];
+static uint8_t buf_64x64[2][64 * 64];
+static uint8_t buf_32x32[4][32 * 32];
 
 static camera_fb_t double_buffers[][2] = {
-    {
-        {buf_64x64[0], 64 * 64, 64, 64, PIXFORMAT_GRAYSCALE},
-        {buf_64x64[1], 64 * 64, 64, 64, PIXFORMAT_GRAYSCALE},
-    },
-    {
-        {buf_32x32[0], 32 * 32, 32, 32, PIXFORMAT_GRAYSCALE},
-        {buf_32x32[1], 32 * 32, 32, 32, PIXFORMAT_GRAYSCALE},
-    },
-    {
-        {buf_32x32[2], 32 * 32, 32, 32, PIXFORMAT_GRAYSCALE},
-        {buf_32x32[3], 32 * 32, 32, 32, PIXFORMAT_GRAYSCALE},
-    },
+        {
+                {buf_64x64[0], 64 * 64, 64, 64, PIXFORMAT_GRAYSCALE},
+                {buf_64x64[1], 64 * 64, 64, 64, PIXFORMAT_GRAYSCALE},
+        },
+        {
+                {buf_32x32[0], 32 * 32, 32, 32, PIXFORMAT_GRAYSCALE},
+                {buf_32x32[1], 32 * 32, 32, 32, PIXFORMAT_GRAYSCALE},
+        },
+        {
+                {buf_32x32[2], 32 * 32, 32, 32, PIXFORMAT_GRAYSCALE},
+                {buf_32x32[3], 32 * 32, 32, 32, PIXFORMAT_GRAYSCALE},
+        },
 };
 
 /* helper functions */
@@ -59,9 +59,9 @@ static inline int queue_fb_return(QueueHandle_t frame_queue, const camera_fb_t* 
 /* run */
 static void main_loop(void* pvParameters) {
     // initialize queues
-    for(int i = 0; i <= sizeof(double_buffers)/sizeof(double_buffers[0]); ++i) {
-        for(int j = 0; j < 2; ++j) {
-            camera_fb_t* fb_ptr = i ? &double_buffers[i-1][j] : esp_camera_fb_get();
+    for (int i = 0; i <= sizeof(double_buffers) / sizeof(double_buffers[0]); ++i) {
+        for (int j = 0; j < 2; ++j) {
+            camera_fb_t* fb_ptr = i ? &double_buffers[i - 1][j] : esp_camera_fb_get();
             xQueueSendToBack(frame_queues[i], &fb_ptr, 0);
         }
         assert(!uxQueueSpacesAvailable(frame_queues[i]));
@@ -69,10 +69,10 @@ static void main_loop(void* pvParameters) {
     int64_t start_time = esp_timer_get_time();
     // main loop
     for (;;) {
-        // get 0 
+        // get 0
         esp_camera_fb_return(queue_fb_get(frame_queues[0]));
         camera_fb_t* fb_ptr_0 = esp_camera_fb_get();
-        while(!fb_ptr_0) {
+        while (!fb_ptr_0) {
             ESP_LOGE(TAG, "Camera capture failed");
             fb_ptr_0 = esp_camera_fb_get();
         }
@@ -85,7 +85,7 @@ static void main_loop(void* pvParameters) {
         camera_fb_t* fb_ptr_1 = queue_fb_get(frame_queues[1]);
 
         // process 0 -> 1
-        ImageMatrix copy_img = fb_to_img(*fb_ptr_1); 
+        ImageMatrix copy_img = fb_to_img(*fb_ptr_1);
         img_copy(&copy_img, img);
 
         // return 0
