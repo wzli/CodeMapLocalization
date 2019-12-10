@@ -51,10 +51,10 @@ void img_rotate(ImageMatrix dst, const ImageMatrix src, Vector2f rotation, PIXEL
             PIXEL(dst, row, col) = bg_fill;
             continue;
         }
-        int16_t right = src_position.x + 0.5f;
-        int16_t bottom = src_position.y + 0.5f;
-        int16_t left = MAX(right - 1, 0);
-        int16_t top = MAX(bottom - 1, 0);
+        int32_t right = src_position.x + 0.5f;
+        int32_t bottom = src_position.y + 0.5f;
+        int32_t left = MAX(right - 1, 0);
+        int32_t top = MAX(bottom - 1, 0);
         right = MIN(right, src.n_cols - 1);
         bottom = MIN(bottom, src.n_rows - 1);
         Vector2f progress = {src_position.x - 0.5f - left, src_position.y - 0.5f - top};

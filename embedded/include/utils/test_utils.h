@@ -24,7 +24,7 @@ extern int test_count;
 extern char test_error[];
 
 // debug prints for internal data structures
-void print_bits(uint32_t word, int8_t word_length);
+void print_bits(uint32_t word, int32_t word_length);
 void print_bit_matrix(BitMatrix32 matrix);
 void print_image_matrix(ImageMatrix src);
 void print_axis_code(AxisCode axis_code);
