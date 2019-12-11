@@ -38,22 +38,45 @@ static camera_fb_t double_buffers[][2] = {
         },
 };
 
+#define N_DOUBLE_BUFFERS (sizeof(double_buffers)/sizeof(double_buffers[0]))
+
+static camera_fb_t* claimed_buffers[N_DOUBLE_BUFFERS + 1] = {};
+
 /* helper functions */
+
 static inline ImageMatrix fb_to_img(camera_fb_t fb) {
     return (ImageMatrix){fb.buf, fb.width, fb.height};
 }
 
-static inline camera_fb_t* queue_fb_get(QueueHandle_t frame_queue) {
-    camera_fb_t* fb_ptr = NULL;
-    xQueueReceive(frame_queue, &fb_ptr, 0);
-    assert(fb_ptr);
-    return fb_ptr;
+static inline camera_fb_t* camera_fb_swap(camera_fb_t* fb) {
+    assert(fb);
+    esp_camera_fb_return(fb);
+    fb = esp_camera_fb_get();
+    while (!fb) {
+        ESP_LOGE(TAG, "Camera capture failed");
+        fb = esp_camera_fb_get();
+    }
+    return fb;
 }
 
-static inline int queue_fb_return(QueueHandle_t frame_queue, const camera_fb_t* fb_ptr) {
-    int success = xQueueSendToBack(frame_queue, &fb_ptr, 0);
-    assert(success == pdTRUE);
-    return success;
+static ImageMatrix queue_fb_get(uint8_t queue_index) {
+    assert(queue_index < N_DOUBLE_BUFFERS + 1);
+    assert(!claimed_buffers[queue_index]);
+    xQueueReceive(frame_queues[queue_index], &claimed_buffers[queue_index], 0);
+    assert(claimed_buffers[queue_index]);
+    if(queue_index == 0) {
+        claimed_buffers[0] = camera_fb_swap(claimed_buffers[0]);
+    }
+    return fb_to_img(*claimed_buffers[queue_index]);
+}
+
+static void queue_fb_return(uint8_t queue_index) {
+    assert(queue_index < N_DOUBLE_BUFFERS + 1);
+    assert(claimed_buffers[queue_index]);
+    if(pdTRUE == xQueueSendToBack(frame_queues[queue_index], &claimed_buffers[queue_index], 0)) {
+        claimed_buffers[queue_index] = NULL;
+    }
+    assert(!claimed_buffers[queue_index]);
 }
 
 /* run */
@@ -69,35 +92,29 @@ static void main_loop(void* pvParameters) {
     int64_t start_time = esp_timer_get_time();
     // main loop
     for (;;) {
-        // get 0
-        esp_camera_fb_return(queue_fb_get(frame_queues[0]));
-        camera_fb_t* fb_ptr_0 = esp_camera_fb_get();
-        while (!fb_ptr_0) {
-            ESP_LOGE(TAG, "Camera capture failed");
-            fb_ptr_0 = esp_camera_fb_get();
-        }
+        ImageMatrix original_image = queue_fb_get(0);
+        uint8_t pixel_average = img_average(original_image);
+        Vector2f rotation = img_estimate_rotation(original_image);
 
-        // process 0
-        ImageMatrix img = fb_to_img(*fb_ptr_0);
-        Vector2f rot = img_estimate_rotation(img);
+        ImageMatrix thresholded_image = queue_fb_get(1);
+        img_threshold(&thresholded_image, original_image, pixel_average);
+        queue_fb_return(1);
 
-        // get 1
-        camera_fb_t* fb_ptr_1 = queue_fb_get(frame_queues[1]);
+        ImageMatrix unrotated_image = queue_fb_get(2);
+        rotation.x *= 0.5f;
+        rotation.y *= -0.5f;
+        img_rotate(unrotated_image, original_image, rotation, pixel_average);
+        queue_fb_return(0);
 
-        // process 0 -> 1
-        ImageMatrix thresh_img = fb_to_img(*fb_ptr_1);
-        img_threshold(&thresh_img, img, img_average(img));
-
-        // return 0
-        queue_fb_return(frame_queues[0], fb_ptr_0);
-
-        // return 1
-        queue_fb_return(frame_queues[1], fb_ptr_1);
+        ImageMatrix final_image = queue_fb_get(3);
+        img_threshold(&final_image, unrotated_image, pixel_average);
+        queue_fb_return(2);
+        queue_fb_return(3);
 
         // end loop
         int64_t end_time = esp_timer_get_time();
         ESP_LOGI(TAG, "%ums %f", (uint32_t)((end_time - start_time) / 1000),
-                180 * atan2(rot.y, rot.x) / M_PI);
+                180 * atan2(rotation.y, rotation.x) / M_PI);
         start_time = end_time;
     }
 }

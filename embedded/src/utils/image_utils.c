@@ -5,7 +5,7 @@ const int8_t edge_detect_kernel[3 * 3] = {-1, -1, -1, -1, 8, -1, -1, -1, -1};
 const int8_t sobel_kernel_x[3 * 3] = {-1, 0, 1, -2, 0, 2, -1, 0, 1};
 const int8_t sobel_kernel_y[3 * 3] = {-1, -2, -1, 0, 0, 0, 1, 2, 1};
 
-PIXEL_TYPE img_average(ImageMatrix mat) {
+PIXEL_TYPE img_average(const ImageMatrix mat) {
     int32_t sum = 0;
     FOR_EACH_PIXEL(mat,) {
         sum += PIXEL(mat, row, col);

@@ -120,4 +120,6 @@ void app_camera_main() {
     }
     // drop down frame size for higher initial frame rate
     s->set_framesize(s, FRAMESIZE_64x64);
+    // set contrast to highest (for better binary seperation)
+    s->set_contrast(s, 2);
 }
