@@ -165,13 +165,7 @@ static esp_err_t cam_params_handler(httpd_req_t* req) {
     char* p = text_buf;
     *p++ = '{';
     p += sprintf(p, "\"framesize\":%u,", s->status.framesize);
-    p += sprintf(p, "\"brightness\":%d,", s->status.brightness);
     p += sprintf(p, "\"contrast\":%d,", s->status.contrast);
-    p += sprintf(p, "\"saturation\":%d,", s->status.saturation);
-    p += sprintf(p, "\"special_effect\":%u,", s->status.special_effect);
-    p += sprintf(p, "\"awb\":%u,", s->status.awb);
-    p += sprintf(p, "\"awb_gain\":%u,", s->status.awb_gain);
-    p += sprintf(p, "\"wb_mode\":%u,", s->status.wb_mode);
     p += sprintf(p, "\"aec\":%u,", s->status.aec);
     p += sprintf(p, "\"aec2\":%u,", s->status.aec2);
     p += sprintf(p, "\"aec_value\":%u,", s->status.aec_value);
@@ -185,7 +179,6 @@ static esp_err_t cam_params_handler(httpd_req_t* req) {
     p += sprintf(p, "\"wpc\":%u,", s->status.wpc);
     p += sprintf(p, "\"hmirror\":%u,", s->status.hmirror);
     p += sprintf(p, "\"vflip\":%u,", s->status.vflip);
-    p += sprintf(p, "\"colorbar\":%u,", s->status.colorbar);
     p += sprintf(p, "\"led_intensity\":%d", led_duty);
     *p++ = '}';
     *p++ = 0;
@@ -235,13 +228,7 @@ void app_httpd_main() {
             {"/set_led_intensity", HTTP_GET, set_led_intensity_handler, NULL},
             {"/cam_params", HTTP_GET, cam_params_handler, NULL},
             // uris for setting camera params
-            {"/set_brightness", HTTP_GET, set_cam_param_handler, s->set_brightness},
             {"/set_contrast", HTTP_GET, set_cam_param_handler, s->set_contrast},
-            {"/set_saturation", HTTP_GET, set_cam_param_handler, s->set_saturation},
-            {"/set_special_effect", HTTP_GET, set_cam_param_handler, s->set_special_effect},
-            {"/set_awb", HTTP_GET, set_cam_param_handler, s->set_whitebal},
-            {"/set_awb_gain", HTTP_GET, set_cam_param_handler, s->set_awb_gain},
-            {"/set_wb_mode", HTTP_GET, set_cam_param_handler, s->set_wb_mode},
             {"/set_aec", HTTP_GET, set_cam_param_handler, s->set_exposure_ctrl},
             {"/set_aec2", HTTP_GET, set_cam_param_handler, s->set_aec2},
             {"/set_aec_value", HTTP_GET, set_cam_param_handler, s->set_aec_value},
@@ -255,7 +242,6 @@ void app_httpd_main() {
             {"/set_wpc", HTTP_GET, set_cam_param_handler, s->set_wpc},
             {"/set_hmirror", HTTP_GET, set_cam_param_handler, s->set_hmirror},
             {"/set_vflip", HTTP_GET, set_cam_param_handler, s->set_vflip},
-            {"/set_colorbar", HTTP_GET, set_cam_param_handler, s->set_colorbar},
     };
     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
     config.core_id = 0;

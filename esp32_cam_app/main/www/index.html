@@ -27,7 +27,7 @@
             #menu {
                 display: none;
                 flex-wrap: nowrap;
-                min-width: 340px;
+                min-width: 300px;
                 background: #363636;
                 padding: 8px;
                 border-radius: 4px;
@@ -331,59 +331,11 @@
                 <div id="sidebar">
                     <input type="checkbox" id="nav-toggle-cb" checked="checked">
                     <nav id="menu">
-                        <div class="input-group" id="brightness-group">
-                            <label for="brightness">Brightness</label>
-                            <div class="range-min">-2</div>
-                            <input type="range" id="brightness" min="-2" max="2" value="0" class="default-action">
-                            <div class="range-max">2</div>
-                        </div>
                         <div class="input-group" id="contrast-group">
                             <label for="contrast">Contrast</label>
                             <div class="range-min">-2</div>
                             <input type="range" id="contrast" min="-2" max="2" value="0" class="default-action">
                             <div class="range-max">2</div>
-                        </div>
-                        <div class="input-group" id="saturation-group">
-                            <label for="saturation">Saturation</label>
-                            <div class="range-min">-2</div>
-                            <input type="range" id="saturation" min="-2" max="2" value="0" class="default-action">
-                            <div class="range-max">2</div>
-                        </div>
-                        <div class="input-group" id="special_effect-group">
-                            <label for="special_effect">Special Effect</label>
-                            <select id="special_effect" class="default-action">
-                                <option value="0" selected="selected">No Effect</option>
-                                <option value="1">Negative</option>
-                                <option value="2">Grayscale</option>
-                                <option value="3">Red Tint</option>
-                                <option value="4">Green Tint</option>
-                                <option value="5">Blue Tint</option>
-                                <option value="6">Sepia</option>
-                            </select>
-                        </div>
-                        <div class="input-group" id="awb-group">
-                            <label for="awb">AWB</label>
-                            <div class="switch">
-                                <input id="awb" type="checkbox" class="default-action" checked="checked">
-                                <label class="slider" for="awb"></label>
-                            </div>
-                        </div>
-                        <div class="input-group" id="awb_gain-group">
-                            <label for="awb_gain">AWB Gain</label>
-                            <div class="switch">
-                                <input id="awb_gain" type="checkbox" class="default-action" checked="checked">
-                                <label class="slider" for="awb_gain"></label>
-                            </div>
-                        </div>
-                        <div class="input-group" id="wb_mode-group">
-                            <label for="wb_mode">WB Mode</label>
-                            <select id="wb_mode" class="default-action">
-                                <option value="0" selected="selected">Auto</option>
-                                <option value="1">Sunny</option>
-                                <option value="2">Cloudy</option>
-                                <option value="3">Office</option>
-                                <option value="4">Home</option>
-                            </select>
                         </div>
                         <div class="input-group" id="aec2-group">
                             <label for="aec2">AEC DSP</label>
@@ -472,13 +424,6 @@
                                 <label class="slider" for="vflip"></label>
                             </div>
                         </div>
-                        <div class="input-group" id="colorbar-group">
-                            <label for="colorbar">Color Bar</label>
-                            <div class="switch">
-                                <input id="colorbar" type="checkbox" class="default-action">
-                                <label class="slider" for="colorbar"></label>
-                            </div>
-                        </div>
                         <div class="input-group" id="led-group">
                           <label for="led_intensity">LED Intensity</label>
                           <div class="range-min">0</div>
@@ -486,8 +431,12 @@
                           <div class="range-max">255</div>
                         </div>
                         <section id="buttons">
-                            <button id="toggle-stream-0">Start Stream</button>
-                            <button id="toggle-stream-1">Start Stream</button>
+                            <button id="toggle-stream-0">Start Stream 0</button>
+                            <button id="toggle-stream-1">Start Stream 1</button>
+                        </section>
+                        <section id="buttons">
+                            <button id="toggle-stream-2">Start Stream 2</button>
+                            <button id="toggle-stream-3">Start Stream 3</button>
                         </section>
                     </nav>
                 </div>
@@ -523,7 +472,7 @@
 document.addEventListener('DOMContentLoaded', function (event) {
   var baseHost = document.location.origin
   // TEMP
-  baseHost = 'http://192.168.10.108'
+  //baseHost = 'http://192.168.10.108'
 
   const hide = el => {
     el.classList.add('hidden')
@@ -543,8 +492,6 @@ document.addEventListener('DOMContentLoaded', function (event) {
         hide(gainCeiling)
         show(agcGain)
       }
-    } else if(el.id === "awb_gain"){
-      value ? show(wb) : hide(wb)
     } else if(el.id == "led_intensity"){
       value > -1 ? show(ledGroup) : hide(ledGroup)
     }
@@ -609,47 +556,76 @@ document.addEventListener('DOMContentLoaded', function (event) {
   const aec = document.getElementById('aec')
   const exposure = document.getElementById('aec_value-group')
 
-  // AWB
-  const awb = document.getElementById('awb_gain')
-  const wb = document.getElementById('wb_mode-group')
-
   // Image Streams
   const view0 = document.getElementById('stream-0')
   const view1 = document.getElementById('stream-1')
+  const view2 = document.getElementById('stream-2')
+  const view3 = document.getElementById('stream-3')
   const streamButton0 = document.getElementById('toggle-stream-0')
   const streamButton1 = document.getElementById('toggle-stream-1')
+  const streamButton2 = document.getElementById('toggle-stream-2')
+  const streamButton3 = document.getElementById('toggle-stream-3')
   const ledGroup = document.getElementById('led-group')
 
   const update_view0 = () => { view0.src = `${baseHost}/capture?stream=0&_cb=${Date.now()}` }
   const update_view1 = () => { view1.src = `${baseHost}/capture?stream=1&_cb=${Date.now()}` }
+  const update_view2 = () => { view2.src = `${baseHost}/capture?stream=2&_cb=${Date.now()}` }
+  const update_view3 = () => { view3.src = `${baseHost}/capture?stream=3&_cb=${Date.now()}` }
 
   // Attach actions to buttons
   streamButton0.onclick = () => {
-    const streamEnabled = streamButton0.innerHTML === 'Stop Stream'
+    const streamEnabled = streamButton0.innerHTML === 'Stop Stream 0'
     if (streamEnabled) {
-      streamButton0.innerHTML = 'Start Stream'
+      streamButton0.innerHTML = 'Start Stream 0'
       view0.removeEventListener("load", update_view0)
       view0.removeEventListener("error", update_view0)
     } else {
       view0.addEventListener("load", update_view0)
       view0.addEventListener("error", update_view0)
       update_view0()
-      streamButton0.innerHTML = 'Stop Stream'
+      streamButton0.innerHTML = 'Stop Stream 0'
     }
   }
 
-  // Attach actions to buttons
   streamButton1.onclick = () => {
-    const streamEnabled = streamButton1.innerHTML === 'Stop Stream'
+    const streamEnabled = streamButton1.innerHTML === 'Stop Stream 1'
     if (streamEnabled) {
-      streamButton1.innerHTML = 'Start Stream'
+      streamButton1.innerHTML = 'Start Stream 1'
       view1.removeEventListener("load", update_view1)
       view1.removeEventListener("error", update_view1)
     } else {
       view1.addEventListener("load", update_view1)
       view1.addEventListener("error", update_view1)
       update_view1()
-      streamButton1.innerHTML = 'Stop Stream'
+      streamButton1.innerHTML = 'Stop Stream 1'
+    }
+  }
+
+  streamButton2.onclick = () => {
+    const streamEnabled = streamButton2.innerHTML === 'Stop Stream 2'
+    if (streamEnabled) {
+      streamButton2.innerHTML = 'Start Stream 2'
+      view2.removeEventListener("load", update_view2)
+      view2.removeEventListener("error", update_view2)
+    } else {
+      view2.addEventListener("load", update_view2)
+      view2.addEventListener("error", update_view2)
+      update_view2()
+      streamButton2.innerHTML = 'Stop Stream 2'
+    }
+  }
+
+  streamButton3.onclick = () => {
+    const streamEnabled = streamButton3.innerHTML === 'Stop Stream 3'
+    if (streamEnabled) {
+      streamButton3.innerHTML = 'Start Stream 3'
+      view3.removeEventListener("load", update_view3)
+      view3.removeEventListener("error", update_view3)
+    } else {
+      view3.addEventListener("load", update_view3)
+      view3.addEventListener("error", update_view3)
+      update_view3()
+      streamButton3.innerHTML = 'Stop Stream 3'
     }
   }
 
