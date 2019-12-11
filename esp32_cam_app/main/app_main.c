@@ -85,8 +85,8 @@ static void main_loop(void* pvParameters) {
         camera_fb_t* fb_ptr_1 = queue_fb_get(frame_queues[1]);
 
         // process 0 -> 1
-        ImageMatrix norm_img = fb_to_img(*fb_ptr_1);
-        img_normalize(&norm_img, img);
+        ImageMatrix thresh_img = fb_to_img(*fb_ptr_1);
+        img_threshold(&thresh_img, img, img_average(img));
 
         // return 0
         queue_fb_return(frame_queues[0], fb_ptr_0);

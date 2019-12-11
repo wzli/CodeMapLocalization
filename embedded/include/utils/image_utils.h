@@ -32,6 +32,7 @@ static inline int32_t img_apply_kernel(
     return sum;
 }
 
+PIXEL_TYPE img_average(ImageMatrix mat);
 void img_copy(ImageMatrix* dst, const ImageMatrix src);
 void img_fill(ImageMatrix mat, PIXEL_TYPE value);
 void img_threshold(ImageMatrix* dst, const ImageMatrix src, PIXEL_TYPE threshold);
