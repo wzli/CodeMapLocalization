@@ -7,10 +7,8 @@ const int8_t sobel_kernel_y[3 * 3] = {-1, -2, -1, 0, 0, 0, 1, 2, 1};
 
 PIXEL_TYPE img_average(const ImageMatrix mat) {
     int32_t sum = 0;
-    FOR_EACH_PIXEL(mat,) {
-        sum += PIXEL(mat, row, col);
-    }
-    return sum/(mat.n_rows * mat.n_cols);
+    FOR_EACH_PIXEL(mat, ) { sum += PIXEL(mat, row, col); }
+    return sum / (mat.n_rows * mat.n_cols);
 }
 
 void img_copy(ImageMatrix* dst, const ImageMatrix src) {

@@ -38,7 +38,7 @@ static camera_fb_t double_buffers[][2] = {
         },
 };
 
-#define N_DOUBLE_BUFFERS (sizeof(double_buffers)/sizeof(double_buffers[0]))
+#define N_DOUBLE_BUFFERS (sizeof(double_buffers) / sizeof(double_buffers[0]))
 
 static camera_fb_t* claimed_buffers[N_DOUBLE_BUFFERS + 1] = {};
 
@@ -64,7 +64,7 @@ static ImageMatrix queue_fb_get(uint8_t queue_index) {
     assert(!claimed_buffers[queue_index]);
     xQueueReceive(frame_queues[queue_index], &claimed_buffers[queue_index], 0);
     assert(claimed_buffers[queue_index]);
-    if(queue_index == 0) {
+    if (queue_index == 0) {
         claimed_buffers[0] = camera_fb_swap(claimed_buffers[0]);
     }
     return fb_to_img(*claimed_buffers[queue_index]);
@@ -73,7 +73,7 @@ static ImageMatrix queue_fb_get(uint8_t queue_index) {
 static void queue_fb_return(uint8_t queue_index) {
     assert(queue_index < N_DOUBLE_BUFFERS + 1);
     assert(claimed_buffers[queue_index]);
-    if(pdTRUE == xQueueSendToBack(frame_queues[queue_index], &claimed_buffers[queue_index], 0)) {
+    if (pdTRUE == xQueueSendToBack(frame_queues[queue_index], &claimed_buffers[queue_index], 0)) {
         claimed_buffers[queue_index] = NULL;
     }
     assert(!claimed_buffers[queue_index]);

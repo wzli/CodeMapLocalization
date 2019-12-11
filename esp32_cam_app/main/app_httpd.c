@@ -137,14 +137,13 @@ static esp_err_t capture_handler(httpd_req_t* req) {
     assert(fb->format != PIXFORMAT_JPEG);
     esp_err_t result = ESP_OK;
     result |= httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*");
-    if(lossless) {
+    if (lossless) {
         httpd_resp_set_type(req, "image/x-portable-graymap");
         httpd_resp_set_hdr(req, "Content-Disposition", "inline; filename=capture.pgm");
         sprintf(text_buf, "P5\n%u %u\n%u\n", fb->width, fb->height, 255);
         result |= httpd_resp_send_chunk(req, text_buf, strlen(text_buf));
-        result |= httpd_resp_send_chunk(req, (char*)fb->buf, fb->width * fb->height);
-    }
-    else {
+        result |= httpd_resp_send_chunk(req, (char*) fb->buf, fb->width * fb->height);
+    } else {
         httpd_resp_set_type(req, "image/jpeg");
         httpd_resp_set_hdr(req, "Content-Disposition", "inline; filename=capture.jpg");
         jpg_chunking_t jchunk = {req, 0};
