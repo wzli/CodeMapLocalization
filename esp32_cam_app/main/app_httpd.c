@@ -70,7 +70,6 @@ static int print_heap_info(char* buf, const char* name, uint32_t capabilities) {
 }
 
 static esp_err_t parse_request_param(httpd_req_t* req, const char* param_name, int* param) {
-    ESP_LOGD(TAG, "received uri request: %s", text_buf);
     size_t buf_len = httpd_req_get_url_query_len(req) + 1;
     if (buf_len < 2 || (httpd_req_get_url_query_str(req, text_buf, buf_len) != ESP_OK) ||
             (httpd_query_key_value(text_buf, param_name, text_buf, 32) != ESP_OK)) {
@@ -120,6 +119,8 @@ static esp_err_t stats_handler(httpd_req_t* req) {
 }
 
 static esp_err_t capture_handler(httpd_req_t* req) {
+    int lossless = 0;
+    parse_request_param(req, "lossless", &lossless);
     int stream;
     if (ESP_OK != parse_request_param(req, "stream", &stream) || stream < 0 ||
             stream >= N_FRAME_QUEUES) {
@@ -133,28 +134,30 @@ static esp_err_t capture_handler(httpd_req_t* req) {
         return ESP_FAIL;
     }
     size_t fb_len = fb->len;
-    httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*");
     assert(fb->format != PIXFORMAT_JPEG);
-#if 0
-    httpd_resp_set_type(req, "image/x-portable-graymap");
-    httpd_resp_set_hdr(req, "Content-Disposition", "inline; filename=capture.pgm");
-    sprintf(text_buf, "P5\n%u %u\n%u\n", fb->width, fb->height, 255);
-    res = httpd_resp_send_chunk(req, text_buf, strlen(text_buf));
-    res = httpd_resp_send_chunk(req, (char*)fb->buf, fb->width * fb->height);
-#else
-    httpd_resp_set_type(req, "image/jpeg");
-    httpd_resp_set_hdr(req, "Content-Disposition", "inline; filename=capture.jpg");
-    jpg_chunking_t jchunk = {req, 0};
-    esp_err_t res = frame2jpg_cb(fb, 80, jpg_encode_stream, &jchunk) ? ESP_OK : ESP_FAIL;
-    fb_len = jchunk.len;
-#endif
-    httpd_resp_send_chunk(req, NULL, 0);
-    if (pdTRUE != xQueueSendToBack(frame_queues[stream], &fb, 0)) {
+    esp_err_t result = ESP_OK;
+    result |= httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*");
+    if(lossless) {
+        httpd_resp_set_type(req, "image/x-portable-graymap");
+        httpd_resp_set_hdr(req, "Content-Disposition", "inline; filename=capture.pgm");
+        sprintf(text_buf, "P5\n%u %u\n%u\n", fb->width, fb->height, 255);
+        result |= httpd_resp_send_chunk(req, text_buf, strlen(text_buf));
+        result |= httpd_resp_send_chunk(req, (char*)fb->buf, fb->width * fb->height);
+    }
+    else {
+        httpd_resp_set_type(req, "image/jpeg");
+        httpd_resp_set_hdr(req, "Content-Disposition", "inline; filename=capture.jpg");
+        jpg_chunking_t jchunk = {req, 0};
+        result |= frame2jpg_cb(fb, 80, jpg_encode_stream, &jchunk) ? ESP_OK : ESP_FAIL;
+        fb_len = jchunk.len;
+    }
+    result |= httpd_resp_send_chunk(req, NULL, 0);
+    while (pdTRUE != xQueueSendToBack(frame_queues[stream], &fb, 5)) {
         ESP_LOGE(TAG, "Frame Queue %d Overflow", stream);
     }
     int64_t fr_end = esp_timer_get_time();
     ESP_LOGD(TAG, "JPG: %uB %ums", (uint32_t)(fb_len), (uint32_t)((fr_end - fr_start) / 1000));
-    return res;
+    return result;
 }
 
 static esp_err_t cam_params_handler(httpd_req_t* req) {
@@ -202,6 +205,7 @@ static esp_err_t set_led_intensity_handler(httpd_req_t* req) {
 }
 
 static esp_err_t set_cam_param_handler(httpd_req_t* req) {
+    ESP_LOGI(TAG, "received cam param request: %s", req->uri);
     int val;
     if (ESP_OK != parse_request_param(req, "val", &val)) {
         httpd_resp_send_404(req);

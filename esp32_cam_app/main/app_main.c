@@ -86,7 +86,7 @@ static void main_loop(void* pvParameters) {
 
         // process 0 -> 1
         ImageMatrix copy_img = fb_to_img(*fb_ptr_1);
-        img_copy(&copy_img, img);
+        img_normalize(&copy_img, img);
 
         // return 0
         queue_fb_return(frame_queues[0], fb_ptr_0);
