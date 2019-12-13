@@ -314,13 +314,19 @@
 
             .image {
                 position: relative;
-                min-width: 320px
+                min-width: 320px;
+                image-rendering: optimizeSpeed; 
+                image-rendering: -moz-crisp-edges;         
+                image-rendering: -webkit-optimize-contrast;
+                image-rendering: -o-crisp-edges;           
+                image-rendering: pixelated;                
+                -ms-interpolation-mode: nearest-neighbor;  
             }
 
             .hidden {
                 display: none
             }
-        </style>
+</style>
     </head>
     <body>
         <section class="main">
@@ -463,7 +469,7 @@
                             <figure>
                                 <img id="stream-3" class="image" src="" crossorigin>
                             </figure>
-                        </td>
+                       </td>
                     </tr>
                 </Table>
             </div>
@@ -471,8 +477,6 @@
         <script>
 document.addEventListener('DOMContentLoaded', function (event) {
   var baseHost = document.location.origin
-  // TEMP
-  //baseHost = 'http://192.168.10.108'
 
   const hide = el => {
     el.classList.add('hidden')
