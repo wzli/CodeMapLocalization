@@ -10,8 +10,8 @@ class MlsIndex(ctypes.Structure):
     _fields_ = [
         ('sequence', ctypes.POINTER(ctypes.c_uint)),
         ('sorted_code_positions', ctypes.POINTER(ctypes.c_ushort)),
-        ('sequence_length', ctypes.c_uint),
-        ('code_length', ctypes.c_uint),
+        ('sequence_length', ctypes.c_ushort),
+        ('code_length', ctypes.c_ubyte),
     ]
 
 

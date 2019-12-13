@@ -18,7 +18,7 @@ void bm32_transpose(BitMatrix32 A) {
 uint32_t reverse_bits(uint32_t x, uint32_t n) {
     assert(n <= 32);
     x &= mask_bits(n);
-    uint32_t r = x & 1;
+    unsigned int r = x & 1;
     for (x >>= 1; x; x >>= 1) {
         r <<= 1;
         r |= x & 1;
@@ -27,13 +27,13 @@ uint32_t reverse_bits(uint32_t x, uint32_t n) {
     return r << (n - 1);
 }
 
-uint32_t first_set_bit(uint32_t x) {
-    static const uint32_t MultiplyDeBruijnBitPosition[32] = {0, 1, 28, 2, 29, 14, 24, 3, 30, 22, 20,
-            15, 25, 17, 4, 8, 31, 27, 13, 23, 21, 19, 16, 7, 26, 12, 18, 6, 11, 5, 10, 9};
+uint8_t first_set_bit(uint32_t x) {
+    static const int MultiplyDeBruijnBitPosition[32] = {0, 1, 28, 2, 29, 14, 24, 3, 30, 22, 20, 15,
+            25, 17, 4, 8, 31, 27, 13, 23, 21, 19, 16, 7, 26, 12, 18, 6, 11, 5, 10, 9};
     return x ? MultiplyDeBruijnBitPosition[((uint32_t)((x & -x) * 0x077CB531U)) >> 27] : 32;
 }
 
-uint32_t sum_bits(uint32_t x) {
+uint8_t sum_bits(uint32_t x) {
     x = x - ((x >> 1) & 0x55555555);
     x = (x & 0x33333333) + ((x >> 2) & 0x33333333);
     return (((x + (x >> 4)) & 0x0F0F0F0F) * 0x01010101) >> 24;

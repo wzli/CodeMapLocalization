@@ -19,11 +19,11 @@ extern const int8_t sobel_kernel_y[3 * 3];
 #define PIXEL(MATRIX, ROW, COL) ((MATRIX).data[(ROW) * (MATRIX).n_cols + (COL)])
 
 #define FOR_EACH_PIXEL(MAT, CH)                                  \
-    for (int32_t CH##row = 0; CH##row < (MAT).n_rows; ++CH##row) \
-        for (int32_t CH##col = 0; CH##col < (MAT).n_cols; ++CH##col)
+    for (int16_t CH##row = 0; CH##row < (MAT).n_rows; ++CH##row) \
+        for (int16_t CH##col = 0; CH##col < (MAT).n_cols; ++CH##col)
 
 static inline int32_t img_apply_kernel(
-        ImageMatrix mat, const int8_t* kernel, uint8_t kernel_size, int32_t row, int32_t col) {
+        ImageMatrix mat, const int8_t* kernel, uint8_t kernel_size, int16_t row, int16_t col) {
     int32_t sum = 0;
     ImageMatrix bounds = {0, kernel_size, kernel_size};
     FOR_EACH_PIXEL(bounds, k_) {
