@@ -5,6 +5,7 @@ set(srcs
   src/mls_query.c
   src/utils/bitwise_utils.c
   src/utils/image_utils.c
+  src/utils/hilbert_gen.c
 
 #for unit tests
   src/utils/test_utils.c

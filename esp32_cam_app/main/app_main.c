@@ -97,7 +97,7 @@ static void main_loop(void* pvParameters) {
         Vector2f rotation = img_estimate_rotation(original_image);
 
         ImageMatrix thresholded_image = queue_fb_get(1);
-        img_threshold(&thresholded_image, original_image, pixel_average);
+        img_local_threshold(&thresholded_image, original_image, 6, 16);
         queue_fb_return(1);
 
         ImageMatrix unrotated_image = queue_fb_get(2);
@@ -107,7 +107,7 @@ static void main_loop(void* pvParameters) {
         queue_fb_return(0);
 
         ImageMatrix final_image = queue_fb_get(3);
-        img_threshold(&final_image, unrotated_image, pixel_average);
+        img_local_threshold(&final_image, unrotated_image, 5, 16);
         queue_fb_return(2);
         queue_fb_return(3);
 

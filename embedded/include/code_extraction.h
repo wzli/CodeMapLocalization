@@ -9,6 +9,9 @@ typedef struct {
     uint32_t n_samples;
 } AxisCode;
 
+void img_local_threshold(
+        ImageMatrix* dst, const ImageMatrix src, uint8_t hilbert_order, uint8_t window_size);
+
 Vector2f img_estimate_rotation(const ImageMatrix mat);
 
 float img_estimate_scale(const ImageMatrix mat);
