@@ -58,7 +58,7 @@ AxisCode bm32_extract_column_code(uint32_t initial_row_guess, const BitMatrix32 
     }
     static const uint8_t FILTER_SIZE = 4;
     uint32_t row_code_bits[FILTER_SIZE];
-    for (int j = 0; j < FILTER_SIZE; ++j) {
+    for (uint8_t j = 0; j < FILTER_SIZE; ++j) {
         row_code_bits[j] = initial_row_guess;
     }
     AxisCode column_code = {};
@@ -69,7 +69,7 @@ AxisCode bm32_extract_column_code(uint32_t initial_row_guess, const BitMatrix32 
         }
         mask_sum *= FILTER_SIZE;
         uint8_t row_diff = 0;
-        for (int j = 0; j < FILTER_SIZE; ++j) {
+        for (uint8_t j = 0; j < FILTER_SIZE; ++j) {
             row_diff += sum_bits((row_code_bits[j] ^ matrix[i]) & mask[i]);
         }
         uint8_t j = i & (FILTER_SIZE - 1);

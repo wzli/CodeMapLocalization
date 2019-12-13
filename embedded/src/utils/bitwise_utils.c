@@ -18,7 +18,7 @@ void bm32_transpose(BitMatrix32 A) {
 uint32_t reverse_bits(uint32_t x, uint32_t n) {
     assert(n <= 32);
     x &= mask_bits(n);
-    unsigned int r = x & 1;
+    uint32_t r = x & 1;
     for (x >>= 1; x; x >>= 1) {
         r <<= 1;
         r |= x & 1;
