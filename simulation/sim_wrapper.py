@@ -10,8 +10,8 @@ class MlsIndex(ctypes.Structure):
     _fields_ = [
         ('sequence', ctypes.POINTER(ctypes.c_uint)),
         ('sorted_code_positions', ctypes.POINTER(ctypes.c_ushort)),
-        ('sequence_length', ctypes.c_ushort),
-        ('code_length', ctypes.c_ubyte),
+        ('sequence_length', ctypes.c_uint),
+        ('code_length', ctypes.c_uint),
     ]
 
 
@@ -19,8 +19,8 @@ class AxisCode(ctypes.Structure):
     _fields_ = [
         ('bits', ctypes.c_uint),
         ('mask', ctypes.c_uint),
-        ('n_errors', ctypes.c_ushort),
-        ('n_samples', ctypes.c_ushort),
+        ('n_errors', ctypes.c_uint),
+        ('n_samples', ctypes.c_uint),
     ]
 
 
@@ -47,8 +47,8 @@ class Location(ctypes.Structure):
 
 
 class ImageMatrix(ctypes.Structure):
-    _fields_ = [('data', ctypes.c_char_p), ('n_cols', ctypes.c_short),
-                ('n_rows', ctypes.c_short)]
+    _fields_ = [('data', ctypes.c_char_p), ('n_cols', ctypes.c_int),
+                ('n_rows', ctypes.c_int)]
 
     def __init__(self, width, height, buf=None):
         self.buf = buf if buf else bytes(libsim.sizeof_img_type() * width *
@@ -66,7 +66,7 @@ class ImageMatrix(ctypes.Structure):
         return image_matrix
 
     def to_image(self):
-        #libsim.img_normalize(self)
+        #libsim.img_normalize(ctypes.byref(self), self)
         if libsim.sizeof_img_type() == 2:
             libsim.img_convert_int16_to_uint8(self)
         image = Image.frombuffer('L', (self.n_cols, self.n_rows), self.buf,

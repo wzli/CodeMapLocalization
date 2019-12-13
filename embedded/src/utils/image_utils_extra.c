@@ -19,15 +19,25 @@ void img_hough_line_transform(ImageMatrix dst, const ImageMatrix src) {
     float angle_resolution = M_PI * 0.5f / dst.n_rows;
     float scale_to_index =
             dst.n_cols / sqrtf((src.n_rows * src.n_rows) + (src.n_cols * src.n_cols));
-    for (uint16_t i = 0; i < dst.n_rows; ++i) {
+    for (int32_t i = 0; i < dst.n_rows; ++i) {
         float sin = sinf(i * angle_resolution);
         float cos = cosf(i * angle_resolution);
         FOR_EACH_PIXEL(src, ) {
-            PIXEL(dst, i, (int16_t)(((sin * row) + (cos * col)) * scale_to_index)) +=
+            PIXEL(dst, i, (int32_t)(((sin * row) + (cos * col)) * scale_to_index)) +=
                     PIXEL(src, row, col);
         }
     }
     assert(img_count_negative(dst) == 0);
+}
+
+void img_convert_from_rgb888(ImageMatrix* dst, const ImageMatrix src) {
+    const rgb888_t* data_rgb888 = (rgb888_t*) src.data;
+    int32_t data_len = src.n_rows * src.n_cols;
+    for (int32_t i = 0; i < data_len; ++i) {
+        dst->data[i] = (data_rgb888[i].r + data_rgb888[i].g + data_rgb888[i].b) / 3;
+    }
+    dst->n_cols = src.n_cols;
+    dst->n_rows = src.n_rows;
 }
 
 void img_convert_uint8_to_int16(ImageMatrix mat) {

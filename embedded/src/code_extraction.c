@@ -36,7 +36,7 @@ void img_bit_matrix_conversion(BitMatrix32 dst, BitMatrix32 mask, const ImageMat
         PIXEL_TYPE low_thresh, PIXEL_TYPE high_thresh) {
     assert(src.n_rows == 32 && src.n_cols == 32);
     assert(high_thresh >= low_thresh);
-    for (uint8_t row = 0; row < 32; ++row) {
+    for (int32_t row = 0; row < 32; ++row) {
         dst[row] = 0;
         mask[row] = ~0;
     }
@@ -50,29 +50,29 @@ void img_bit_matrix_conversion(BitMatrix32 dst, BitMatrix32 mask, const ImageMat
 }
 
 AxisCode bm32_extract_column_code(uint32_t initial_row_guess, const BitMatrix32 matrix,
-        const BitMatrix32 mask, uint8_t min_row_samples) {
+        const BitMatrix32 mask, uint32_t min_row_samples) {
     assert(min_row_samples > 0);
     assert(matrix && mask);
     if (!initial_row_guess) {
         initial_row_guess = matrix[15] & mask[15];
     }
-    static const uint8_t FILTER_SIZE = 4;
+    static const uint32_t FILTER_SIZE = 4;
     uint32_t row_code_bits[FILTER_SIZE];
-    for (int j = 0; j < FILTER_SIZE; ++j) {
+    for (uint32_t j = 0; j < FILTER_SIZE; ++j) {
         row_code_bits[j] = initial_row_guess;
     }
     AxisCode column_code = {};
-    for (uint8_t i = 0; i < 32; ++i) {
-        uint8_t mask_sum = sum_bits(mask[i]);
+    for (uint32_t i = 0; i < 32; ++i) {
+        uint32_t mask_sum = sum_bits(mask[i]);
         if (mask_sum < min_row_samples) {
             continue;
         }
         mask_sum *= FILTER_SIZE;
-        uint8_t row_diff = 0;
-        for (int j = 0; j < FILTER_SIZE; ++j) {
+        uint32_t row_diff = 0;
+        for (uint32_t j = 0; j < FILTER_SIZE; ++j) {
             row_diff += sum_bits((row_code_bits[j] ^ matrix[i]) & mask[i]);
         }
-        uint8_t j = i & (FILTER_SIZE - 1);
+        uint32_t j = i & (FILTER_SIZE - 1);
         row_code_bits[j] &= ~mask[i];
         if (row_diff > mask_sum / 2) {
             column_code.bits |= 1 << i;
@@ -89,13 +89,13 @@ AxisCode bm32_extract_column_code(uint32_t initial_row_guess, const BitMatrix32 
 }
 
 void bm32_extract_axis_codes(AxisCode* row_code, AxisCode* col_code, BitMatrix32 matrix,
-        BitMatrix32 mask, uint8_t min_samples) {
+        BitMatrix32 mask, uint32_t min_samples) {
     assert(row_code && col_code);
     *col_code = bm32_extract_column_code(0, matrix, mask, min_samples);
     bm32_transpose(matrix);
     bm32_transpose(mask);
     *row_code = bm32_extract_column_code(col_code->bits, matrix, mask, min_samples);
-    uint8_t offset = first_set_bit(col_code->mask);
+    uint32_t offset = first_set_bit(col_code->mask);
     col_code->bits >>= offset;
     col_code->mask >>= offset;
     offset = first_set_bit(row_code->mask);

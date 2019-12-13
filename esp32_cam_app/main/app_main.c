@@ -1,127 +1,130 @@
-#include <stdio.h>
+#include "esp_timer.h"
+#include "esp_camera.h"
+#include "sdkconfig.h"
+#include "esp_log.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
-#include "esp_system.h"
-#include "esp_spi_flash.h"
-#include "esp_camera.h"
+#include "freertos/queue.h"
 
-#include "board_pins.h"
+#include "tests.h"
+#include "location_decode.h"
+#include "mls_query.h"
 
-#include "esp_log.h"
-#include "driver/ledc.h"
-#include "sdkconfig.h"
+/* externals */
+void app_camera_main();
+void app_wifi_main();
+void app_httpd_main();
 
+extern QueueHandle_t frame_queues[];
 
-static const char *TAG = "app_camera";
+/* static data */
+static const char* TAG = "main_loop";
 
-void app_camera_main ()
-{
-#if CONFIG_CAMERA_MODEL_ESP_EYE
-    /* IO13, IO14 is designed for JTAG by default,
-     * to use it as generalized input,
-     * firstly declair it as pullup input */
-    gpio_config_t conf;
-    conf.mode = GPIO_MODE_INPUT;
-    conf.pull_up_en = GPIO_PULLUP_ENABLE;
-    conf.pull_down_en = GPIO_PULLDOWN_DISABLE;
-    conf.intr_type = GPIO_INTR_DISABLE;
-    conf.pin_bit_mask = 1LL << 13;
-    gpio_config(&conf);
-    conf.pin_bit_mask = 1LL << 14;
-    gpio_config(&conf);
-#endif
+static uint8_t buf_64x64[2][64 * 64];
+static uint8_t buf_32x32[4][32 * 32];
 
-#ifdef CONFIG_LED_ILLUMINATOR_ENABLED
-    gpio_set_direction(CONFIG_LED_LEDC_PIN,GPIO_MODE_OUTPUT);
-    ledc_timer_config_t ledc_timer = {
-        .duty_resolution = LEDC_TIMER_8_BIT,            // resolution of PWM duty
-        .freq_hz         = 1000,                        // frequency of PWM signal
-        .speed_mode      = LEDC_LOW_SPEED_MODE,  // timer mode
-        .timer_num       = CONFIG_LED_LEDC_TIMER        // timer index
-    };
-    ledc_channel_config_t ledc_channel = {
-        .channel    = CONFIG_LED_LEDC_CHANNEL,
-        .duty       = 0,
-        .gpio_num   = CONFIG_LED_LEDC_PIN,
-        .speed_mode = LEDC_LOW_SPEED_MODE,
-        .hpoint     = 0,
-        .timer_sel  = CONFIG_LED_LEDC_TIMER
-    };
-    #ifdef CONFIG_LED_LEDC_HIGH_SPEED_MODE
-    ledc_timer.speed_mode = ledc_channel.speed_mode = LEDC_HIGH_SPEED_MODE;
-    #endif
-    switch (ledc_timer_config(&ledc_timer)) {
-        case ESP_ERR_INVALID_ARG: ESP_LOGE(TAG, "ledc_timer_config() parameter error"); break;
-        case ESP_FAIL: ESP_LOGE(TAG, "ledc_timer_config() Can not find a proper pre-divider number base on the given frequency and the current duty_resolution"); break;
-        case ESP_OK: if (ledc_channel_config(&ledc_channel) == ESP_ERR_INVALID_ARG) {
-            ESP_LOGE(TAG, "ledc_channel_config() parameter error");
-          }
-          break;
-        default: break;
-    }
-#endif
+static camera_fb_t double_buffers[][2] = {
+        {
+                {buf_64x64[0], 64 * 64, 64, 64, PIXFORMAT_GRAYSCALE},
+                {buf_64x64[1], 64 * 64, 64, 64, PIXFORMAT_GRAYSCALE},
+        },
+        {
+                {buf_32x32[0], 32 * 32, 32, 32, PIXFORMAT_GRAYSCALE},
+                {buf_32x32[1], 32 * 32, 32, 32, PIXFORMAT_GRAYSCALE},
+        },
+        {
+                {buf_32x32[2], 32 * 32, 32, 32, PIXFORMAT_GRAYSCALE},
+                {buf_32x32[3], 32 * 32, 32, 32, PIXFORMAT_GRAYSCALE},
+        },
+};
 
-    camera_config_t config;
-    config.ledc_channel = LEDC_CHANNEL_0;
-    config.ledc_timer = LEDC_TIMER_0;
-    config.pin_d0 = Y2_GPIO_NUM;
-    config.pin_d1 = Y3_GPIO_NUM;
-    config.pin_d2 = Y4_GPIO_NUM;
-    config.pin_d3 = Y5_GPIO_NUM;
-    config.pin_d4 = Y6_GPIO_NUM;
-    config.pin_d5 = Y7_GPIO_NUM;
-    config.pin_d6 = Y8_GPIO_NUM;
-    config.pin_d7 = Y9_GPIO_NUM;
-    config.pin_xclk = XCLK_GPIO_NUM;
-    config.pin_pclk = PCLK_GPIO_NUM;
-    config.pin_vsync = VSYNC_GPIO_NUM;
-    config.pin_href = HREF_GPIO_NUM;
-    config.pin_sscb_sda = SIOD_GPIO_NUM;
-    config.pin_sscb_scl = SIOC_GPIO_NUM;
-    config.pin_pwdn = PWDN_GPIO_NUM;
-    config.pin_reset = RESET_GPIO_NUM;
-    config.xclk_freq_hz = 10000000;
-    config.pixel_format = PIXFORMAT_JPEG;
-    //init with high specs to pre-allocate larger buffers
-    config.frame_size = FRAMESIZE_UXGA;
-    config.jpeg_quality = 10;
-    config.fb_count = 2;
+#define N_DOUBLE_BUFFERS (sizeof(double_buffers) / sizeof(double_buffers[0]))
 
-    // camera init
-    esp_err_t err = esp_camera_init(&config);
-    if (err != ESP_OK) {
-        ESP_LOGE(TAG, "Camera init failed with error 0x%x", err);
-        return;
-    }
+static camera_fb_t* claimed_buffers[N_DOUBLE_BUFFERS + 1] = {};
 
-    sensor_t * s = esp_camera_sensor_get();
-    //initial sensors are flipped vertically and colors are a bit saturated
-    if (s->id.PID == OV3660_PID) {
-        s->set_vflip(s, 1);//flip it back
-        s->set_brightness(s, 1);//up the blightness just a bit
-        s->set_saturation(s, -2);//lower the saturation
-    }
-    //drop down frame size for higher initial frame rate
-    s->set_framesize(s, FRAMESIZE_QVGA);
+/* helper functions */
+
+static inline ImageMatrix fb_to_img(camera_fb_t fb) {
+    return (ImageMatrix){fb.buf, fb.width, fb.height};
 }
 
+static inline camera_fb_t* camera_fb_swap(camera_fb_t* fb) {
+    assert(fb);
+    esp_camera_fb_return(fb);
+    fb = esp_camera_fb_get();
+    while (!fb) {
+        ESP_LOGE(TAG, "Camera capture failed");
+        fb = esp_camera_fb_get();
+    }
+    return fb;
+}
 
-void app_main()
-{
-    printf("Hello world!\n");
+static ImageMatrix queue_fb_get(uint8_t queue_index) {
+    assert(queue_index < N_DOUBLE_BUFFERS + 1);
+    assert(!claimed_buffers[queue_index]);
+    xQueueReceive(frame_queues[queue_index], &claimed_buffers[queue_index], 0);
+    assert(claimed_buffers[queue_index]);
+    if (queue_index == 0) {
+        claimed_buffers[0] = camera_fb_swap(claimed_buffers[0]);
+    }
+    return fb_to_img(*claimed_buffers[queue_index]);
+}
 
-    /* Print chip information */
-    esp_chip_info_t chip_info;
-    esp_chip_info(&chip_info);
-    printf("This is ESP32 chip with %d CPU cores, WiFi%s%s, ",
-            chip_info.cores,
-            (chip_info.features & CHIP_FEATURE_BT) ? "/BT" : "",
-            (chip_info.features & CHIP_FEATURE_BLE) ? "/BLE" : "");
+static void queue_fb_return(uint8_t queue_index) {
+    assert(queue_index < N_DOUBLE_BUFFERS + 1);
+    assert(claimed_buffers[queue_index]);
+    if (pdTRUE == xQueueSendToBack(frame_queues[queue_index], &claimed_buffers[queue_index], 0)) {
+        claimed_buffers[queue_index] = NULL;
+    }
+    assert(!claimed_buffers[queue_index]);
+}
 
-    printf("silicon revision %d, ", chip_info.revision);
+/* run */
+static void main_loop(void* pvParameters) {
+    // initialize queues
+    for (int i = 0; i <= sizeof(double_buffers) / sizeof(double_buffers[0]); ++i) {
+        for (int j = 0; j < 2; ++j) {
+            camera_fb_t* fb_ptr = i ? &double_buffers[i - 1][j] : esp_camera_fb_get();
+            xQueueSendToBack(frame_queues[i], &fb_ptr, 0);
+        }
+        assert(!uxQueueSpacesAvailable(frame_queues[i]));
+    }
+    int64_t start_time = esp_timer_get_time();
+    // main loop
+    for (;;) {
+        ImageMatrix original_image = queue_fb_get(0);
+        uint8_t pixel_average = img_average(original_image);
+        Vector2f rotation = img_estimate_rotation(original_image);
 
-    printf("%dMB %s flash\n", spi_flash_get_chip_size() / (1024 * 1024),
-            (chip_info.features & CHIP_FEATURE_EMB_FLASH) ? "embedded" : "external");
+        ImageMatrix thresholded_image = queue_fb_get(1);
+        img_threshold(&thresholded_image, original_image, pixel_average);
+        queue_fb_return(1);
 
+        ImageMatrix unrotated_image = queue_fb_get(2);
+        rotation.x *= 0.5f;
+        rotation.y *= -0.5f;
+        img_rotate(unrotated_image, original_image, rotation, pixel_average);
+        queue_fb_return(0);
+
+        ImageMatrix final_image = queue_fb_get(3);
+        img_threshold(&final_image, unrotated_image, pixel_average);
+        queue_fb_return(2);
+        queue_fb_return(3);
+
+        // end loop
+        int64_t end_time = esp_timer_get_time();
+        ESP_LOGI(TAG, "%ums %f", (uint32_t)((end_time - start_time) / 1000),
+                180 * atan2(rotation.y, rotation.x) / M_PI);
+        start_time = end_time;
+    }
+}
+
+void app_main() {
+    // assert(!run_all_tests());
+    // ESP_LOGI(TAG, "%s\ntests ran: %d\n", test_error, test_count);
+
+    app_wifi_main();
     app_camera_main();
+    app_httpd_main();
+    xTaskCreatePinnedToCore(main_loop, "main_loop", 5000, NULL, 9, NULL, 1);
 }
