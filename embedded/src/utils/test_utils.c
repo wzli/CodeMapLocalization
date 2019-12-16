@@ -1,6 +1,6 @@
 #include "test_utils.h"
 
-int test_count = 0;
+uint32_t test_count = 0;
 char test_error[200] = "ALL TESTS PASSED";
 
 void print_bits(uint32_t word, int8_t word_length) {

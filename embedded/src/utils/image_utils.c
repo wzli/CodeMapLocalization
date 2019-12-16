@@ -5,26 +5,43 @@ const int8_t edge_detect_kernel[3 * 3] = {-1, -1, -1, -1, 8, -1, -1, -1, -1};
 const int8_t sobel_kernel_x[3 * 3] = {-1, 0, 1, -2, 0, 2, -1, 0, 1};
 const int8_t sobel_kernel_y[3 * 3] = {-1, -2, -1, 0, 0, 0, 1, 2, 1};
 
+PIXEL_TYPE img_average(const ImageMatrix mat) {
+    int32_t sum = 0;
+    FOR_EACH_PIXEL(mat, ) { sum += PIXEL(mat, row, col); }
+    return sum / (mat.n_rows * mat.n_cols);
+}
+
+void img_copy(ImageMatrix* dst, const ImageMatrix src) {
+    dst->n_cols = src.n_cols;
+    dst->n_rows = src.n_rows;
+    FOR_EACH_PIXEL(src, ) { PIXEL(*dst, row, col) = PIXEL(src, row, col); }
+}
+
 void img_fill(ImageMatrix mat, PIXEL_TYPE value) {
     FOR_EACH_PIXEL(mat, ) { PIXEL(mat, row, col) = value; }
 }
 
-void img_threshold(ImageMatrix mat, PIXEL_TYPE threshold) {
-    FOR_EACH_PIXEL(mat, ) { PIXEL(mat, row, col) = (PIXEL(mat, row, col) >= threshold) * 255; }
+void img_threshold(ImageMatrix* dst, const ImageMatrix src, PIXEL_TYPE threshold) {
+    dst->n_cols = src.n_cols;
+    dst->n_rows = src.n_rows;
+    FOR_EACH_PIXEL(src, ) { PIXEL(*dst, row, col) = (PIXEL(src, row, col) >= threshold) * 255; }
 }
 
-void img_normalize(ImageMatrix mat) {
-    PIXEL_TYPE max_pixel = PIXEL(mat, 0, 0);
-    PIXEL_TYPE min_pixel = PIXEL(mat, 0, 0);
-    FOR_EACH_PIXEL(mat, ) {
-        max_pixel = MAX(max_pixel, PIXEL(mat, row, col));
-        min_pixel = MIN(min_pixel, PIXEL(mat, row, col));
+void img_normalize(ImageMatrix* dst, const ImageMatrix src) {
+    PIXEL_TYPE max_pixel = PIXEL(src, 0, 0);
+    PIXEL_TYPE min_pixel = PIXEL(src, 0, 0);
+    FOR_EACH_PIXEL(src, ) {
+        max_pixel = MAX(max_pixel, PIXEL(src, row, col));
+        min_pixel = MIN(min_pixel, PIXEL(src, row, col));
     }
     if (max_pixel == min_pixel) {
         return;
     }
-    FOR_EACH_PIXEL(mat, ) {
-        PIXEL(mat, row, col) = ((PIXEL(mat, row, col) - min_pixel) * 255) / (max_pixel - min_pixel);
+    dst->n_cols = src.n_cols;
+    dst->n_rows = src.n_rows;
+    FOR_EACH_PIXEL(src, ) {
+        PIXEL(*dst, row, col) =
+                ((PIXEL(src, row, col) - min_pixel) * 255) / (max_pixel - min_pixel);
     }
 }
 
@@ -63,5 +80,4 @@ void img_edge_filter(ImageMatrix* dst, const ImageMatrix src) {
         int32_t val = img_apply_kernel(src, edge_detect_kernel, 3, row, col);
         PIXEL(*dst, row, col) = CLAMP(val, 0, INT_TYPE_MAX(PIXEL_TYPE));
     }
-    assert(img_count_negative(*dst) == 0);
 }

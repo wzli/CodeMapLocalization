@@ -1,5 +1,24 @@
 #include "code_extraction.h"
+#include "hilbert_gen.h"
 #include <assert.h>
+
+void img_local_threshold(
+        ImageMatrix* dst, const ImageMatrix src, uint8_t hilbert_order, uint8_t window_size) {
+    static uint8_t hilbert_curve[64 * 64 / 4] = {};
+    if (!hilbert_curve[0]) {
+        hilbert_curve_generate(hilbert_curve, hilbert_order);
+    }
+    int32_t sums[] = {0, 255 * window_size};
+    dst->n_cols = src.n_cols;
+    dst->n_rows = src.n_rows;
+    HILBERT_CURVE_FOR_EACH_XY(hilbert_curve, hilbert_order) {
+        int32_t avg[] = {sums[0] / window_size, sums[1] / window_size};
+        int32_t diff[] = {PIXEL(src, y, x) - avg[0], PIXEL(src, y, x) - avg[1]};
+        uint8_t closest = ABS(diff[0]) > ABS(diff[1]);
+        PIXEL(*dst, y, x) = closest * 255;
+        sums[closest] += PIXEL(src, y, x) - avg[closest];
+    }
+}
 
 Vector2f img_estimate_rotation(const ImageMatrix mat) {
     Vector2f gradient_sum = {};
@@ -58,7 +77,7 @@ AxisCode bm32_extract_column_code(uint32_t initial_row_guess, const BitMatrix32 
     }
     static const uint8_t FILTER_SIZE = 4;
     uint32_t row_code_bits[FILTER_SIZE];
-    for (int j = 0; j < FILTER_SIZE; ++j) {
+    for (uint8_t j = 0; j < FILTER_SIZE; ++j) {
         row_code_bits[j] = initial_row_guess;
     }
     AxisCode column_code = {};
@@ -69,7 +88,7 @@ AxisCode bm32_extract_column_code(uint32_t initial_row_guess, const BitMatrix32 
         }
         mask_sum *= FILTER_SIZE;
         uint8_t row_diff = 0;
-        for (int j = 0; j < FILTER_SIZE; ++j) {
+        for (uint8_t j = 0; j < FILTER_SIZE; ++j) {
             row_diff += sum_bits((row_code_bits[j] ^ matrix[i]) & mask[i]);
         }
         uint8_t j = i & (FILTER_SIZE - 1);

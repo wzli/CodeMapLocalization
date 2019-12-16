@@ -3,4 +3,6 @@
 #
 # (Uses default behaviour of compiling all source files in directory, adding 'include' to include path.)
 
+CFLAGS += -Wall -Wextra -Werror=double-promotion
+
 COMPONENT_EMBED_FILES := www/index.html.gz

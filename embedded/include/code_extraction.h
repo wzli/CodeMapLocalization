@@ -5,9 +5,12 @@
 typedef struct {
     uint32_t bits;
     uint32_t mask;
-    uint16_t n_errors;
-    uint16_t n_samples;
+    uint32_t n_errors;
+    uint32_t n_samples;
 } AxisCode;
+
+void img_local_threshold(
+        ImageMatrix* dst, const ImageMatrix src, uint8_t hilbert_order, uint8_t window_size);
 
 Vector2f img_estimate_rotation(const ImageMatrix mat);
 

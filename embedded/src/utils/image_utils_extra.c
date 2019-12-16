@@ -30,6 +30,16 @@ void img_hough_line_transform(ImageMatrix dst, const ImageMatrix src) {
     assert(img_count_negative(dst) == 0);
 }
 
+void img_convert_from_rgb888(ImageMatrix* dst, const ImageMatrix src) {
+    const rgb888_t* data_rgb888 = (rgb888_t*) src.data;
+    int32_t data_len = src.n_rows * src.n_cols;
+    for (int32_t i = 0; i < data_len; ++i) {
+        dst->data[i] = (data_rgb888[i].r + data_rgb888[i].g + data_rgb888[i].b) / 3;
+    }
+    dst->n_cols = src.n_cols;
+    dst->n_rows = src.n_rows;
+}
+
 void img_convert_uint8_to_int16(ImageMatrix mat) {
     uint8_t* data_uint8 = (uint8_t*) mat.data;
     for (int32_t i = mat.n_rows * mat.n_cols - 1; i >= 0; --i) {
