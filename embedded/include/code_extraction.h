@@ -9,6 +9,8 @@ typedef struct {
     uint32_t n_samples;
 } AxisCode;
 
+void img_edge_threshold(ImageMatrix* dst, const ImageMatrix src, uint8_t hysteresis);
+
 void img_local_threshold(
         ImageMatrix* dst, const ImageMatrix src, uint8_t hilbert_order, uint8_t window_size);
 

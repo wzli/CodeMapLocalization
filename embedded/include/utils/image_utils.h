@@ -12,9 +12,9 @@ typedef struct {
     int32_t n_rows;
 } ImageMatrix;
 
-extern const int8_t edge_detect_kernel[3 * 3];
-extern const int8_t sobel_kernel_x[3 * 3];
-extern const int8_t sobel_kernel_y[3 * 3];
+static const int8_t edge_detect_kernel[3 * 3] = {-1, -1, -1, -1, 8, -1, -1, -1, -1};
+static const int8_t sobel_kernel_x[3 * 3] = {-1, 0, 1, -2, 0, 2, -1, 0, 1};
+static const int8_t sobel_kernel_y[3 * 3] = {-1, -2, -1, 0, 0, 0, 1, 2, 1};
 
 #define PIXEL(MATRIX, ROW, COL) ((MATRIX).data[(ROW) * (MATRIX).n_cols + (COL)])
 

@@ -20,14 +20,23 @@ extern QueueHandle_t frame_queues[];
 /* static data */
 static const char* TAG = "main_loop";
 
-static uint8_t buf_64x64[2][64 * 64];
-static uint8_t buf_32x32[4][32 * 32];
+static uint8_t buf_64x64[6][64 * 64];
+// static uint8_t buf_32x32[4][32 * 32];
 
 static camera_fb_t double_buffers[][2] = {
         {
                 {buf_64x64[0], 64 * 64, 64, 64, PIXFORMAT_GRAYSCALE},
                 {buf_64x64[1], 64 * 64, 64, 64, PIXFORMAT_GRAYSCALE},
         },
+        {
+                {buf_64x64[2], 64 * 64, 64, 64, PIXFORMAT_GRAYSCALE},
+                {buf_64x64[3], 64 * 64, 64, 64, PIXFORMAT_GRAYSCALE},
+        },
+        {
+                {buf_64x64[4], 64 * 64, 64, 64, PIXFORMAT_GRAYSCALE},
+                {buf_64x64[5], 64 * 64, 64, 64, PIXFORMAT_GRAYSCALE},
+        },
+#if 0
         {
                 {buf_32x32[0], 32 * 32, 32, 32, PIXFORMAT_GRAYSCALE},
                 {buf_32x32[1], 32 * 32, 32, 32, PIXFORMAT_GRAYSCALE},
@@ -36,6 +45,7 @@ static camera_fb_t double_buffers[][2] = {
                 {buf_32x32[2], 32 * 32, 32, 32, PIXFORMAT_GRAYSCALE},
                 {buf_32x32[3], 32 * 32, 32, 32, PIXFORMAT_GRAYSCALE},
         },
+#endif
 };
 
 #define N_DOUBLE_BUFFERS (sizeof(double_buffers) / sizeof(double_buffers[0]))
@@ -101,13 +111,16 @@ static void main_loop(void* pvParameters) {
         queue_fb_return(1);
 
         ImageMatrix unrotated_image = queue_fb_get(2);
-        rotation.x *= 0.5f;
-        rotation.y *= -0.5f;
-        img_rotate(unrotated_image, original_image, rotation, pixel_average);
-        queue_fb_return(0);
+        // rotation.x *= 0.5f;
+        // rotation.y *= -0.5f;
+        rotation.y *= -1.0f;
+        // img_rotate(unrotated_image, original_image, rotation, pixel_average);
+        // img_rotate(unrotated_image, original_image, rotation, pixel_average);
+        img_edge_threshold(&unrotated_image, original_image, 50);
 
         ImageMatrix final_image = queue_fb_get(3);
-        img_local_threshold(&final_image, unrotated_image, 5, 16);
+        img_threshold(&final_image, original_image, pixel_average);
+        queue_fb_return(0);
         queue_fb_return(2);
         queue_fb_return(3);
 

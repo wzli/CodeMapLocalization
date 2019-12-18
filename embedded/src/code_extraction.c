@@ -2,13 +2,31 @@
 #include "hilbert_gen.h"
 #include <assert.h>
 
+void img_edge_threshold(ImageMatrix* dst, const ImageMatrix src, uint8_t hysteresis) {
+    dst->n_rows = src.n_rows;
+    dst->n_cols = src.n_cols;
+    int16_t pixel_average = img_average(src);
+    FOR_EACH_PIXEL(*dst, ) {
+        if (!row || !col || row == src.n_rows - 1 || col == src.n_cols - 1) {
+            PIXEL(*dst, row, col) = 127;
+        } else {
+            int32_t val = img_apply_kernel(src, edge_detect_kernel, 3, row, col);
+            PIXEL(*dst, row, col) =
+                    val < 0 && PIXEL(src, row, col) < pixel_average + hysteresis
+                            ? 0
+                            : val > 0 && PIXEL(src, row, col) > pixel_average - hysteresis ? 255
+                                                                                           : 127;
+        }
+    }
+}
+
 void img_local_threshold(
         ImageMatrix* dst, const ImageMatrix src, uint8_t hilbert_order, uint8_t window_size) {
     static uint8_t hilbert_curve[64 * 64 / 4] = {};
     if (!hilbert_curve[0]) {
         hilbert_curve_generate(hilbert_curve, hilbert_order);
     }
-    int32_t sums[] = {0, 255 * window_size};
+    int32_t sums[] = {127 * window_size, 128 * window_size};
     dst->n_cols = src.n_cols;
     dst->n_rows = src.n_rows;
     HILBERT_CURVE_FOR_EACH_XY(hilbert_curve, hilbert_order) {
