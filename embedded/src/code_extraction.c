@@ -1,40 +1,41 @@
 #include "code_extraction.h"
-#include "hilbert_gen.h"
 #include <assert.h>
 
-void img_edge_threshold(ImageMatrix* dst, const ImageMatrix src, uint8_t hysteresis) {
-    dst->n_rows = src.n_rows;
-    dst->n_cols = src.n_cols;
-    int16_t pixel_average = img_average(src);
+void img_edge_hysteresis_threshold(
+        ImageMatrix* dst, const ImageMatrix src, uint16_t edge_threshold, uint8_t value_threshold) {
+    uint8_t average = img_average(src);
+    uint8_t lower_bound = MAX(0, average - value_threshold);
+    uint8_t upper_bound = MIN(UINT8_MAX, average + value_threshold);
+    uint16_t latched_value = 0;
+    dst->n_rows = src.n_rows - 2;
+    dst->n_cols = src.n_cols - 2;
     FOR_EACH_PIXEL(*dst, ) {
-        if (!row || !col || row == src.n_rows - 1 || col == src.n_cols - 1) {
-            PIXEL(*dst, row, col) = 127;
-        } else {
-            int32_t val = img_apply_kernel(src, edge_detect_kernel, 3, row, col);
-            PIXEL(*dst, row, col) =
-                    val < 0 && PIXEL(src, row, col) < pixel_average + hysteresis
-                            ? 0
-                            : val > 0 && PIXEL(src, row, col) > pixel_average - hysteresis ? 255
-                                                                                           : 127;
+        int16_t s_col = row & 1 ? col : dst->n_cols - col - 1;
+        int32_t edge = img_apply_kernel(src, edge_detect_kernel, 3, row, s_col);
+        if (edge < -edge_threshold && PIXEL(src, row, s_col) < upper_bound) {
+            latched_value = 0;
+        } else if (edge > edge_threshold && PIXEL(src, row, s_col) > lower_bound) {
+            latched_value = UINT8_MAX;
+        } else if (row > 0) {
+            uint8_t count = 1;
+            if (s_col > 0) {
+                latched_value += PIXEL(*dst, row - 1, s_col - 1);
+                ++count;
+            }
+            if (s_col < dst->n_cols - 1) {
+                latched_value += PIXEL(*dst, row - 1, s_col + 1);
+                ++count;
+            }
+            if (col > 0) {
+                latched_value += PIXEL(*dst, row - 1, s_col);
+                ++count;
+            }
+            assert(count > 1);
+            latched_value = (latched_value > (count * INT8_MAX)) * UINT8_MAX;
+        } else if (col == 0) {
+            latched_value = (PIXEL(src, row, s_col) > average) * UINT8_MAX;
         }
-    }
-}
-
-void img_local_threshold(
-        ImageMatrix* dst, const ImageMatrix src, uint8_t hilbert_order, uint8_t window_size) {
-    static uint8_t hilbert_curve[64 * 64 / 4] = {};
-    if (!hilbert_curve[0]) {
-        hilbert_curve_generate(hilbert_curve, hilbert_order);
-    }
-    int32_t sums[] = {127 * window_size, 128 * window_size};
-    dst->n_cols = src.n_cols;
-    dst->n_rows = src.n_rows;
-    HILBERT_CURVE_FOR_EACH_XY(hilbert_curve, hilbert_order) {
-        int32_t avg[] = {sums[0] / window_size, sums[1] / window_size};
-        int32_t diff[] = {PIXEL(src, y, x) - avg[0], PIXEL(src, y, x) - avg[1]};
-        uint8_t closest = ABS(diff[0]) > ABS(diff[1]);
-        PIXEL(*dst, y, x) = closest * 255;
-        sums[closest] += PIXEL(src, y, x) - avg[closest];
+        PIXEL(*dst, row, s_col) = latched_value;
     }
 }
 
