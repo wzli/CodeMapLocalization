@@ -25,8 +25,8 @@ static uint8_t buf_64x64[6][64 * 64];
 
 static camera_fb_t double_buffers[][2] = {
         {
-                {buf_64x64[0], 62 * 62, 62, 62, PIXFORMAT_GRAYSCALE},
-                {buf_64x64[1], 62 * 62, 62, 62, PIXFORMAT_GRAYSCALE},
+                {buf_64x64[0], 64 * 64, 64, 64, PIXFORMAT_GRAYSCALE},
+                {buf_64x64[1], 64 * 64, 64, 64, PIXFORMAT_GRAYSCALE},
         },
         {
                 {buf_64x64[2], 62 * 62, 62, 62, PIXFORMAT_GRAYSCALE},
@@ -103,24 +103,19 @@ static void main_loop(void* pvParameters) {
     // main loop
     for (;;) {
         ImageMatrix original_image = queue_fb_get(0);
-        img_normalize(&original_image, original_image);
-        Vector2f rotation = img_estimate_rotation(original_image);
-
-        ImageMatrix thresholded_image = queue_fb_get(1);
-        img_edge_hysteresis_threshold(&thresholded_image, original_image, 0, 100);
-        queue_fb_return(1);
-
-        ImageMatrix unrotated_image = queue_fb_get(2);
-        // rotation.x *= 0.5f;
-        // rotation.y *= -0.5f;
-        rotation.y *= -1.0f;
-        // img_rotate(unrotated_image, original_image, rotation, pixel_average);
-        // img_rotate(unrotated_image, original_image, rotation, pixel_average);
-        img_edge_hysteresis_threshold(&unrotated_image, original_image, 40, 255);
-
+        ImageMatrix unrotated_image = queue_fb_get(1);
+        ImageMatrix thresholded_image = queue_fb_get(2);
         ImageMatrix final_image = queue_fb_get(3);
-        img_edge_hysteresis_threshold(&final_image, original_image, 30, 80);
+
+        img_normalize(&original_image, original_image);
+        uint8_t pixel_average = img_average(original_image);
+        Vector2f rotation = img_estimate_rotation(original_image);
+        rotation.y *= -1.0f;
+        img_rotate(unrotated_image, original_image, rotation, pixel_average);
+        img_edge_hysteresis_threshold(&final_image, unrotated_image, 30, pixel_average, 60);
+
         queue_fb_return(0);
+        queue_fb_return(1);
         queue_fb_return(2);
         queue_fb_return(3);
 

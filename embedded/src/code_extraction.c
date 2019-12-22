@@ -1,21 +1,22 @@
 #include "code_extraction.h"
 #include <assert.h>
 
-void img_edge_hysteresis_threshold(
-        ImageMatrix* dst, const ImageMatrix src, uint16_t edge_threshold, uint8_t value_threshold) {
-    uint8_t average = img_average(src);
-    uint8_t lower_bound = MAX(0, average - value_threshold);
-    uint8_t upper_bound = MIN(UINT8_MAX, average + value_threshold);
-    uint16_t latched_value = 0;
+void img_edge_hysteresis_threshold(ImageMatrix* dst, const ImageMatrix src, uint16_t edge_thresh,
+        PIXEL_TYPE value_thresh, PIXEL_TYPE value_tolerance) {
+    PIXEL_TYPE hi_thresh = MAX(0, value_thresh - value_tolerance);
+    PIXEL_TYPE lo_thresh = MIN(INT_TYPE_MAX(PIXEL_TYPE), value_thresh + value_tolerance);
+    int32_t latched_value = INT_TYPE_MAX(PIXEL_TYPE) / 2;
     dst->n_rows = src.n_rows - 2;
     dst->n_cols = src.n_cols - 2;
     FOR_EACH_PIXEL(*dst, ) {
-        int16_t s_col = row & 1 ? col : dst->n_cols - col - 1;
+        int16_t s_col = row & 1 ? dst->n_cols - col - 1 : col;
         int32_t edge = img_apply_kernel(src, edge_detect_kernel, 3, row, s_col);
-        if (edge < -edge_threshold && PIXEL(src, row, s_col) < upper_bound) {
+        if (edge < -edge_thresh && PIXEL(src, row, s_col) < lo_thresh) {
             latched_value = 0;
-        } else if (edge > edge_threshold && PIXEL(src, row, s_col) > lower_bound) {
-            latched_value = UINT8_MAX;
+        } else if (edge > edge_thresh && PIXEL(src, row, s_col) > hi_thresh) {
+            latched_value = INT_TYPE_MAX(PIXEL_TYPE);
+        } else if (PIXEL(src, row, s_col) == value_thresh) {
+            latched_value = INT_TYPE_MAX(PIXEL_TYPE) / 2;
         } else if (row > 0) {
             uint8_t count = 1;
             if (s_col > 0) {
@@ -31,9 +32,7 @@ void img_edge_hysteresis_threshold(
                 ++count;
             }
             assert(count > 1);
-            latched_value = (latched_value > (count * INT8_MAX)) * UINT8_MAX;
-        } else if (col == 0) {
-            latched_value = (PIXEL(src, row, s_col) > average) * UINT8_MAX;
+            latched_value = (2 * latched_value > count * value_thresh) * INT_TYPE_MAX(PIXEL_TYPE);
         }
         PIXEL(*dst, row, s_col) = latched_value;
     }
