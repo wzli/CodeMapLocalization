@@ -1,28 +1,6 @@
 #include "image_utils.h"
 #include <assert.h>
 
-PIXEL_TYPE img_average(const ImageMatrix mat) {
-    int32_t sum = 0;
-    FOR_EACH_PIXEL(mat, ) { sum += PIXEL(mat, row, col); }
-    return sum / (mat.n_rows * mat.n_cols);
-}
-
-void img_copy(ImageMatrix* dst, const ImageMatrix src) {
-    dst->n_cols = src.n_cols;
-    dst->n_rows = src.n_rows;
-    FOR_EACH_PIXEL(src, ) { PIXEL(*dst, row, col) = PIXEL(src, row, col); }
-}
-
-void img_fill(ImageMatrix mat, PIXEL_TYPE value) {
-    FOR_EACH_PIXEL(mat, ) { PIXEL(mat, row, col) = value; }
-}
-
-void img_threshold(ImageMatrix* dst, const ImageMatrix src, PIXEL_TYPE threshold) {
-    dst->n_cols = src.n_cols;
-    dst->n_rows = src.n_rows;
-    FOR_EACH_PIXEL(src, ) { PIXEL(*dst, row, col) = (PIXEL(src, row, col) >= threshold) * 255; }
-}
-
 void img_normalize(ImageMatrix* dst, const ImageMatrix src) {
     PIXEL_TYPE max_pixel = PIXEL(src, 0, 0);
     PIXEL_TYPE min_pixel = PIXEL(src, 0, 0);
@@ -33,11 +11,10 @@ void img_normalize(ImageMatrix* dst, const ImageMatrix src) {
     if (max_pixel == min_pixel) {
         return;
     }
-    dst->n_cols = src.n_cols;
-    dst->n_rows = src.n_rows;
+    img_copy_dimensions(dst, src, 0);
     FOR_EACH_PIXEL(src, ) {
         PIXEL(*dst, row, col) =
-                ((PIXEL(src, row, col) - min_pixel) * 255) / (max_pixel - min_pixel);
+                ((PIXEL(src, row, col) - min_pixel) * UINT8_MAX) / (max_pixel - min_pixel);
     }
 }
 
@@ -69,11 +46,35 @@ void img_rotate(ImageMatrix dst, const ImageMatrix src, Vector2f rotation, PIXEL
     }
 }
 
-void img_edge_filter(ImageMatrix* dst, const ImageMatrix src) {
-    dst->n_rows = src.n_rows - 2;
-    dst->n_cols = src.n_cols - 2;
-    FOR_EACH_PIXEL(*dst, ) {
-        int32_t val = img_apply_kernel(src, edge_detect_kernel, 3, row, col);
-        PIXEL(*dst, row, col) = CLAMP(val, 0, INT_TYPE_MAX(PIXEL_TYPE));
+void img_draw_line(
+        ImageMatrix mat, int16_t x0, int16_t y0, int16_t x1, int16_t y1, PIXEL_TYPE color) {
+    // Bresenham's Line Algorithm
+    uint8_t swap_xy = ABS(y1 - y0) > ABS(x1 - x0);
+    if (swap_xy) {
+        SWAP(x0, y0);
+        SWAP(x1, y1);
+    }
+    if (x0 > x1) {
+        SWAP(x0, x1);
+        SWAP(y0, y1);
+    }
+    int16_t dx = x1 - x0;
+    int16_t dy = y1 - y0;
+    if (dy < 0) {
+        dy = -dy;
+        y0 = -y0;
+    }
+    int16_t error = dy * 2 - dx;
+#define ITERATE_LINE(EDIT_PIXEL)                  \
+    EDIT_PIXEL = color;                       \
+    while (x0++ < x1) {                       \
+        error += 2 * (dy - (error > 0) * dx); \
+        y0 += error > 0;                      \
+        EDIT_PIXEL = color;                   \
+    }
+    if (swap_xy) {
+        ITERATE_LINE(PIXEL(mat, x0, ABS(y0)));
+    } else {
+        ITERATE_LINE(PIXEL(mat, ABS(y0), x0));
     }
 }

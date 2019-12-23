@@ -8,6 +8,7 @@
 #define CUBE(x) (SQR(x) * (x))
 #define MAX(x, y) ((x) > (y) ? (x) : (y))
 #define MIN(x, y) ((x) < (y) ? (x) : (y))
+#define SWAP(x, y) (y ^= x ^= y, x ^= y)
 #define CLAMP(x, min, max) ((x) < (min) ? (min) : (x) > (max) ? (max) : (x))
 #define IS_SIGNED(Type) ((Type) -1 < 0x7F)
 #define INT_TYPE_MAX(Type) \

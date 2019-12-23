@@ -6,8 +6,7 @@ void img_edge_hysteresis_threshold(ImageMatrix* dst, const ImageMatrix src, uint
     PIXEL_TYPE hi_thresh = MAX(0, value_thresh - value_tolerance);
     PIXEL_TYPE lo_thresh = MIN(INT_TYPE_MAX(PIXEL_TYPE), value_thresh + value_tolerance);
     int32_t latched_value = INT_TYPE_MAX(PIXEL_TYPE) / 2;
-    dst->n_rows = src.n_rows - 2;
-    dst->n_cols = src.n_cols - 2;
+    img_copy_dimensions(dst, src, -2);
     FOR_EACH_PIXEL(*dst, ) {
         int16_t s_col = row & 1 ? dst->n_cols - col - 1 : col;
         int32_t edge = img_apply_kernel(src, edge_detect_kernel, 3, row, s_col);

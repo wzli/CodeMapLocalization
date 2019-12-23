@@ -36,8 +36,7 @@ void img_convert_from_rgb888(ImageMatrix* dst, const ImageMatrix src) {
     for (int32_t i = 0; i < data_len; ++i) {
         dst->data[i] = (data_rgb888[i].r + data_rgb888[i].g + data_rgb888[i].b) / 3;
     }
-    dst->n_cols = src.n_cols;
-    dst->n_rows = src.n_rows;
+    img_copy_dimensions(dst, src, 0);
 }
 
 void img_convert_uint8_to_int16(ImageMatrix mat) {
