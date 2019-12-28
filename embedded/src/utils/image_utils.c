@@ -4,7 +4,7 @@
 void img_normalize(ImageMatrix* dst, const ImageMatrix src) {
     PIXEL_TYPE max_pixel = PIXEL(src, 0, 0);
     PIXEL_TYPE min_pixel = PIXEL(src, 0, 0);
-    FOR_EACH_PIXEL(src, ) {
+    FOR_EACH_PIXEL(src) {
         max_pixel = MAX(max_pixel, PIXEL(src, row, col));
         min_pixel = MIN(min_pixel, PIXEL(src, row, col));
     }
@@ -12,7 +12,7 @@ void img_normalize(ImageMatrix* dst, const ImageMatrix src) {
         return;
     }
     img_copy_dimensions(dst, src, 0);
-    FOR_EACH_PIXEL(src, ) {
+    FOR_EACH_PIXEL(src) {
         PIXEL(*dst, row, col) =
                 ((PIXEL(src, row, col) - min_pixel) * UINT8_MAX) / (max_pixel - min_pixel);
     }
@@ -23,7 +23,7 @@ void img_rotate(ImageMatrix dst, const ImageMatrix src, Vector2f rotation, PIXEL
     Vector2f src_center = {0.5f * src.n_cols, 0.5f * src.n_rows};
     Vector2f dst_center = {0.5f * dst.n_cols, 0.5f * dst.n_rows};
     rotation = v2f_flip_rotation(rotation);
-    FOR_EACH_PIXEL(dst, ) {
+    FOR_EACH_PIXEL(dst) {
         Vector2f from_center = {0.5f + col - dst_center.x, 0.5f + row - dst_center.y};
         Vector2f src_position = v2f_add(src_center, v2f_rotate(from_center, rotation));
         if (src_position.x < 0.0f || src_position.x >= src.n_cols || src_position.y < 0.0f ||
@@ -65,7 +65,7 @@ void img_draw_line(
         y0 = -y0;
     }
     int16_t error = dy * 2 - dx;
-#define ITERATE_LINE(EDIT_PIXEL)                  \
+#define ITERATE_LINE(EDIT_PIXEL)              \
     EDIT_PIXEL = color;                       \
     while (x0++ < x1) {                       \
         error += 2 * (dy - (error > 0) * dx); \

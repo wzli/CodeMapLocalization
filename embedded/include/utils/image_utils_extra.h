@@ -1,8 +1,6 @@
 #pragma once
 #include "image_utils.h"
 
-void img_convolution(ImageMatrix* dst, const ImageMatrix src, const ImageMatrix kernel);
-
 void img_hough_line_transform(ImageMatrix dst, const ImageMatrix src);
 
 // convert to grayscale assuming data buffer is in following format

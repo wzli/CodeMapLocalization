@@ -7,9 +7,9 @@ void img_edge_hysteresis_threshold(ImageMatrix* dst, const ImageMatrix src, uint
     PIXEL_TYPE lo_thresh = MIN(INT_TYPE_MAX(PIXEL_TYPE), value_thresh + value_tolerance);
     int32_t latched_value = INT_TYPE_MAX(PIXEL_TYPE) / 2;
     img_copy_dimensions(dst, src, -2);
-    FOR_EACH_PIXEL(*dst, ) {
+    FOR_EACH_PIXEL(*dst) {
         int16_t s_col = row & 1 ? dst->n_cols - col - 1 : col;
-        int32_t edge = img_apply_kernel(src, edge_detect_kernel, 3, row, s_col);
+        int32_t edge = img_apply_kernel(edge_detect_kernel, src, row, s_col);
         if (edge < -edge_thresh && PIXEL(src, row, s_col) < lo_thresh) {
             latched_value = 0;
         } else if (edge > edge_thresh && PIXEL(src, row, s_col) > hi_thresh) {
@@ -40,9 +40,9 @@ void img_edge_hysteresis_threshold(ImageMatrix* dst, const ImageMatrix src, uint
 Vector2f img_estimate_rotation(const ImageMatrix mat) {
     Vector2f gradient_sum = {};
     ImageMatrix bounds = {0, mat.n_cols - 2, mat.n_rows - 2};
-    FOR_EACH_PIXEL(bounds, ) {
-        Vector2f gradient = {img_apply_kernel(mat, sobel_kernel_x, 3, row, col),
-                img_apply_kernel(mat, sobel_kernel_y, 3, row, col)};
+    FOR_EACH_PIXEL(bounds) {
+        Vector2f gradient = {img_apply_kernel(sobel_x_kernel, mat, row, col),
+                img_apply_kernel(sobel_y_kernel, mat, row, col)};
         gradient_sum = v2f_add(gradient_sum, v2f_double_angle(v2f_double_angle(gradient)));
     }
     if (!v2f_is_zero(gradient_sum)) {
@@ -57,8 +57,8 @@ Vector2f img_estimate_rotation(const ImageMatrix mat) {
 float img_estimate_scale(const ImageMatrix mat) {
     int32_t sum = 0, max_val = 0;
     ImageMatrix bounds = {0, mat.n_cols - 2, mat.n_rows - 2};
-    FOR_EACH_PIXEL(bounds, ) {
-        int32_t val = img_apply_kernel(mat, edge_detect_kernel, 3, row, col);
+    FOR_EACH_PIXEL(bounds) {
+        int32_t val = img_apply_kernel(edge_detect_kernel, mat, row, col);
         if (val > 0) {
             sum += val;
             max_val = MAX(max_val, val);
@@ -76,7 +76,7 @@ void img_bit_matrix_conversion(BitMatrix32 dst, BitMatrix32 mask, const ImageMat
         dst[row] = 0;
         mask[row] = ~0;
     }
-    FOR_EACH_PIXEL(src, ) {
+    FOR_EACH_PIXEL(src) {
         if (PIXEL(src, row, col) >= high_thresh) {
             bm32_set_bit(dst, row, col);
         } else if (PIXEL(src, row, col) > low_thresh) {
