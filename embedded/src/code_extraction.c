@@ -33,7 +33,7 @@ void img_edge_hysteresis_threshold(ImageMatrix* dst, const ImageMatrix src, uint
                 ++count;
             }
             assert(count > 1);
-            latched_value = (2 * latched_value > count * value_thresh) * UINT8_MAX;
+            latched_value = (2 * latched_value > count * UINT8_MAX) * UINT8_MAX;
         }
         PIXEL(*dst, row, s_col) = latched_value;
     }
@@ -46,8 +46,10 @@ Vector2f img_estimate_rotation(const ImageMatrix mat) {
         int32_t grad_x = 0, grad_y = 0;
         IMG_APPLY_KERNEL(grad_x, sobel_x_kernel, mat, row, col);
         IMG_APPLY_KERNEL(grad_y, sobel_y_kernel, mat, row, col);
-        gradient_sum = v2f_add(
-                gradient_sum, v2f_double_angle(v2f_double_angle((Vector2f){grad_x, grad_y})));
+        Vector2f gradient = {grad_x, grad_y};
+        gradient = v2f_double_angle(gradient);
+        gradient = v2f_double_angle(gradient);
+        gradient_sum = v2f_add(gradient_sum, gradient);
     }
     if (!v2f_is_zero(gradient_sum)) {
         gradient_sum = v2f_normalize(gradient_sum);

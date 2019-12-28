@@ -39,9 +39,9 @@ static const ImageMatrixInt8 sobel_y_kernel = {(int8_t[]){-1, -2, -1, 0, 0, 0, 1
 #define IMG_FILL(MAT, VAL) \
     FOR_EACH_PIXEL(MAT) { PIXEL(MAT, row, col) = (VAL); }
 
-#define IMG_APPLY_KERNEL(RET_VAL, KERNEL, MAT, ROW, COL)                                     \
-    FOR_EACH_PIXEL_PREFIXED_INDEX(KERNEL, k_) {                                              \
-        (RET_VAL) += PIXEL(KERNEL, k_row, k_col) * PIXEL(MAT, k_row + (ROW), k_col + (COL)); \
+#define IMG_APPLY_KERNEL(ACCUMULATOR, KERNEL, MAT, ROW, COL)                                     \
+    FOR_EACH_PIXEL_PREFIXED_INDEX(KERNEL, k_) {                                                  \
+        (ACCUMULATOR) += PIXEL(KERNEL, k_row, k_col) * PIXEL(MAT, k_row + (ROW), k_col + (COL)); \
     }
 
 uint8_t img_average(const ImageMatrix mat);
