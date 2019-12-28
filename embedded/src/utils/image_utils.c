@@ -29,7 +29,24 @@ void img_normalize(ImageMatrix* dst, const ImageMatrix src) {
     }
 }
 
-void img_rotate(ImageMatrix dst, const ImageMatrix src, Vector2f rotation, uint8_t bg_fill) {
+uint8_t img_bilinear_interpolation(const ImageMatrix mat, Vector2f position) {
+    int16_t right = position.x + 0.5f;
+    int16_t bottom = position.y + 0.5f;
+    int16_t left = MAX(right - 1, 0);
+    int16_t top = MAX(bottom - 1, 0);
+    right = MIN(right, mat.n_cols - 1);
+    bottom = MIN(bottom, mat.n_rows - 1);
+    Vector2f progress = {position.x - 0.5f - left, position.y - 0.5f - top};
+    float top_average = (float) PIXEL(mat, top, left) +
+                        progress.x * (PIXEL(mat, top, right) - PIXEL(mat, top, left));
+    float bottom_average = (float) PIXEL(mat, bottom, left) +
+                           progress.x * (PIXEL(mat, bottom, right) - PIXEL(mat, bottom, left));
+    return top_average + progress.y * (bottom_average - top_average);
+}
+
+void img_rotate(ImageMatrix dst, const ImageMatrix src, Vector2f rotation, uint8_t bg_fill,
+        ImageInterpolation interpolation) {
+    assert(interpolation);
     assert(!v2f_is_zero(rotation) && !v2f_is_nan(rotation));
     Vector2f src_center = {0.5f * src.n_cols, 0.5f * src.n_rows};
     Vector2f dst_center = {0.5f * dst.n_cols, 0.5f * dst.n_rows};
@@ -42,18 +59,7 @@ void img_rotate(ImageMatrix dst, const ImageMatrix src, Vector2f rotation, uint8
             PIXEL(dst, row, col) = bg_fill;
             continue;
         }
-        int16_t right = src_position.x + 0.5f;
-        int16_t bottom = src_position.y + 0.5f;
-        int16_t left = MAX(right - 1, 0);
-        int16_t top = MAX(bottom - 1, 0);
-        right = MIN(right, src.n_cols - 1);
-        bottom = MIN(bottom, src.n_rows - 1);
-        Vector2f progress = {src_position.x - 0.5f - left, src_position.y - 0.5f - top};
-        float top_average = (float) PIXEL(src, top, left) +
-                            progress.x * (PIXEL(src, top, right) - PIXEL(src, top, left));
-        float bottom_average = (float) PIXEL(src, bottom, left) +
-                               progress.x * (PIXEL(src, bottom, right) - PIXEL(src, bottom, left));
-        PIXEL(dst, row, col) = top_average + progress.y * (bottom_average - top_average);
+        PIXEL(dst, row, col) = interpolation(src, src_position);
     }
 }
 

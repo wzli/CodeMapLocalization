@@ -11,6 +11,7 @@
 IMG_MATRIX_TYPEDEF(ImageMatrix, uint8_t);
 IMG_MATRIX_TYPEDEF(ImageMatrixInt8, int8_t);
 IMG_MATRIX_TYPEDEF(ImageMatrixFloat, float);
+typedef uint8_t (*ImageInterpolation)(const ImageMatrix mat, Vector2f position);
 
 static const ImageMatrixInt8 edge_kernel = {(int8_t[]){-1, -1, -1, -1, 8, -1, -1, -1, -1}, 3, 3};
 static const ImageMatrixInt8 sobel_x_kernel = {(int8_t[]){-1, 0, 1, -2, 0, 2, -1, 0, 1}, 3, 3};
@@ -47,8 +48,12 @@ static const ImageMatrixInt8 sobel_y_kernel = {(int8_t[]){-1, -2, -1, 0, 0, 0, 1
 uint8_t img_average(const ImageMatrix mat);
 void img_threshold(ImageMatrix* dst, const ImageMatrix src, uint8_t threshold);
 void img_normalize(ImageMatrix* dst, const ImageMatrix src);
-void img_rotate(ImageMatrix dst, const ImageMatrix src, Vector2f rotation, uint8_t bg_fill);
+
 void img_draw_line(ImageMatrix mat, int16_t x0, int16_t y0, int16_t x1, int16_t y1, uint8_t color);
+
+uint8_t img_bilinear_interpolation(const ImageMatrix mat, Vector2f position);
+void img_rotate(ImageMatrix dst, const ImageMatrix src, Vector2f rotation, uint8_t bg_fill,
+        ImageInterpolation interpolation);
 
 void img_convolution(ImageMatrix* dst, const ImageMatrix src, const ImageMatrixInt8 kernel);
 void img_edge_filter(ImageMatrix* dst, const ImageMatrix src);

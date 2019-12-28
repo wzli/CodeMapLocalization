@@ -13,7 +13,7 @@ int test_full_chain() {
         static uint8_t img_buf[32 * 32];
         static ImageMatrix img = {img_buf, 32, 32};
         Vector2f rot = img_estimate_rotation(src_img);
-        img_rotate(img, src_img, rot, 127);
+        img_rotate(img, src_img, rot, 127, img_bilinear_interpolation);
 
         // convert to bit matrix
         static BitMatrix32 bit_matrix, bit_mask;
