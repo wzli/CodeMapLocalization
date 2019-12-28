@@ -5,12 +5,12 @@
 int test_full_chain() {
     for (int i = 0; i < 10; ++i) {
         // src image setup
-        static PIXEL_TYPE src_img_buf[30 * 30];
+        static uint8_t src_img_buf[30 * 30];
         static ImageMatrix src_img = {src_img_buf, 30, 30};
         FOR_EACH_PIXEL(src_img) { PIXEL(src_img, row, col) = row + col; }
 
         // unrotate image
-        static PIXEL_TYPE img_buf[32 * 32];
+        static uint8_t img_buf[32 * 32];
         static ImageMatrix img = {img_buf, 32, 32};
         Vector2f rot = img_estimate_rotation(src_img);
         img_rotate(img, src_img, rot, 127);

@@ -1,16 +1,17 @@
 #pragma once
 #include "math_utils.h"
 
-//#define PIXEL_TYPE int16_t
-#ifndef PIXEL_TYPE
-#define PIXEL_TYPE uint8_t
-#endif
+typedef struct {
+    uint8_t* data;
+    int16_t n_cols;
+    int16_t n_rows;
+} ImageMatrix;
 
 typedef struct {
-    PIXEL_TYPE* data;
-    int32_t n_cols;
-    int32_t n_rows;
-} ImageMatrix;
+    float* data;
+    int16_t n_cols;
+    int16_t n_rows;
+} ImageMatrixFloat;
 
 static const int8_t edge_detect_kernel_data[3][3] = {{-1, -1, -1}, {-1, 8, -1}, {-1, -1, -1}};
 static const int8_t sobel_x_kernel_data[3][3] = {{-1, 0, 1}, {-2, 0, 2}, {-1, 0, 1}};
@@ -22,63 +23,42 @@ static const ImageMatrix sobel_y_kernel = {(uint8_t*) sobel_y_kernel_data, 3, 3}
 
 #define PIXEL(MATRIX, ROW, COL) ((MATRIX).data[(ROW) * (MATRIX).n_cols + (COL)])
 
-#define FOR_EACH_PIXEL(MAT)                          \
-    for (int16_t row = 0; row < (MAT).n_rows; ++row) \
-        for (int16_t col = 0; col < (MAT).n_cols; ++col)
+#define FOR_EACH_PIXEL_PREFIXED_INDEX(MAT, PRE)                     \
+    for (int16_t PRE##row = 0; PRE##row < (MAT).n_rows; ++PRE##row) \
+        for (int16_t PRE##col = 0; PRE##col < (MAT).n_cols; ++PRE##col)
 
-static inline void img_copy_dimensions(ImageMatrix* dst, const ImageMatrix src, int16_t border) {
-    dst->n_cols = src.n_cols + border;
-    dst->n_rows = src.n_rows + border;
-}
+#define FOR_EACH_PIXEL(MAT) FOR_EACH_PIXEL_PREFIXED_INDEX(MAT, )
 
-static inline void img_fill(ImageMatrix mat, PIXEL_TYPE value) {
-    FOR_EACH_PIXEL(mat) { PIXEL(mat, row, col) = value; }
-}
+#define IMG_COPY_SIZE(DST_PTR, SRC)       \
+    do {                                  \
+        (DST_PTR)->n_rows = (SRC).n_rows; \
+        (DST_PTR)->n_cols = (SRC).n_cols; \
+    } while (0)
 
-static inline PIXEL_TYPE img_average(const ImageMatrix mat) {
-    int32_t sum = 0;
-    FOR_EACH_PIXEL(mat) { sum += PIXEL(mat, row, col); }
-    return sum / (mat.n_rows * mat.n_cols);
-}
+#define IMG_COPY(DST_PTR, SRC)                                                    \
+    do {                                                                          \
+        IMG_COPY_SIZE(DST_PTR, SRC);                                              \
+        FOR_EACH_PIXEL(SRC) { PIXEL(*DST_PTR, row, col) = PIXEL(SRC, row, col); } \
+    } while (0)
 
-static inline void img_copy(ImageMatrix* dst, const ImageMatrix src) {
-    img_copy_dimensions(dst, src, 0);
-    FOR_EACH_PIXEL(src) { PIXEL(*dst, row, col) = PIXEL(src, row, col); }
-}
+#define IMG_FILL(MAT, VAL) \
+    FOR_EACH_PIXEL(MAT) { PIXEL(MAT, row, col) = (VAL); }
 
-static inline void img_threshold(ImageMatrix* dst, const ImageMatrix src, PIXEL_TYPE threshold) {
-    img_copy_dimensions(dst, src, 0);
-    FOR_EACH_PIXEL(src) { PIXEL(*dst, row, col) = (PIXEL(src, row, col) >= threshold) * UINT8_MAX; }
-}
-
-static inline int32_t img_apply_kernel(
-        const ImageMatrix kernel, const ImageMatrix mat, int16_t mat_row, int16_t mat_col) {
-    int32_t sum = 0;
-    FOR_EACH_PIXEL(kernel) {
-        sum += PIXEL(kernel, row, col) * PIXEL(mat, row + mat_row, col + mat_col);
+#define IMG_APPLY_KERNEL(RET_VAL, KERNEL, MAT, ROW, COL)                                     \
+    FOR_EACH_PIXEL_PREFIXED_INDEX(KERNEL, k_) {                                              \
+        (RET_VAL) += PIXEL(KERNEL, k_row, k_col) * PIXEL(MAT, k_row + (ROW), k_col + (COL)); \
     }
-    return sum;
-}
 
-static inline void img_convolution(
-        ImageMatrix* dst, const ImageMatrix src, const ImageMatrix kernel) {
-    dst->n_rows = src.n_rows - (kernel.n_rows - 1);
-    dst->n_cols = src.n_cols - (kernel.n_cols - 1);
-    FOR_EACH_PIXEL(*dst) {
-        int32_t value = img_apply_kernel(kernel, src, row, col);
-        PIXEL(*dst, row, col) = CLAMP_INT_RANGE(value, PIXEL_TYPE);
-    }
-}
-
-static inline void img_edge_filter(ImageMatrix* dst, const ImageMatrix src) {
-    img_copy_dimensions(dst, src, -2);
-    FOR_EACH_PIXEL(*dst) {
-        int32_t val = img_apply_kernel(edge_detect_kernel, src, row, col);
-        PIXEL(*dst, row, col) = CLAMP(val, 0, INT_TYPE_MAX(PIXEL_TYPE));
-    }
-}
-
+uint8_t img_average(const ImageMatrix mat);
+void img_threshold(ImageMatrix* dst, const ImageMatrix src, uint8_t threshold);
 void img_normalize(ImageMatrix* dst, const ImageMatrix src);
-void img_rotate(ImageMatrix dst, const ImageMatrix src, Vector2f rotation, PIXEL_TYPE bg_fill);
-void img_draw_line(
-        ImageMatrix mat, int16_t x0, int16_t y0, int16_t x1, int16_t y1, PIXEL_TYPE color);
+void img_rotate(ImageMatrix dst, const ImageMatrix src, Vector2f rotation, uint8_t bg_fill);
+void img_draw_line(ImageMatrix mat, int16_t x0, int16_t y0, int16_t x1, int16_t y1, uint8_t color);
+
+void img_convolution(ImageMatrix* dst, const ImageMatrix src, const ImageMatrix kernel);
+void img_edge_filter(ImageMatrix* dst, const ImageMatrix src);
+
+void img_convert_from_rgb888(ImageMatrix* dst, const ImageMatrix src);
+
+uint32_t img_count_negative(ImageMatrixFloat mat);
+void img_hough_line_transform(ImageMatrixFloat dst, const ImageMatrix src);

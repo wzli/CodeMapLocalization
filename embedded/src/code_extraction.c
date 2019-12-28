@@ -2,20 +2,22 @@
 #include <assert.h>
 
 void img_edge_hysteresis_threshold(ImageMatrix* dst, const ImageMatrix src, uint16_t edge_thresh,
-        PIXEL_TYPE value_thresh, PIXEL_TYPE value_tolerance) {
-    PIXEL_TYPE hi_thresh = MAX(0, value_thresh - value_tolerance);
-    PIXEL_TYPE lo_thresh = MIN(INT_TYPE_MAX(PIXEL_TYPE), value_thresh + value_tolerance);
-    int32_t latched_value = INT_TYPE_MAX(PIXEL_TYPE) / 2;
-    img_copy_dimensions(dst, src, -2);
+        uint8_t value_thresh, uint8_t value_tolerance) {
+    uint8_t hi_thresh = MAX(0, value_thresh - value_tolerance);
+    uint8_t lo_thresh = MIN(UINT8_MAX, value_thresh + value_tolerance);
+    int32_t latched_value = UINT8_MAX / 2;
+    dst->n_rows = src.n_rows - 2;
+    dst->n_cols = src.n_cols - 2;
     FOR_EACH_PIXEL(*dst) {
         int16_t s_col = row & 1 ? dst->n_cols - col - 1 : col;
-        int32_t edge = img_apply_kernel(edge_detect_kernel, src, row, s_col);
+        int32_t edge = 0;
+        IMG_APPLY_KERNEL(edge, edge_detect_kernel, src, row, s_col);
         if (edge < -edge_thresh && PIXEL(src, row, s_col) < lo_thresh) {
             latched_value = 0;
         } else if (edge > edge_thresh && PIXEL(src, row, s_col) > hi_thresh) {
-            latched_value = INT_TYPE_MAX(PIXEL_TYPE);
+            latched_value = UINT8_MAX;
         } else if (PIXEL(src, row, s_col) == value_thresh) {
-            latched_value = INT_TYPE_MAX(PIXEL_TYPE) / 2;
+            latched_value = UINT8_MAX / 2;
         } else if (row > 0) {
             uint8_t count = 1;
             if (s_col > 0) {
@@ -31,7 +33,7 @@ void img_edge_hysteresis_threshold(ImageMatrix* dst, const ImageMatrix src, uint
                 ++count;
             }
             assert(count > 1);
-            latched_value = (2 * latched_value > count * value_thresh) * INT_TYPE_MAX(PIXEL_TYPE);
+            latched_value = (2 * latched_value > count * value_thresh) * UINT8_MAX;
         }
         PIXEL(*dst, row, s_col) = latched_value;
     }
@@ -41,8 +43,9 @@ Vector2f img_estimate_rotation(const ImageMatrix mat) {
     Vector2f gradient_sum = {};
     ImageMatrix bounds = {0, mat.n_cols - 2, mat.n_rows - 2};
     FOR_EACH_PIXEL(bounds) {
-        Vector2f gradient = {img_apply_kernel(sobel_x_kernel, mat, row, col),
-                img_apply_kernel(sobel_y_kernel, mat, row, col)};
+        Vector2f gradient = {};
+        IMG_APPLY_KERNEL(gradient.x, sobel_x_kernel, mat, row, col);
+        IMG_APPLY_KERNEL(gradient.y, sobel_y_kernel, mat, row, col);
         gradient_sum = v2f_add(gradient_sum, v2f_double_angle(v2f_double_angle(gradient)));
     }
     if (!v2f_is_zero(gradient_sum)) {
@@ -58,7 +61,8 @@ float img_estimate_scale(const ImageMatrix mat) {
     int32_t sum = 0, max_val = 0;
     ImageMatrix bounds = {0, mat.n_cols - 2, mat.n_rows - 2};
     FOR_EACH_PIXEL(bounds) {
-        int32_t val = img_apply_kernel(edge_detect_kernel, mat, row, col);
+        int32_t val = 0;
+        IMG_APPLY_KERNEL(val, edge_detect_kernel, mat, row, col);
         if (val > 0) {
             sum += val;
             max_val = MAX(max_val, val);
@@ -69,7 +73,7 @@ float img_estimate_scale(const ImageMatrix mat) {
 }
 
 void img_bit_matrix_conversion(BitMatrix32 dst, BitMatrix32 mask, const ImageMatrix src,
-        PIXEL_TYPE low_thresh, PIXEL_TYPE high_thresh) {
+        uint8_t low_thresh, uint8_t high_thresh) {
     assert(src.n_rows == 32 && src.n_cols == 32);
     assert(high_thresh >= low_thresh);
     for (uint8_t row = 0; row < 32; ++row) {

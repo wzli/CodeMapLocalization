@@ -11,10 +11,6 @@
 #define SWAP(x, y) (y ^= x ^= y, x ^= y)
 #define CLAMP(x, min, max) ((x) < (min) ? (min) : (x) > (max) ? (max) : (x))
 #define IS_SIGNED(Type) ((Type) -1 < 0x7F)
-#define INT_TYPE_MAX(Type) \
-    (Type)((Type) ~0 ^ ((uint64_t) IS_SIGNED(Type) << ((CHAR_BIT * sizeof(Type)) - 1)))
-#define INT_TYPE_MIN(Type) ((Type) ~INT_TYPE_MAX(Type))
-#define CLAMP_INT_RANGE(x, Type) CLAMP(x, INT_TYPE_MIN(Type), INT_TYPE_MAX(Type))
 
 #ifndef M_PI
 #define M_PI (3.1415926f)

@@ -10,14 +10,14 @@ typedef struct {
 } AxisCode;
 
 void img_edge_hysteresis_threshold(ImageMatrix* dst, const ImageMatrix src, uint16_t edge_thresh,
-        PIXEL_TYPE value_thresh, PIXEL_TYPE value_tolerance);
+        uint8_t value_thresh, uint8_t value_tolerance);
 
 Vector2f img_estimate_rotation(const ImageMatrix mat);
 
 float img_estimate_scale(const ImageMatrix mat);
 
 void img_bit_matrix_conversion(BitMatrix32 dst, BitMatrix32 mask, const ImageMatrix src,
-        PIXEL_TYPE low_thresh, PIXEL_TYPE high_thresh);
+        uint8_t low_thresh, uint8_t high_thresh);
 
 void bm32_extract_axis_codes(AxisCode* row_code, AxisCode* col_code, BitMatrix32 matrix,
         BitMatrix32 mask, uint8_t min_samples);
