@@ -11,7 +11,7 @@ void img_edge_hysteresis_threshold(ImageMatrix* dst, const ImageMatrix src, uint
     FOR_EACH_PIXEL(*dst) {
         int16_t s_col = row & 1 ? dst->n_cols - col - 1 : col;
         int32_t edge = 0;
-        IMG_APPLY_KERNEL(edge, edge_detect_kernel, src, row, s_col);
+        IMG_APPLY_KERNEL(edge, edge_kernel, src, row, s_col);
         if (edge < -edge_thresh && PIXEL(src, row, s_col) < lo_thresh) {
             latched_value = 0;
         } else if (edge > edge_thresh && PIXEL(src, row, s_col) > hi_thresh) {
@@ -43,10 +43,11 @@ Vector2f img_estimate_rotation(const ImageMatrix mat) {
     Vector2f gradient_sum = {};
     ImageMatrix bounds = {0, mat.n_cols - 2, mat.n_rows - 2};
     FOR_EACH_PIXEL(bounds) {
-        Vector2f gradient = {};
-        IMG_APPLY_KERNEL(gradient.x, sobel_x_kernel, mat, row, col);
-        IMG_APPLY_KERNEL(gradient.y, sobel_y_kernel, mat, row, col);
-        gradient_sum = v2f_add(gradient_sum, v2f_double_angle(v2f_double_angle(gradient)));
+        int32_t grad_x = 0, grad_y = 0;
+        IMG_APPLY_KERNEL(grad_x, sobel_x_kernel, mat, row, col);
+        IMG_APPLY_KERNEL(grad_y, sobel_y_kernel, mat, row, col);
+        gradient_sum = v2f_add(
+                gradient_sum, v2f_double_angle(v2f_double_angle((Vector2f){grad_x, grad_y})));
     }
     if (!v2f_is_zero(gradient_sum)) {
         gradient_sum = v2f_normalize(gradient_sum);
@@ -62,7 +63,7 @@ float img_estimate_scale(const ImageMatrix mat) {
     ImageMatrix bounds = {0, mat.n_cols - 2, mat.n_rows - 2};
     FOR_EACH_PIXEL(bounds) {
         int32_t val = 0;
-        IMG_APPLY_KERNEL(val, edge_detect_kernel, mat, row, col);
+        IMG_APPLY_KERNEL(val, edge_kernel, mat, row, col);
         if (val > 0) {
             sum += val;
             max_val = MAX(max_val, val);

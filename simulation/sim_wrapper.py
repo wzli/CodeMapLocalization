@@ -19,8 +19,8 @@ class AxisCode(ctypes.Structure):
     _fields_ = [
         ('bits', ctypes.c_uint),
         ('mask', ctypes.c_uint),
-        ('n_errors', ctypes.c_uint),
-        ('n_samples', ctypes.c_uint),
+        ('n_errors', ctypes.c_ushort),
+        ('n_samples', ctypes.c_ushort),
     ]
 
 
@@ -47,12 +47,11 @@ class Location(ctypes.Structure):
 
 
 class ImageMatrix(ctypes.Structure):
-    _fields_ = [('data', ctypes.c_char_p), ('n_cols', ctypes.c_int),
-                ('n_rows', ctypes.c_int)]
+    _fields_ = [('data', ctypes.c_char_p), ('n_cols', ctypes.c_short),
+                ('n_rows', ctypes.c_short)]
 
     def __init__(self, width, height, buf=None):
-        self.buf = buf if buf else bytes(libsim.sizeof_img_type() * width *
-                                         height)
+        self.buf = buf if buf else bytes(width * height)
         self.data = self.buf
         self.n_cols = width
         self.n_rows = height
@@ -61,18 +60,11 @@ class ImageMatrix(ctypes.Structure):
         buf = image.tobytes() * 2 if image.mode == 'L' else image.convert(
             'L').tobytes() * 2
         image_matrix = ImageMatrix(image.width, image.height, buf)
-        if libsim.sizeof_img_type() == 2:
-            libsim.img_convert_uint8_to_int16(image_matrix)
         return image_matrix
 
     def to_image(self):
-        #libsim.img_normalize(ctypes.byref(self), self)
-        if libsim.sizeof_img_type() == 2:
-            libsim.img_convert_int16_to_uint8(self)
         image = Image.frombuffer('L', (self.n_cols, self.n_rows), self.buf,
                                  'raw', 'L', 0, 1).copy()
-        if libsim.sizeof_img_type() == 2:
-            libsim.img_convert_uint8_to_int16(self)
         return image
 
     def print(self):

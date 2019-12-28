@@ -1,25 +1,20 @@
 #pragma once
 #include "math_utils.h"
 
-typedef struct {
-    uint8_t* data;
-    int16_t n_cols;
-    int16_t n_rows;
-} ImageMatrix;
+#define IMG_MATRIX_TYPEDEF(NAME, TYPE) \
+    typedef struct {                   \
+        TYPE* data;                    \
+        int16_t n_cols;                \
+        int16_t n_rows;                \
+    } NAME
 
-typedef struct {
-    float* data;
-    int16_t n_cols;
-    int16_t n_rows;
-} ImageMatrixFloat;
+IMG_MATRIX_TYPEDEF(ImageMatrix, uint8_t);
+IMG_MATRIX_TYPEDEF(ImageMatrixInt8, int8_t);
+IMG_MATRIX_TYPEDEF(ImageMatrixFloat, float);
 
-static const int8_t edge_detect_kernel_data[3][3] = {{-1, -1, -1}, {-1, 8, -1}, {-1, -1, -1}};
-static const int8_t sobel_x_kernel_data[3][3] = {{-1, 0, 1}, {-2, 0, 2}, {-1, 0, 1}};
-static const int8_t sobel_y_kernel_data[3][3] = {{-1, -2, -1}, {0, 0, 0}, {1, 2, 1}};
-
-static const ImageMatrix edge_detect_kernel = {(uint8_t*) edge_detect_kernel_data, 3, 3};
-static const ImageMatrix sobel_x_kernel = {(uint8_t*) sobel_x_kernel_data, 3, 3};
-static const ImageMatrix sobel_y_kernel = {(uint8_t*) sobel_y_kernel_data, 3, 3};
+static const ImageMatrixInt8 edge_kernel = {(int8_t[]){-1, -1, -1, -1, 8, -1, -1, -1, -1}, 3, 3};
+static const ImageMatrixInt8 sobel_x_kernel = {(int8_t[]){-1, 0, 1, -2, 0, 2, -1, 0, 1}, 3, 3};
+static const ImageMatrixInt8 sobel_y_kernel = {(int8_t[]){-1, -2, -1, 0, 0, 0, 1, 2, 1}, 3, 3};
 
 #define PIXEL(MATRIX, ROW, COL) ((MATRIX).data[(ROW) * (MATRIX).n_cols + (COL)])
 
@@ -55,7 +50,7 @@ void img_normalize(ImageMatrix* dst, const ImageMatrix src);
 void img_rotate(ImageMatrix dst, const ImageMatrix src, Vector2f rotation, uint8_t bg_fill);
 void img_draw_line(ImageMatrix mat, int16_t x0, int16_t y0, int16_t x1, int16_t y1, uint8_t color);
 
-void img_convolution(ImageMatrix* dst, const ImageMatrix src, const ImageMatrix kernel);
+void img_convolution(ImageMatrix* dst, const ImageMatrix src, const ImageMatrixInt8 kernel);
 void img_edge_filter(ImageMatrix* dst, const ImageMatrix src);
 
 void img_convert_from_rgb888(ImageMatrix* dst, const ImageMatrix src);

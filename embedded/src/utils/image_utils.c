@@ -89,7 +89,7 @@ void img_draw_line(ImageMatrix mat, int16_t x0, int16_t y0, int16_t x1, int16_t 
     }
 }
 
-void img_convolution(ImageMatrix* dst, const ImageMatrix src, const ImageMatrix kernel) {
+void img_convolution(ImageMatrix* dst, const ImageMatrix src, const ImageMatrixInt8 kernel) {
     dst->n_rows = src.n_rows - (kernel.n_rows - 1);
     dst->n_cols = src.n_cols - (kernel.n_cols - 1);
     FOR_EACH_PIXEL(*dst) {
@@ -100,7 +100,7 @@ void img_convolution(ImageMatrix* dst, const ImageMatrix src, const ImageMatrix 
 }
 
 void img_edge_filter(ImageMatrix* dst, const ImageMatrix src) {
-    img_convolution(dst, src, edge_detect_kernel);
+    img_convolution(dst, src, edge_kernel);
 }
 
 void img_convert_from_rgb888(ImageMatrix* dst, const ImageMatrix src) {

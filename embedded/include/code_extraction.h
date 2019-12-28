@@ -5,8 +5,8 @@
 typedef struct {
     uint32_t bits;
     uint32_t mask;
-    uint32_t n_errors;
-    uint32_t n_samples;
+    uint16_t n_errors;
+    uint16_t n_samples;
 } AxisCode;
 
 void img_edge_hysteresis_threshold(ImageMatrix* dst, const ImageMatrix src, uint16_t edge_thresh,
