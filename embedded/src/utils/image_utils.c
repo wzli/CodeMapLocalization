@@ -1,34 +1,6 @@
 #include "image_utils.h"
 #include <assert.h>
 
-uint8_t img_average(const ImageMatrix mat) {
-    uint32_t sum = 0;
-    FOR_EACH_PIXEL(mat) { sum += PIXEL(mat, row, col); }
-    return sum / (mat.n_rows * mat.n_cols);
-}
-
-void img_threshold(ImageMatrix* dst, const ImageMatrix src, uint8_t threshold) {
-    IMG_COPY_SIZE(dst, src);
-    FOR_EACH_PIXEL(src) { PIXEL(*dst, row, col) = (PIXEL(src, row, col) >= threshold) * UINT8_MAX; }
-}
-
-void img_normalize(ImageMatrix* dst, const ImageMatrix src) {
-    uint8_t max_pixel = PIXEL(src, 0, 0);
-    uint8_t min_pixel = PIXEL(src, 0, 0);
-    FOR_EACH_PIXEL(src) {
-        max_pixel = MAX(max_pixel, PIXEL(src, row, col));
-        min_pixel = MIN(min_pixel, PIXEL(src, row, col));
-    }
-    if (max_pixel == min_pixel) {
-        return;
-    }
-    IMG_COPY_SIZE(dst, src);
-    FOR_EACH_PIXEL(src) {
-        PIXEL(*dst, row, col) =
-                ((PIXEL(src, row, col) - min_pixel) * UINT8_MAX) / (max_pixel - min_pixel);
-    }
-}
-
 uint8_t img_bilinear_interpolation(const ImageMatrix mat, Vector2f position) {
     int16_t right = position.x + 0.5f;
     int16_t bottom = position.y + 0.5f;
@@ -63,35 +35,35 @@ void img_rotate(ImageMatrix dst, const ImageMatrix src, Vector2f rotation, uint8
     }
 }
 
-void img_draw_line(ImageMatrix mat, int16_t x0, int16_t y0, int16_t x1, int16_t y1, uint8_t color) {
+void img_draw_line(ImageMatrix mat, ImageWindow line, uint8_t color) {
     // Bresenham's Line Algorithm
-    uint8_t swap_xy = ABS(y1 - y0) > ABS(x1 - x0);
+    uint8_t swap_xy = ABS(line.y1 - line.y0) > ABS(line.x1 - line.x0);
     if (swap_xy) {
-        SWAP(x0, y0);
-        SWAP(x1, y1);
+        SWAP(line.x0, line.y0);
+        SWAP(line.x1, line.y1);
     }
-    if (x0 > x1) {
-        SWAP(x0, x1);
-        SWAP(y0, y1);
+    if (line.x0 > line.x1) {
+        SWAP(line.x0, line.x1);
+        SWAP(line.y0, line.y1);
     }
-    int16_t dx = x1 - x0;
-    int16_t dy = y1 - y0;
+    int16_t dx = line.x1 - line.x0;
+    int16_t dy = line.y1 - line.y0;
     if (dy < 0) {
         dy = -dy;
-        y0 = -y0;
+        line.y0 = -line.y0;
     }
     int16_t error = dy * 2 - dx;
 #define ITERATE_LINE(EDIT_PIXEL)              \
     EDIT_PIXEL = color;                       \
-    while (x0++ < x1) {                       \
+    while (line.x0++ < line.x1) {             \
         error += 2 * (dy - (error > 0) * dx); \
-        y0 += error > 0;                      \
+        line.y0 += error > 0;                 \
         EDIT_PIXEL = color;                   \
     }
     if (swap_xy) {
-        ITERATE_LINE(PIXEL(mat, x0, ABS(y0)));
+        ITERATE_LINE(PIXEL(mat, line.x0, ABS(line.y0)));
     } else {
-        ITERATE_LINE(PIXEL(mat, ABS(y0), x0));
+        ITERATE_LINE(PIXEL(mat, ABS(line.y0), line.x0));
     }
 }
 
@@ -111,20 +83,14 @@ void img_edge_filter(ImageMatrix* dst, const ImageMatrix src) {
 
 void img_convert_from_rgb888(ImageMatrix* dst, const ImageMatrix src) {
     const uint8_t(*data_rgb888)[3] = (uint8_t(*)[3]) src.data;
-    int32_t data_len = src.n_rows * src.n_cols;
+    int32_t data_len = IMG_SIZE(src);
     for (int32_t i = 0; i < data_len; ++i) {
         dst->data[i] = (data_rgb888[i][0] + data_rgb888[i][1] + data_rgb888[i][2]) / 3;
     }
     IMG_COPY_SIZE(dst, src);
 }
 
-uint32_t img_count_negative(ImageMatrixFloat mat) {
-    uint32_t count = 0;
-    FOR_EACH_PIXEL(mat) { count += PIXEL(mat, row, col) < 0; }
-    return count;
-}
-
-void img_hough_line_transform(ImageMatrixFloat dst, const ImageMatrix src) {
+void img_hough_line_transform(ImageMatrixInt32 dst, const ImageMatrix src) {
     IMG_FILL(dst, 0);
     float angle_resolution = M_PI / dst.n_rows;
     float scale_to_index =
@@ -137,5 +103,5 @@ void img_hough_line_transform(ImageMatrixFloat dst, const ImageMatrix src) {
                     PIXEL(src, row, col);
         }
     }
-    assert(img_count_negative(dst) == 0);
+    IMG_NORMALIZE(&dst, dst);
 }

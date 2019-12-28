@@ -57,8 +57,8 @@ class ImageMatrix(ctypes.Structure):
         self.n_rows = height
 
     def from_image(image):
-        buf = image.tobytes() * 2 if image.mode == 'L' else image.convert(
-            'L').tobytes() * 2
+        buf = image.tobytes() if image.mode == 'L' else image.convert(
+            'L').tobytes()
         image_matrix = ImageMatrix(image.width, image.height, buf)
         return image_matrix
 
@@ -71,6 +71,32 @@ class ImageMatrix(ctypes.Structure):
         libsim.print_image_matrix(self)
 
     def show(self, scale=10):
+        self.to_image().resize(
+            (int(self.n_cols * scale), int(self.n_rows * scale))).show()
+
+
+class ImageMatrixInt32(ctypes.Structure):
+    _fields_ = [('data', ctypes.c_char_p), ('n_cols', ctypes.c_short),
+                ('n_rows', ctypes.c_short)]
+
+    def __init__(self, width, height, buf=None):
+        self.buf = buf if buf else bytes(4 * width * height)
+        self.data = self.buf
+        self.n_cols = width
+        self.n_rows = height
+
+    def from_image(image):
+        buf = image.tobytes() if image.mode == 'I' else image.convert(
+            'I').tobytes()
+        image_matrix = ImageMatrix(image.width, image.height, buf)
+        return image_matrix
+
+    def to_image(self):
+        image = Image.frombuffer('I', (self.n_cols, self.n_rows), self.buf,
+                                 'raw', 'I', 0, 1).copy()
+        return image
+
+    def show(self, scale=1):
         self.to_image().resize(
             (int(self.n_cols * scale), int(self.n_rows * scale))).show()
 
