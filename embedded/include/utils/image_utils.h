@@ -87,6 +87,48 @@ static const ImageMatrixInt8 sobel_y_kernel = {(int8_t[]){-1, -2, -1, 0, 0, 0, 1
         }                                                                           \
     } while (0)
 
+#define IMG_VFLIP_INPLACE(MAT)                                    \
+    FOR_EACH_PIXEL(MAT) {                                         \
+        int16_t flipped_row = (MAT).n_rows - row - 1;             \
+        if (row >= flipped_row) {                                 \
+            break;                                                \
+        }                                                         \
+        SWAP(PIXEL(MAT, row, col), PIXEL(MAT, flipped_row, col)); \
+    }
+
+#define IMG_HFLIP_INPLACE(MAT)                                    \
+    FOR_EACH_PIXEL(MAT) {                                         \
+        int16_t flipped_col = (MAT).n_cols - col - 1;             \
+        if (col >= flipped_col) {                                 \
+            break;                                                \
+        }                                                         \
+        SWAP(PIXEL(MAT, row, col), PIXEL(MAT, row, flipped_col)); \
+    }
+
+#define IMG_VFLIP(DST_PTR, SRC)                                                      \
+    do {                                                                             \
+        if ((DST_PTR) == &(SRC)) {                                                   \
+            IMG_VFLIP_INPLACE(SRC);                                                  \
+        } else {                                                                     \
+            IMG_COPY_SIZE(DST_PTR, SRC);                                             \
+            FOR_EACH_PIXEL(SRC) {                                                    \
+                PIXEL(*DST_PTR, row, col) = PIXEL(SRC, (SRC).n_rows - row - 1, col); \
+            }                                                                        \
+        }                                                                            \
+    } while (0)
+
+#define IMG_HFLIP(DST_PTR, SRC)                                                      \
+    do {                                                                             \
+        if ((DST_PTR) == &(SRC)) {                                                   \
+            IMG_HFLIP_INPLACE(SRC);                                                  \
+        } else {                                                                     \
+            IMG_COPY_SIZE(DST_PTR, SRC);                                             \
+            FOR_EACH_PIXEL(SRC) {                                                    \
+                PIXEL(*DST_PTR, row, col) = PIXEL(SRC, row, (SRC).n_cols - col - 1); \
+            }                                                                        \
+        }                                                                            \
+    } while (0)
+
 #define IMG_NORMALIZE_RANGE(DST_PTR, SRC, MIN, MAX)                                       \
     do {                                                                                  \
         IMG_COPY_SIZE(DST_PTR, SRC);                                                      \
@@ -110,19 +152,19 @@ static const ImageMatrixInt8 sobel_y_kernel = {(int8_t[]){-1, -2, -1, 0, 0, 0, 1
         }                                                            \
     } while (0)
 
+uint8_t img_nearest_interpolation(const ImageMatrix mat, Vector2f position);
 uint8_t img_bilinear_interpolation(const ImageMatrix mat, Vector2f position);
 
+void img_resize(ImageMatrix dst, const ImageMatrix src, ImageInterpolation interpolation);
 void img_rotate(ImageMatrix dst, const ImageMatrix src, Vector2f rotation, uint8_t bg_fill,
         ImageInterpolation interpolation);
 
 void img_histogram(uint32_t* histogram, const ImageMatrix mat);
-
 uint8_t img_otsu_histogram_threshold(const uint32_t* histogram);
 
 void img_draw_line(ImageMatrix mat, ImageWindow line, uint8_t color);
 
 void img_convolution(ImageMatrix* dst, const ImageMatrix src, const ImageMatrixInt8 kernel);
-
 void img_edge_filter(ImageMatrix* dst, const ImageMatrix src);
 
 void img_convert_from_rgb888(ImageMatrix* dst, const ImageMatrix src);

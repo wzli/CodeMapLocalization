@@ -47,6 +47,10 @@ static inline Vector2f v2f_subtract(Vector2f a, Vector2f b) {
     return (Vector2f){a.x - b.x, a.y - b.y};
 }
 
+static inline Vector2f v2f_multiply(Vector2f a, Vector2f b) {
+    return (Vector2f){a.x * b.x, a.y * b.y};
+}
+
 static inline Vector2f v2f_scale(Vector2f vec, float scale) {
     return (Vector2f){scale * vec.x, scale * vec.y};
 }

@@ -18,5 +18,10 @@ int test_math_utils() {
     test_assert(IS_SIGNED(int32_t));
     test_assert(IS_SIGNED(int64_t));
 
+    int8_t ai = 3;
+    int8_t bi = 7;
+    SWAP(ai, bi);
+    test_assert(ai == 7 && bi == 3);
+
     return 0;
 }

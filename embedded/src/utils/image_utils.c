@@ -1,6 +1,11 @@
 #include "image_utils.h"
 #include <assert.h>
 
+uint8_t img_nearest_interpolation(const ImageMatrix mat, Vector2f position) {
+    return PIXEL(mat, CLAMP((int16_t) position.y, 0, mat.n_rows),
+            CLAMP((int16_t) position.x, 0, mat.n_cols));
+}
+
 uint8_t img_bilinear_interpolation(const ImageMatrix mat, Vector2f position) {
     int16_t right = position.x + 0.5f;
     int16_t bottom = position.y + 0.5f;
@@ -14,6 +19,15 @@ uint8_t img_bilinear_interpolation(const ImageMatrix mat, Vector2f position) {
     float bottom_average = (float) PIXEL(mat, bottom, left) +
                            progress.x * (PIXEL(mat, bottom, right) - PIXEL(mat, bottom, left));
     return top_average + progress.y * (bottom_average - top_average);
+}
+
+void img_resize(ImageMatrix dst, const ImageMatrix src, ImageInterpolation interpolation) {
+    assert(interpolation);
+    Vector2f scale = {(float) src.n_cols / dst.n_cols, (float) src.n_rows / dst.n_rows};
+    FOR_EACH_PIXEL(dst) {
+        Vector2f position = {0.5f + col, 0.5f + row};
+        PIXEL(dst, row, col) = interpolation(src, v2f_multiply(position, scale));
+    }
 }
 
 void img_rotate(ImageMatrix dst, const ImageMatrix src, Vector2f rotation, uint8_t bg_fill,
@@ -43,6 +57,7 @@ void img_histogram(uint32_t* histogram, const ImageMatrix mat) {
 }
 
 uint8_t img_otsu_histogram_threshold(const uint32_t* histogram) {
+    // "A C++ Implementation of Otsu’s Image Segmentation Method", 2016.
     int32_t N = 0;
     int32_t sum = 0;
     for (int16_t i = 0; i < UINT8_MAX; ++i) {

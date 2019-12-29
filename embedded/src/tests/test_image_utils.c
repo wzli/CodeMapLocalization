@@ -5,7 +5,7 @@ static uint32_t histogram[UINT8_MAX];
 
 int test_image_utils() {
     ImageMatrix test_img = {(uint8_t[5 * 5]){}, 5, 5};
-    ImageMatrix buf_img = {(uint8_t[5 * 5]){}, 5, 5};
+    ImageMatrix buf_img = {(uint8_t[5 * 5 * 2]){}, 5, 5};
     test_assert(IMG_SIZE(test_img) == 25);
 
     for (int i = 0; i < IMG_SIZE(test_img); ++i) {
@@ -53,6 +53,26 @@ int test_image_utils() {
         test_assert(PIXEL(buf_img, row, col) == PIXEL(test_img, row + 3, col + 3));
     }
 
+    IMG_VFLIP(&buf_img, test_img);
+    FOR_EACH_PIXEL(buf_img) {
+        test_assert(PIXEL(buf_img, row, col) == PIXEL(test_img, test_img.n_rows - 1 - row, col));
+    }
+
+    IMG_VFLIP(&buf_img, buf_img);
+    FOR_EACH_PIXEL(test_img) {
+        test_assert(PIXEL(test_img, row, col) == PIXEL(buf_img, row, col));
+    };
+
+    IMG_HFLIP(&buf_img, test_img);
+    FOR_EACH_PIXEL(buf_img) {
+        test_assert(PIXEL(buf_img, row, col) == PIXEL(test_img, row, test_img.n_cols - 1 - col));
+    }
+
+    IMG_HFLIP(&buf_img, buf_img);
+    FOR_EACH_PIXEL(test_img) {
+        test_assert(PIXEL(test_img, row, col) == PIXEL(buf_img, row, col));
+    };
+
     IMG_NORMALIZE_RANGE(&buf_img, test_img, 5, 20);
     test_assert(buf_img.data[5] == 0);
     test_assert(buf_img.data[20] == UINT8_MAX);
@@ -67,5 +87,10 @@ int test_image_utils() {
     }
     test_assert(img_otsu_histogram_threshold(histogram) == 12);
 
+    buf_img.n_cols *= 2;
+    img_resize(buf_img, test_img, img_nearest_interpolation);
+    FOR_EACH_PIXEL(buf_img) {
+        test_assert(PIXEL(buf_img, row, col) == PIXEL(test_img, row, col / 2));
+    }
     return 0;
 }
