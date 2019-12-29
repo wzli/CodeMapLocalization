@@ -154,6 +154,7 @@ static const ImageMatrixInt8 sobel_y_kernel = {(int8_t[]){-1, -2, -1, 0, 0, 0, 1
 
 uint8_t img_nearest_interpolation(const ImageMatrix mat, Vector2f position);
 uint8_t img_bilinear_interpolation(const ImageMatrix mat, Vector2f position);
+uint8_t img_bicubic_interpolation(const ImageMatrix mat, Vector2f position);
 
 void img_resize(ImageMatrix dst, const ImageMatrix src, ImageInterpolation interpolation);
 void img_rotate(ImageMatrix dst, const ImageMatrix src, Vector2f rotation, uint8_t bg_fill,

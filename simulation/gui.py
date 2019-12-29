@@ -180,7 +180,7 @@ class ImageProcessor:
         # reverse rotation
         unrotated_matrix = ImageMatrix(32, 32)
         libsim.img_rotate(unrotated_matrix, matrix, rotation, 127,
-                          libsim.img_bilinear_interpolation)
+                          libsim.img_bicubic_interpolation)
         # store bit mask and matrix in image
         new_image = unrotated_matrix.to_image()
         new_image.unrotated_matrix = unrotated_matrix

@@ -21,6 +21,30 @@ uint8_t img_bilinear_interpolation(const ImageMatrix mat, Vector2f position) {
     return top_average + progress.y * (bottom_average - top_average);
 }
 
+static inline float cubic_interpolation(float p[4], float x) {
+    return p[1] + 0.5f * x *
+                          (p[2] - p[0] +
+                                  x * (2.0f * p[0] - 5.0f * p[1] + 4.0f * p[2] - p[3] +
+                                              x * (3.0f * (p[1] - p[2]) + p[3] - p[0])));
+}
+
+uint8_t img_bicubic_interpolation(const ImageMatrix mat, Vector2f position) {
+    int16_t row0 = position.y - 1.5f;
+    int16_t col0 = position.x - 1.5f;
+    float y_points[4];
+    for (int16_t i = 0; i < 4; ++i) {
+        int16_t row = CLAMP(row0 + i, 0, mat.n_rows - 1);
+        float x_points[4];
+        for (int16_t j = 0; j < 4; ++j) {
+            int16_t col = CLAMP(col0 + j, 0, mat.n_cols - 1);
+            x_points[j] = PIXEL(mat, row, col);
+        }
+        y_points[i] = cubic_interpolation(x_points, position.x - col0 - 1.5f);
+    }
+    float result = cubic_interpolation(y_points, position.y - row0 - 1.5f);
+    return CLAMP(result, 0, UINT8_MAX);
+}
+
 void img_resize(ImageMatrix dst, const ImageMatrix src, ImageInterpolation interpolation) {
     assert(interpolation);
     Vector2f scale = {(float) src.n_cols / dst.n_cols, (float) src.n_rows / dst.n_rows};
