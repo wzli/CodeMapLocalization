@@ -33,7 +33,11 @@ void img_edge_hysteresis_threshold(ImageMatrix* dst, const ImageMatrix src, uint
                 ++count;
             }
             assert(count > 1);
-            latched_value = (2 * latched_value > count * UINT8_MAX) * UINT8_MAX;
+            latched_value = UINT8_MAX *
+                            ((2 * latched_value != count * UINT8_MAX)
+                                            ? (2 * latched_value > count * UINT8_MAX)
+                                            : edge == 0 ? (PIXEL(src, row, s_col) > value_thresh)
+                                                        : edge > 0);
         }
         PIXEL(*dst, row, s_col) = latched_value;
     }
