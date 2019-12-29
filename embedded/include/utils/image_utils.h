@@ -78,36 +78,35 @@ static const ImageMatrixInt8 sobel_y_kernel = {(int8_t[]){-1, -2, -1, 0, 0, 0, 1
         }                                                                               \
     } while (0)
 
-#define IMG_CROP(DST_PTR, SRC, WIN)                                                \
-    do {                                                                           \
-        (DST_PTR)->n_cols = (WIN).x1 - (WIN).x0;                                   \
-        (DST_PTR)->n_rows = (WIN).y1 - (WIN).y0;                                   \
-        FOR_EACH_PIXEL(DST_PTR) {                                                  \
-            PIXEL(*DST_PTR, row, col) = PIXEL(SRC, row + (WIN).y0, col + (WIN).x0) \
-        }                                                                          \
+#define IMG_CROP(DST_PTR, SRC, WIN)                                                 \
+    do {                                                                            \
+        (DST_PTR)->n_cols = (WIN).x1 - (WIN).x0;                                    \
+        (DST_PTR)->n_rows = (WIN).y1 - (WIN).y0;                                    \
+        FOR_EACH_PIXEL(*DST_PTR) {                                                  \
+            PIXEL(*DST_PTR, row, col) = PIXEL(SRC, row + (WIN).y0, col + (WIN).x0); \
+        }                                                                           \
     } while (0)
 
-#define IMG_NORMALIZE_RANGE(DST_PTR, SRC, MAX, MIN)                                 \
-    do {                                                                            \
-        assert(MAX > MIN);                                                          \
-        IMG_COPY_SIZE(DST_PTR, SRC);                                                \
-        FOR_EACH_PIXEL(SRC) {                                                       \
-            PIXEL(*DST_PTR, row, col) =                                             \
-                    ((PIXEL(SRC, row, col) - (MIN)) * UINT8_MAX) / ((MAX) - (MIN)); \
-        }                                                                           \
+#define IMG_NORMALIZE_RANGE(DST_PTR, SRC, MIN, MAX)                                       \
+    do {                                                                                  \
+        IMG_COPY_SIZE(DST_PTR, SRC);                                                      \
+        FOR_EACH_PIXEL(SRC) {                                                             \
+            int32_t val = ((PIXEL(SRC, row, col) - (MIN)) * UINT8_MAX) / ((MAX) - (MIN)); \
+            PIXEL(*DST_PTR, row, col) = CLAMP(val, 0, UINT8_MAX);                         \
+        }                                                                                 \
     } while (0)
 
 #define IMG_NORMALIZE(DST_PTR, SRC)                                  \
     do {                                                             \
-        int32_t max_pixel = PIXEL(SRC, 0, 0);                        \
         int32_t min_pixel = PIXEL(SRC, 0, 0);                        \
-        IMG_MAX(max_pixel, SRC);                                     \
+        int32_t max_pixel = PIXEL(SRC, 0, 0);                        \
         IMG_MIN(min_pixel, SRC);                                     \
+        IMG_MAX(max_pixel, SRC);                                     \
         if (max_pixel == min_pixel) {                                \
             IMG_COPY_SIZE(DST_PTR, SRC);                             \
             IMG_FILL(*DST_PTR, 0);                                   \
         } else {                                                     \
-            IMG_NORMALIZE_RANGE(DST_PTR, SRC, max_pixel, min_pixel); \
+            IMG_NORMALIZE_RANGE(DST_PTR, SRC, min_pixel, max_pixel); \
         }                                                            \
     } while (0)
 

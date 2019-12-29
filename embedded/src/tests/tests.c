@@ -2,6 +2,7 @@
 
 int run_all_tests() {
     test_run(test_math_utils);
+    test_run(test_image_utils);
     test_run(test_bitwise_utils);
     test_run(test_mls_query);
     test_run(test_next_valid_code_segment);
