@@ -5,7 +5,7 @@ void img_edge_hysteresis_threshold(ImageMatrix* dst, const ImageMatrix src, uint
         uint8_t value_thresh, uint8_t value_tolerance) {
     uint8_t hi_thresh = MAX(0, value_thresh - value_tolerance);
     uint8_t lo_thresh = MIN(UINT8_MAX, value_thresh + value_tolerance);
-    int32_t latched_value = UINT8_MAX / 2;
+    uint16_t latched_value = UINT8_MAX / 2;
     dst->n_rows = src.n_rows - 2;
     dst->n_cols = src.n_cols - 2;
     FOR_EACH_PIXEL(*dst) {
@@ -33,11 +33,7 @@ void img_edge_hysteresis_threshold(ImageMatrix* dst, const ImageMatrix src, uint
                 ++count;
             }
             assert(count > 1);
-            latched_value = UINT8_MAX *
-                            ((2 * latched_value != count * UINT8_MAX)
-                                            ? (2 * latched_value > count * UINT8_MAX)
-                                            : edge == 0 ? (PIXEL(src, row, s_col) > value_thresh)
-                                                        : edge > 0);
+            latched_value = ((2 * latched_value) >= (count * UINT8_MAX)) * UINT8_MAX;
         }
         PIXEL(*dst, row, s_col) = latched_value;
     }

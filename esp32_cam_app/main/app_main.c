@@ -20,9 +20,20 @@ extern QueueHandle_t frame_queues[];
 /* static data */
 static const char* TAG = "main_loop";
 
-static const uint8_t double_buffer_sizes[] = {64, 62, 62};
-static camera_fb_t double_buffers[sizeof(double_buffer_sizes)][2];
-static camera_fb_t* claimed_buffers[sizeof(double_buffer_sizes) + 1] = {};
+#define STATIC_FRAME_BUFFER(SIZE) \
+    (camera_fb_t) { (uint8_t[SQR(SIZE)]){}, SQR(SIZE), SIZE, SIZE, PIXFORMAT_GRAYSCALE }
+
+#define STATIC_DOUBLE_BUFFER(SIZE) \
+    { STATIC_FRAME_BUFFER(SIZE), STATIC_FRAME_BUFFER(SIZE) }
+
+static camera_fb_t double_buffers[][2] = {
+        STATIC_DOUBLE_BUFFER(64),
+        STATIC_DOUBLE_BUFFER(64),
+        STATIC_DOUBLE_BUFFER(62),
+};
+
+#define N_DOUBLE_BUFFERS (sizeof(double_buffers) / sizeof(double_buffers[0]))
+static camera_fb_t* claimed_buffers[N_DOUBLE_BUFFERS + 1] = {};
 
 /* helper functions */
 
@@ -42,7 +53,7 @@ static inline camera_fb_t* camera_fb_swap(camera_fb_t* fb) {
 }
 
 static ImageMatrix queue_fb_get(uint8_t queue_index) {
-    assert(queue_index < sizeof(double_buffer_sizes) + 1);
+    assert(queue_index <= N_DOUBLE_BUFFERS);
     assert(!claimed_buffers[queue_index]);
     xQueueReceive(frame_queues[queue_index], &claimed_buffers[queue_index], 0);
     assert(claimed_buffers[queue_index]);
@@ -53,7 +64,7 @@ static ImageMatrix queue_fb_get(uint8_t queue_index) {
 }
 
 static void queue_fb_return(uint8_t queue_index) {
-    assert(queue_index < sizeof(double_buffer_sizes) + 1);
+    assert(queue_index <= N_DOUBLE_BUFFERS);
     assert(claimed_buffers[queue_index]);
     if (pdTRUE == xQueueSendToBack(frame_queues[queue_index], &claimed_buffers[queue_index], 0)) {
         claimed_buffers[queue_index] = NULL;
@@ -63,18 +74,8 @@ static void queue_fb_return(uint8_t queue_index) {
 
 /* run */
 static void main_loop(void* pvParameters) {
-    // allocate double buffers
-    for (int i = 0; i <= sizeof(double_buffer_sizes); ++i) {
-        for (int j = 0; j < 2; ++j) {
-            int16_t n = double_buffer_sizes[i];
-            double_buffers[i][j] =
-                    (camera_fb_t){heap_caps_malloc(n * n, MALLOC_CAP_8BIT | MALLOC_CAP_INTERNAL),
-                            n * n, n, n, PIXFORMAT_GRAYSCALE};
-            assert(double_buffers[i][j].buf);
-        }
-    }
     // initialize queues
-    for (int i = 0; i <= sizeof(double_buffer_sizes); ++i) {
+    for (int i = 0; i <= N_DOUBLE_BUFFERS; ++i) {
         for (int j = 0; j < 2; ++j) {
             camera_fb_t* fb_ptr = i ? &double_buffers[i - 1][j] : esp_camera_fb_get();
             xQueueSendToBack(frame_queues[i], &fb_ptr, 0);
@@ -89,10 +90,10 @@ static void main_loop(void* pvParameters) {
         ImageMatrix thresholded_image = queue_fb_get(2);
         ImageMatrix final_image = queue_fb_get(3);
 
-        IMG_NORMALIZE(&original_image, original_image);
         int32_t pixel_average = 0;
         IMG_SUM(pixel_average, original_image);
         pixel_average /= IMG_SIZE(original_image);
+
         Vector2f rotation = img_estimate_rotation(original_image);
         rotation.y *= -1.0f;
         img_rotate(unrotated_image, original_image, rotation, pixel_average,
@@ -100,7 +101,7 @@ static void main_loop(void* pvParameters) {
         rotation = v2f_scale(rotation, 0.5f);
         img_rotate(thresholded_image, original_image, rotation, pixel_average,
                 img_bilinear_interpolation);
-        img_edge_hysteresis_threshold(&final_image, unrotated_image, 30, pixel_average, 60);
+        img_edge_hysteresis_threshold(&final_image, unrotated_image, 10, pixel_average, 60);
 
         queue_fb_return(0);
         queue_fb_return(1);
