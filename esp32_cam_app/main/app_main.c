@@ -35,6 +35,8 @@ static camera_fb_t double_buffers[][2] = {
 #define N_DOUBLE_BUFFERS (sizeof(double_buffers) / sizeof(double_buffers[0]))
 static camera_fb_t* claimed_buffers[N_DOUBLE_BUFFERS + 1] = {};
 
+static uint32_t histogram[256];
+
 /* helper functions */
 
 static inline ImageMatrix fb_to_img(camera_fb_t fb) {
@@ -84,24 +86,23 @@ static void main_loop(void* pvParameters) {
     }
     int64_t start_time = esp_timer_get_time();
     // main loop
-    for (;;) {
+    for (uint32_t frame_count = 0;; ++frame_count) {
         ImageMatrix original_image = queue_fb_get(0);
         ImageMatrix unrotated_image = queue_fb_get(1);
         ImageMatrix thresholded_image = queue_fb_get(2);
         ImageMatrix final_image = queue_fb_get(3);
 
-        int32_t pixel_average = 0;
-        IMG_SUM(pixel_average, original_image);
-        pixel_average /= IMG_SIZE(original_image);
+        img_histogram(histogram, original_image);
+        uint8_t otsu_threshold = img_otsu_histogram_threshold(histogram);
 
         Vector2f rotation = img_estimate_rotation(original_image);
         rotation.y *= -1.0f;
-        img_rotate(unrotated_image, original_image, rotation, pixel_average,
+        img_rotate(unrotated_image, original_image, rotation, otsu_threshold,
                 img_bilinear_interpolation);
         rotation = v2f_scale(rotation, 0.5f);
-        img_rotate(thresholded_image, original_image, rotation, pixel_average,
+        img_rotate(thresholded_image, original_image, rotation, otsu_threshold,
                 img_bilinear_interpolation);
-        img_edge_hysteresis_threshold(&final_image, unrotated_image, 10, pixel_average, 60);
+        img_edge_hysteresis_threshold(&final_image, unrotated_image, 10, otsu_threshold, 60);
 
         queue_fb_return(0);
         queue_fb_return(1);
@@ -109,9 +110,14 @@ static void main_loop(void* pvParameters) {
         queue_fb_return(3);
 
         // end loop
+        img_histogram(histogram, original_image);
         int64_t end_time = esp_timer_get_time();
-        ESP_LOGI(TAG, "%ums %f", (uint32_t)((end_time - start_time) / 1000),
-                180 * atan2(rotation.y, rotation.x) / M_PI);
+
+        if (!(frame_count & 0xF)) {
+            ESP_LOGI(TAG, "frame %u time %ums rot %fdeg thresh %u", frame_count,
+                    (uint32_t)((end_time - start_time) / 1000),
+                    180 * atan2(rotation.y, rotation.x) / M_PI, otsu_threshold);
+        }
         start_time = end_time;
     }
 }

@@ -35,6 +35,44 @@ void img_rotate(ImageMatrix dst, const ImageMatrix src, Vector2f rotation, uint8
     }
 }
 
+void img_histogram(uint32_t* histogram, const ImageMatrix mat) {
+    for (uint16_t i = 0; i < UINT8_MAX; ++i) {
+        histogram[i] = 0;
+    }
+    FOR_EACH_PIXEL(mat) { ++histogram[PIXEL(mat, row, col)]; }
+}
+
+uint8_t img_otsu_histogram_threshold(const uint32_t* histogram) {
+    int32_t N = 0;
+    int32_t sum = 0;
+    for (int16_t i = 0; i < UINT8_MAX; ++i) {
+        N += histogram[i];
+        sum += i * histogram[i];
+    }
+    uint8_t threshold = 0;
+    int32_t sum_b = 0;
+    int32_t q1 = 0;
+    float max_variance = 0;
+    for (int16_t i = 0; i < UINT8_MAX; ++i) {
+        q1 += histogram[i];
+        if (!q1) {
+            continue;
+        }
+        int32_t q2 = N - q1;
+        if (!q2) {
+            break;
+        }
+        sum_b += i * histogram[i];
+        float mean_difference = (float) sum_b / q1 - (float) (sum - sum_b) / q2;
+        float variance = SQR(mean_difference) * q1 * q2;
+        if (variance >= max_variance) {
+            threshold = i;
+            max_variance = variance;
+        }
+    }
+    return threshold;
+}
+
 void img_draw_line(ImageMatrix mat, ImageWindow line, uint8_t color) {
     // Bresenham's Line Algorithm
     uint8_t swap_xy = ABS(line.y1 - line.y0) > ABS(line.x1 - line.x0);

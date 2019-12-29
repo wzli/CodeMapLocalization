@@ -70,12 +70,12 @@ static const ImageMatrixInt8 sobel_y_kernel = {(int8_t[]){-1, -2, -1, 0, 0, 0, 1
                     PIXEL(KERNEL, k_row, k_col) * PIXEL(MAT, k_row + (ROW), k_col + (COL)); \
         }
 
-#define IMG_THRESHOLD(DST_PTR, SRC, THRESH)                                             \
-    do {                                                                                \
-        IMG_COPY_SIZE(DST_PTR, SRC);                                                    \
-        FOR_EACH_PIXEL(SRC) {                                                           \
-            PIXEL(*DST_PTR, row, col) = (PIXEL(SRC, row, col) >= (THRESH)) * UINT8_MAX; \
-        }                                                                               \
+#define IMG_THRESHOLD(DST_PTR, SRC, THRESH)                                            \
+    do {                                                                               \
+        IMG_COPY_SIZE(DST_PTR, SRC);                                                   \
+        FOR_EACH_PIXEL(SRC) {                                                          \
+            PIXEL(*DST_PTR, row, col) = (PIXEL(SRC, row, col) > (THRESH)) * UINT8_MAX; \
+        }                                                                              \
     } while (0)
 
 #define IMG_CROP(DST_PTR, SRC, WIN)                                                 \
@@ -114,6 +114,10 @@ uint8_t img_bilinear_interpolation(const ImageMatrix mat, Vector2f position);
 
 void img_rotate(ImageMatrix dst, const ImageMatrix src, Vector2f rotation, uint8_t bg_fill,
         ImageInterpolation interpolation);
+
+void img_histogram(uint32_t* histogram, const ImageMatrix mat);
+
+uint8_t img_otsu_histogram_threshold(const uint32_t* histogram);
 
 void img_draw_line(ImageMatrix mat, ImageWindow line, uint8_t color);
 

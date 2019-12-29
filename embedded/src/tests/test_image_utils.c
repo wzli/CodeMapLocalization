@@ -1,6 +1,8 @@
 #include "tests.h"
 #include "image_utils.h"
 
+static uint32_t histogram[UINT8_MAX];
+
 int test_image_utils() {
     ImageMatrix test_img = {(uint8_t[5 * 5]){}, 5, 5};
     ImageMatrix buf_img = {(uint8_t[5 * 5]){}, 5, 5};
@@ -41,7 +43,7 @@ int test_image_utils() {
     IMG_APPLY_KERNEL(accumulator, edge_kernel, test_img, 0, 0);
     test_assert(accumulator == 0);
 
-    IMG_THRESHOLD(&buf_img, test_img, 5);
+    IMG_THRESHOLD(&buf_img, test_img, 4);
     FOR_EACH_PIXEL(buf_img) { test_assert(PIXEL(buf_img, row, col) == (row > 0) * UINT8_MAX); }
 
     ImageWindow win = {3, 3, 5, 5};
@@ -58,6 +60,12 @@ int test_image_utils() {
     IMG_NORMALIZE(&buf_img, test_img);
     test_assert(PIXEL(buf_img, 0, 0) == 0);
     test_assert(PIXEL(buf_img, 4, 4) == UINT8_MAX);
+
+    img_histogram(histogram, test_img);
+    for (int i = 0; i < UINT8_MAX; ++i) {
+        test_assert(histogram[i] == (i < 25));
+    }
+    test_assert(img_otsu_histogram_threshold(histogram) == 12);
 
     return 0;
 }
