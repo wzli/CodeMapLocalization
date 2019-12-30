@@ -6,8 +6,8 @@ void img_filter(ImageMatrix* dst, const ImageMatrix src, const ImageMatrixInt8 k
 }
 
 uint8_t img_nearest_interpolation(const ImageMatrix mat, Vector2f position) {
-    return PIXEL(mat, CLAMP((int16_t) position.y, 0, mat.n_rows),
-            CLAMP((int16_t) position.x, 0, mat.n_cols));
+    return PIXEL(mat, CLAMP((int16_t) position.y, 0, mat.n_rows - 1),
+            CLAMP((int16_t) position.x, 0, mat.n_cols - 1));
 }
 
 uint8_t img_bilinear_interpolation(const ImageMatrix mat, Vector2f position) {
