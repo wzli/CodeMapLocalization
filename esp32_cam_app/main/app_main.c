@@ -29,7 +29,7 @@ static const char* TAG = "main_loop";
 static camera_fb_t double_buffers[][2] = {
         STATIC_DOUBLE_BUFFER(64),
         STATIC_DOUBLE_BUFFER(64),
-        STATIC_DOUBLE_BUFFER(62),
+        STATIC_DOUBLE_BUFFER(64),
 };
 
 #define N_DOUBLE_BUFFERS (sizeof(double_buffers) / sizeof(double_buffers[0]))
@@ -87,30 +87,50 @@ static void main_loop(void* pvParameters) {
     int64_t start_time = esp_timer_get_time();
     // main loop
     for (uint32_t frame_count = 0;; ++frame_count) {
-        ImageMatrix original_image = queue_fb_get(0);
-        ImageMatrix unrotated_image = queue_fb_get(1);
-        ImageMatrix thresholded_image = queue_fb_get(2);
-        ImageMatrix final_image = queue_fb_get(3);
+        ImageMatrix images[N_DOUBLE_BUFFERS + 1];
+        for (uint8_t i = 0; i <= N_DOUBLE_BUFFERS; ++i) {
+            images[i] = queue_fb_get(i);
+        }
 
-        img_histogram(histogram, original_image);
+        Vector2f rotation = img_estimate_rotation(images[0]);
+        rotation.y *= -(float) M_SQRT1_2;
+        rotation.x *= (float) M_SQRT1_2;
+#define BG_FILL (0)
+        images[1].n_cols = 64;
+        images[1].n_rows = 64;
+        img_rotate(images[1], images[0], rotation, BG_FILL, img_bilinear_interpolation);
+        img_filter(&images[2], images[1], sharpen_kernel);
+
+        images[3].n_cols = 32;
+        images[3].n_rows = 32;
+        img_resize(images[3], images[2], img_bilinear_interpolation);
+        img_histogram(histogram, images[3]);
+        histogram[BG_FILL] -= IMG_SIZE(images[3]) / 2;
         uint8_t otsu_threshold = img_otsu_histogram_threshold(histogram);
+        IMG_THRESHOLD(&images[3], images[3], otsu_threshold);
 
-        Vector2f rotation = img_estimate_rotation(original_image);
-        rotation.y *= -1.0f;
-        img_rotate(unrotated_image, original_image, rotation, otsu_threshold,
-                img_bilinear_interpolation);
-        rotation = v2f_scale(rotation, 0.5f);
-        img_rotate(thresholded_image, original_image, rotation, otsu_threshold,
-                img_bilinear_interpolation);
-        img_edge_hysteresis_threshold(&final_image, unrotated_image, 10, otsu_threshold, 60);
+        img_histogram(histogram, images[2]);
+        histogram[BG_FILL] -= IMG_SIZE(images[2]) / 2;
+        otsu_threshold = img_otsu_histogram_threshold(histogram);
+        IMG_THRESHOLD(&images[2], images[2], otsu_threshold);
 
-        queue_fb_return(0);
-        queue_fb_return(1);
-        queue_fb_return(2);
-        queue_fb_return(3);
+        images[1].n_cols = 32;
+        images[1].n_rows = 32;
+        img_resize(images[1], images[2], img_bilinear_interpolation);
+        img_histogram(histogram, images[1]);
+        histogram[BG_FILL] -= IMG_SIZE(images[1]) / 2;
+        otsu_threshold = img_otsu_histogram_threshold(histogram);
+        IMG_THRESHOLD(&images[1], images[1], otsu_threshold);
+
+        for (uint8_t i = 0; i <= N_DOUBLE_BUFFERS; ++i) {
+            assert(claimed_buffers[i]);
+            claimed_buffers[i]->width = images[i].n_cols;
+            claimed_buffers[i]->height = images[i].n_rows;
+            claimed_buffers[i]->len = IMG_SIZE(images[i]);
+            queue_fb_return(i);
+        }
 
         // end loop
-        img_histogram(histogram, original_image);
         int64_t end_time = esp_timer_get_time();
 
         if (!(frame_count & 0xF)) {
