@@ -83,47 +83,28 @@ typedef struct {
         }                                                                           \
     } while (0)
 
-#define IMG_VFLIP_INPLACE(MAT)                                    \
-    FOR_EACH_PIXEL(MAT) {                                         \
-        int16_t flipped_row = (MAT).n_rows - row - 1;             \
-        if (row >= flipped_row) {                                 \
-            break;                                                \
-        }                                                         \
-        SWAP(PIXEL(MAT, row, col), PIXEL(MAT, flipped_row, col)); \
+#define IMG_FLIP_INPLACE(MAT, F_ROW, F_COL)                   \
+    FOR_EACH_PIXEL(MAT) {                                     \
+        int16_t f_row = F_ROW;                                \
+        int16_t f_col = F_COL;                                \
+        if (row >= f_row && col >= f_col) {                   \
+            break;                                            \
+        }                                                     \
+        SWAP(PIXEL(MAT, row, col), PIXEL(MAT, f_row, f_col)); \
     }
 
-#define IMG_HFLIP_INPLACE(MAT)                                    \
-    FOR_EACH_PIXEL(MAT) {                                         \
-        int16_t flipped_col = (MAT).n_cols - col - 1;             \
-        if (col >= flipped_col) {                                 \
-            break;                                                \
-        }                                                         \
-        SWAP(PIXEL(MAT, row, col), PIXEL(MAT, row, flipped_col)); \
-    }
-
-#define IMG_VFLIP(DST_PTR, SRC)                                                      \
-    do {                                                                             \
-        if ((DST_PTR) == &(SRC)) {                                                   \
-            IMG_VFLIP_INPLACE(SRC);                                                  \
-        } else {                                                                     \
-            IMG_COPY_SIZE(DST_PTR, SRC);                                             \
-            FOR_EACH_PIXEL(SRC) {                                                    \
-                PIXEL(*DST_PTR, row, col) = PIXEL(SRC, (SRC).n_rows - row - 1, col); \
-            }                                                                        \
-        }                                                                            \
+#define IMG_FLIP(DST_PTR, SRC, F_ROW, F_COL)                                              \
+    do {                                                                                  \
+        if ((DST_PTR) == &(SRC)) {                                                        \
+            IMG_FLIP_INPLACE(SRC, F_ROW, F_COL);                                          \
+        } else {                                                                          \
+            IMG_COPY_SIZE(DST_PTR, SRC);                                                  \
+            FOR_EACH_PIXEL(SRC) { PIXEL(*DST_PTR, row, col) = PIXEL(SRC, F_ROW, F_COL); } \
+        }                                                                                 \
     } while (0)
 
-#define IMG_HFLIP(DST_PTR, SRC)                                                      \
-    do {                                                                             \
-        if ((DST_PTR) == &(SRC)) {                                                   \
-            IMG_HFLIP_INPLACE(SRC);                                                  \
-        } else {                                                                     \
-            IMG_COPY_SIZE(DST_PTR, SRC);                                             \
-            FOR_EACH_PIXEL(SRC) {                                                    \
-                PIXEL(*DST_PTR, row, col) = PIXEL(SRC, row, (SRC).n_cols - col - 1); \
-            }                                                                        \
-        }                                                                            \
-    } while (0)
+#define IMG_VFLIP(DST_PTR, SRC) IMG_FLIP(DST_PTR, SRC, (SRC).n_rows - 1 - row, col)
+#define IMG_HFLIP(DST_PTR, SRC) IMG_FLIP(DST_PTR, SRC, row, (SRC).n_cols - 1 - col)
 
 #define IMG_NORMALIZE_RANGE(DST_PTR, SRC, MIN, MAX)                                       \
     do {                                                                                  \
