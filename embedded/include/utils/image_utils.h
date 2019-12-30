@@ -66,6 +66,17 @@ typedef struct {
                     PIXEL(KERNEL, k_row, k_col) * PIXEL(MAT, k_row + (ROW), k_col + (COL)); \
         }
 
+#define IMG_CONVOLUTION(DST_PTR, SRC, KERNEL, CLAMP_MIN, CLAMP_MAX)           \
+    do {                                                                      \
+        (DST_PTR)->n_rows = (SRC).n_rows - ((KERNEL).n_rows - 1);             \
+        (DST_PTR)->n_cols = (SRC).n_cols - ((KERNEL).n_cols - 1);             \
+        FOR_EACH_PIXEL(*(DST_PTR)) {                                          \
+            int32_t value = 0;                                                \
+            IMG_APPLY_KERNEL(value, KERNEL, SRC, row, col);                   \
+            PIXEL(*(DST_PTR), row, col) = CLAMP(value, CLAMP_MIN, CLAMP_MAX); \
+        }                                                                     \
+    } while (0)
+
 #define IMG_THRESHOLD(DST_PTR, SRC, THRESH)                                            \
     do {                                                                               \
         IMG_COPY_SIZE(DST_PTR, SRC);                                                   \
@@ -130,11 +141,12 @@ typedef struct {
     } while (0)
 
 static const ImageMatrixInt8 edge_kernel = {(int8_t[]){-1, -1, -1, -1, 8, -1, -1, -1, -1}, 3, 3};
+static const ImageMatrixInt8 sharpen_kernel = {(int8_t[]){-1, -1, -1, -1, 9, -1, -1, -1, -1}, 3, 3};
 static const ImageMatrixInt8 sobel_x_kernel = {(int8_t[]){-1, 0, 1, -2, 0, 2, -1, 0, 1}, 3, 3};
 static const ImageMatrixInt8 sobel_y_kernel = {(int8_t[]){-1, -2, -1, 0, 0, 0, 1, 2, 1}, 3, 3};
+static const ImageMatrixInt8 laplacian_kernel = {(int8_t[]){0, 1, 0, 1, -4, 1, 0, 1, 0}, 3, 3};
 
-#define img_filter img_convolution
-void img_convolution(ImageMatrix* dst, const ImageMatrix src, const ImageMatrixInt8 kernel);
+void img_filter(ImageMatrix* dst, const ImageMatrix src, const ImageMatrixInt8 kernel);
 
 uint8_t img_nearest_interpolation(const ImageMatrix mat, Vector2f position);
 uint8_t img_bilinear_interpolation(const ImageMatrix mat, Vector2f position);

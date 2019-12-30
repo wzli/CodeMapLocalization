@@ -1,14 +1,8 @@
 #include "image_utils.h"
 #include <assert.h>
 
-void img_convolution(ImageMatrix* dst, const ImageMatrix src, const ImageMatrixInt8 kernel) {
-    dst->n_rows = src.n_rows - (kernel.n_rows - 1);
-    dst->n_cols = src.n_cols - (kernel.n_cols - 1);
-    FOR_EACH_PIXEL(*dst) {
-        int32_t value = 0;
-        IMG_APPLY_KERNEL(value, kernel, src, row, col);
-        PIXEL(*dst, row, col) = CLAMP(value, 0, UINT8_MAX);
-    }
+void img_filter(ImageMatrix* dst, const ImageMatrix src, const ImageMatrixInt8 kernel) {
+    IMG_CONVOLUTION(dst, src, kernel, 0, UINT8_MAX);
 }
 
 uint8_t img_nearest_interpolation(const ImageMatrix mat, Vector2f position) {
