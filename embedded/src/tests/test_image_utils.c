@@ -1,7 +1,7 @@
 #include "tests.h"
 #include "image_utils.h"
 
-static uint32_t histogram[UINT8_MAX];
+static uint32_t histogram[256];
 
 int test_image_utils() {
     ImageMatrix test_img = {(uint8_t[5 * 5]){}, 5, 5};
@@ -82,7 +82,7 @@ int test_image_utils() {
     test_assert(PIXEL(buf_img, 4, 4) == UINT8_MAX);
 
     img_histogram(histogram, test_img);
-    for (int i = 0; i < UINT8_MAX; ++i) {
+    for (int i = 0; i < 256; ++i) {
         test_assert(histogram[i] == (i < 25));
     }
     test_assert(img_otsu_histogram_threshold(histogram) == 12);

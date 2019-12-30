@@ -21,10 +21,6 @@ typedef struct {
     int16_t y1;
 } ImageWindow;
 
-static const ImageMatrixInt8 edge_kernel = {(int8_t[]){-1, -1, -1, -1, 8, -1, -1, -1, -1}, 3, 3};
-static const ImageMatrixInt8 sobel_x_kernel = {(int8_t[]){-1, 0, 1, -2, 0, 2, -1, 0, 1}, 3, 3};
-static const ImageMatrixInt8 sobel_y_kernel = {(int8_t[]){-1, -2, -1, 0, 0, 0, 1, 2, 1}, 3, 3};
-
 #define PIXEL(MATRIX, ROW, COL) ((MATRIX).data[(ROW) * (MATRIX).n_cols + (COL)])
 
 #define FOR_EACH_PIXEL(MAT)                          \
@@ -152,6 +148,13 @@ static const ImageMatrixInt8 sobel_y_kernel = {(int8_t[]){-1, -2, -1, 0, 0, 0, 1
         }                                                            \
     } while (0)
 
+static const ImageMatrixInt8 edge_kernel = {(int8_t[]){-1, -1, -1, -1, 8, -1, -1, -1, -1}, 3, 3};
+static const ImageMatrixInt8 sobel_x_kernel = {(int8_t[]){-1, 0, 1, -2, 0, 2, -1, 0, 1}, 3, 3};
+static const ImageMatrixInt8 sobel_y_kernel = {(int8_t[]){-1, -2, -1, 0, 0, 0, 1, 2, 1}, 3, 3};
+
+#define img_filter img_convolution
+void img_convolution(ImageMatrix* dst, const ImageMatrix src, const ImageMatrixInt8 kernel);
+
 uint8_t img_nearest_interpolation(const ImageMatrix mat, Vector2f position);
 uint8_t img_bilinear_interpolation(const ImageMatrix mat, Vector2f position);
 uint8_t img_bicubic_interpolation(const ImageMatrix mat, Vector2f position);
@@ -160,13 +163,10 @@ void img_resize(ImageMatrix dst, const ImageMatrix src, ImageInterpolation inter
 void img_rotate(ImageMatrix dst, const ImageMatrix src, Vector2f rotation, uint8_t bg_fill,
         ImageInterpolation interpolation);
 
-void img_histogram(uint32_t* histogram, const ImageMatrix mat);
-uint8_t img_otsu_histogram_threshold(const uint32_t* histogram);
+void img_histogram(uint32_t histogram[256], const ImageMatrix mat);
+uint8_t img_otsu_histogram_threshold(const uint32_t histogram[256]);
 
 void img_draw_line(ImageMatrix mat, ImageWindow line, uint8_t color);
-
-void img_convolution(ImageMatrix* dst, const ImageMatrix src, const ImageMatrixInt8 kernel);
-void img_edge_filter(ImageMatrix* dst, const ImageMatrix src);
 
 void img_convert_from_rgb888(ImageMatrix* dst, const ImageMatrix src);
 

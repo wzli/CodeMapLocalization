@@ -1,6 +1,16 @@
 #include "image_utils.h"
 #include <assert.h>
 
+void img_convolution(ImageMatrix* dst, const ImageMatrix src, const ImageMatrixInt8 kernel) {
+    dst->n_rows = src.n_rows - (kernel.n_rows - 1);
+    dst->n_cols = src.n_cols - (kernel.n_cols - 1);
+    FOR_EACH_PIXEL(*dst) {
+        int32_t value = 0;
+        IMG_APPLY_KERNEL(value, kernel, src, row, col);
+        PIXEL(*dst, row, col) = CLAMP(value, 0, UINT8_MAX);
+    }
+}
+
 uint8_t img_nearest_interpolation(const ImageMatrix mat, Vector2f position) {
     return PIXEL(mat, CLAMP((int16_t) position.y, 0, mat.n_rows),
             CLAMP((int16_t) position.x, 0, mat.n_cols));
@@ -73,18 +83,18 @@ void img_rotate(ImageMatrix dst, const ImageMatrix src, Vector2f rotation, uint8
     }
 }
 
-void img_histogram(uint32_t* histogram, const ImageMatrix mat) {
-    for (uint16_t i = 0; i < UINT8_MAX; ++i) {
+void img_histogram(uint32_t histogram[256], const ImageMatrix mat) {
+    for (uint16_t i = 0; i < 256; ++i) {
         histogram[i] = 0;
     }
     FOR_EACH_PIXEL(mat) { ++histogram[PIXEL(mat, row, col)]; }
 }
 
-uint8_t img_otsu_histogram_threshold(const uint32_t* histogram) {
+uint8_t img_otsu_histogram_threshold(const uint32_t histogram[256]) {
     // "A C++ Implementation of Otsu’s Image Segmentation Method", 2016.
     int32_t N = 0;
     int32_t sum = 0;
-    for (int16_t i = 0; i < UINT8_MAX; ++i) {
+    for (int16_t i = 0; i < 256; ++i) {
         N += histogram[i];
         sum += i * histogram[i];
     }
@@ -92,7 +102,7 @@ uint8_t img_otsu_histogram_threshold(const uint32_t* histogram) {
     int32_t sum_b = 0;
     int32_t q1 = 0;
     float max_variance = 0;
-    for (int16_t i = 0; i < UINT8_MAX; ++i) {
+    for (int16_t i = 0; i < 256; ++i) {
         q1 += histogram[i];
         if (!q1) {
             continue;
@@ -142,20 +152,6 @@ void img_draw_line(ImageMatrix mat, ImageWindow line, uint8_t color) {
     } else {
         ITERATE_LINE(PIXEL(mat, ABS(line.y0), line.x0));
     }
-}
-
-void img_convolution(ImageMatrix* dst, const ImageMatrix src, const ImageMatrixInt8 kernel) {
-    dst->n_rows = src.n_rows - (kernel.n_rows - 1);
-    dst->n_cols = src.n_cols - (kernel.n_cols - 1);
-    FOR_EACH_PIXEL(*dst) {
-        int32_t value = 0;
-        IMG_APPLY_KERNEL(value, kernel, src, row, col);
-        PIXEL(*dst, row, col) = CLAMP(value, 0, UINT8_MAX);
-    }
-}
-
-void img_edge_filter(ImageMatrix* dst, const ImageMatrix src) {
-    img_convolution(dst, src, edge_kernel);
 }
 
 void img_convert_from_rgb888(ImageMatrix* dst, const ImageMatrix src) {
