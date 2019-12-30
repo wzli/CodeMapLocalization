@@ -66,15 +66,15 @@ typedef struct {
                     PIXEL(KERNEL, k_row, k_col) * PIXEL(MAT, k_row + (ROW), k_col + (COL)); \
         }
 
-#define IMG_CONVOLUTION(DST_PTR, SRC, KERNEL, CLAMP_MIN, CLAMP_MAX)           \
-    do {                                                                      \
-        (DST_PTR)->n_rows = (SRC).n_rows - ((KERNEL).n_rows - 1);             \
-        (DST_PTR)->n_cols = (SRC).n_cols - ((KERNEL).n_cols - 1);             \
-        FOR_EACH_PIXEL(*(DST_PTR)) {                                          \
-            int32_t value = 0;                                                \
-            IMG_APPLY_KERNEL(value, KERNEL, SRC, row, col);                   \
-            PIXEL(*(DST_PTR), row, col) = CLAMP(value, CLAMP_MIN, CLAMP_MAX); \
-        }                                                                     \
+#define IMG_CONVOLUTION(DST_PTR, SRC, KERNEL, SCALE, CLAMP_MIN, CLAMP_MAX)            \
+    do {                                                                              \
+        (DST_PTR)->n_rows = (SRC).n_rows - ((KERNEL).n_rows - 1);                     \
+        (DST_PTR)->n_cols = (SRC).n_cols - ((KERNEL).n_cols - 1);                     \
+        FOR_EACH_PIXEL(*(DST_PTR)) {                                                  \
+            int32_t value = 0;                                                        \
+            IMG_APPLY_KERNEL(value, KERNEL, SRC, row, col);                           \
+            PIXEL(*(DST_PTR), row, col) = CLAMP(value * SCALE, CLAMP_MIN, CLAMP_MAX); \
+        }                                                                             \
     } while (0)
 
 #define IMG_THRESHOLD(DST_PTR, SRC, THRESH)                                            \

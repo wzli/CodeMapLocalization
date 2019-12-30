@@ -2,7 +2,7 @@
 #include <assert.h>
 
 void img_filter(ImageMatrix* dst, const ImageMatrix src, const ImageMatrixInt8 kernel) {
-    IMG_CONVOLUTION(dst, src, kernel, 0, UINT8_MAX);
+    IMG_CONVOLUTION(dst, src, kernel, 1, 0, UINT8_MAX);
 }
 
 uint8_t img_nearest_interpolation(const ImageMatrix mat, Vector2f position) {
