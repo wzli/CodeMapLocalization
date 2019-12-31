@@ -3,13 +3,12 @@
 #include <limits.h>
 #include <math.h>
 
-#define ABS(x) ((x) < 0 ? -(x) : (x))
-#define SQR(x) ((x) * (x))
-#define CUBE(x) (SQR(x) * (x))
-#define MAX(x, y) ((x) > (y) ? (x) : (y))
-#define MIN(x, y) ((x) < (y) ? (x) : (y))
-#define SWAP(x, y) (y ^= x ^= y, x ^= y)
-#define CLAMP(x, min, max) ((x) < (min) ? (min) : (x) > (max) ? (max) : (x))
+#define ABS(X) ((X) < 0 ? -(X) : (X))
+#define SQR(X) ((X) * (X))
+#define CUBE(X) (SQR(X) * (X))
+#define MAX(X, Y) ((X) > (Y) ? (X) : (Y))
+#define MIN(X, Y) ((X) < (Y) ? (X) : (Y))
+#define CLAMP(X, MIN, MAX) ((X) < (MIN) ? (MIN) : (X) > (MAX) ? (MAX) : (X))
 #define IS_SIGNED(Type) ((Type) -1 < 0x7F)
 
 #ifndef M_PI
@@ -19,6 +18,36 @@
 #ifndef M_SQRT1_2
 #define M_SQRT1_2 (0.707106781f)
 #endif
+
+#define SWAP(X, Y)                                                            \
+    do {                                                                      \
+        for (uint16_t swap_index = 0; swap_index < sizeof(X); ++swap_index) { \
+            uint8_t swap_tmp = ((uint8_t*) &(X))[swap_index];                 \
+            ((uint8_t*) &(X))[swap_index] = ((uint8_t*) &(Y))[swap_index];    \
+            ((uint8_t*) &(Y))[swap_index] = swap_tmp;                         \
+        }                                                                     \
+    } while (0)
+
+#define QUICK_SELECT(array, len, k)                     \
+    do {                                                \
+        for (int32_t start = 0, end = (len);;) {        \
+            int32_t pivot = start;                      \
+            for (int32_t i = start; i < end - 1; i++) { \
+                if ((array)[i] <= (array)[end - 1]) {   \
+                    SWAP((array)[i], (array)[pivot]);   \
+                    pivot++;                            \
+                }                                       \
+            }                                           \
+            SWAP((array)[end - 1], (array)[pivot]);     \
+            if ((k) == pivot) {                         \
+                break;                                  \
+            } else if (pivot > (k)) {                   \
+                end = pivot;                            \
+            } else {                                    \
+                start = pivot;                          \
+            }                                           \
+        }                                               \
+    } while (0)
 
 typedef struct {
     float x;

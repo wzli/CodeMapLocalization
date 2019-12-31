@@ -22,6 +22,13 @@ int test_math_utils() {
     int8_t bi = 7;
     SWAP(ai, bi);
     test_assert(ai == 7 && bi == 3);
+    uint8_t ab[] = {33, 56};
+    SWAP(ab[0], ab[1]);
+    test_assert(ab[0] == 56 && ab[1] == 33);
+
+    int8_t test_array[] = {0, 33, 33, 4, 6, 7, 1, 2, 8, 4, 3, 40};
+    QUICK_SELECT(test_array, sizeof(test_array), 6);
+    test_assert(test_array[6] == 6);
 
     return 0;
 }
