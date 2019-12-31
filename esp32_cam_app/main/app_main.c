@@ -105,12 +105,12 @@ static void main_loop(void* pvParameters) {
         images[3].n_rows = 32;
         img_resize(images[3], images[2], img_bilinear_interpolation);
         img_histogram(histogram, images[3]);
-        histogram[BG_FILL] -= IMG_SIZE(images[3]) / 2;
+        histogram[BG_FILL] -= MIN(IMG_SIZE(images[3]) / 2, histogram[BG_FILL]);
         uint8_t otsu_threshold = img_otsu_histogram_threshold(histogram);
         IMG_THRESHOLD(&images[3], images[3], otsu_threshold);
 
         img_histogram(histogram, images[2]);
-        histogram[BG_FILL] -= IMG_SIZE(images[2]) / 2;
+        histogram[BG_FILL] -= MIN(IMG_SIZE(images[2]) / 2, histogram[BG_FILL]);
         otsu_threshold = img_otsu_histogram_threshold(histogram);
         IMG_THRESHOLD(&images[2], images[2], otsu_threshold);
 
@@ -118,7 +118,7 @@ static void main_loop(void* pvParameters) {
         images[1].n_rows = 32;
         img_resize(images[1], images[2], img_bilinear_interpolation);
         img_histogram(histogram, images[1]);
-        histogram[BG_FILL] -= IMG_SIZE(images[1]) / 2;
+        histogram[BG_FILL] -= MIN(IMG_SIZE(images[1]) / 2, histogram[BG_FILL]);
         otsu_threshold = img_otsu_histogram_threshold(histogram);
         IMG_THRESHOLD(&images[1], images[1], otsu_threshold);
 

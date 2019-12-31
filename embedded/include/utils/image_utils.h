@@ -21,7 +21,7 @@ typedef struct {
     int16_t y1;
 } ImageWindow;
 
-#define PIXEL(MATRIX, ROW, COL) ((MATRIX).data[(ROW) * (MATRIX).n_cols + (COL)])
+#define PIXEL(MATRIX, ROW, COL) (MATRIX).data[(ROW) * (MATRIX).n_cols + (COL)]
 
 #define FOR_EACH_PIXEL(MAT)                          \
     for (int16_t row = 0; row < (MAT).n_rows; ++row) \
