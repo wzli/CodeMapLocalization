@@ -24,12 +24,24 @@ static inline uint32_t bm32_get_bit(const BitMatrix32 matrix, uint8_t row, uint8
     return (matrix[row] >> col) & 1u;
 };
 
+static inline uint32_t bm64_get_bit(const BitMatrix64 matrix, uint8_t row, uint8_t col) {
+    return (matrix[row] >> col) & 1ul;
+};
+
 static inline void bm32_set_bit(BitMatrix32 matrix, uint8_t row, uint8_t col) {
     matrix[row] |= 1u << col;
 };
 
+static inline void bm64_set_bit(BitMatrix64 matrix, uint8_t row, uint8_t col) {
+    matrix[row] |= 1ul << col;
+};
+
 static inline void bm32_clear_bit(BitMatrix32 matrix, uint8_t row, uint8_t col) {
     matrix[row] &= ~(1u << col);
+};
+
+static inline void bm64_clear_bit(BitMatrix64 matrix, uint8_t row, uint8_t col) {
+    matrix[row] &= ~(1ul << col);
 };
 
 void bm32_transpose(BitMatrix32 matrix);
