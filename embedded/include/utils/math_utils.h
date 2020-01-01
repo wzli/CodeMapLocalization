@@ -88,6 +88,10 @@ static inline float v2f_dot(Vector2f a, Vector2f b) {
     return a.x * b.x + a.y * b.y;
 }
 
+static inline float v2f_cross(Vector2f a, Vector2f b) {
+    return a.x * b.y - a.y * b.x;
+}
+
 static inline float v2f_norm_l1(Vector2f vec) {
     return ABS(vec.x) + ABS(vec.y);
 }
@@ -137,11 +141,12 @@ static inline Vector2f v2f_add_angle(Vector2f rot_a, Vector2f rot_b) {
     return (Vector2f){rot_a.x * rot_b.x - rot_a.y * rot_b.y, rot_a.y * rot_b.x + rot_a.x * rot_b.y};
 }
 
+// matrix operations
+
 static inline Vector2f v2f_transform(Matrix2f mat, Vector2f vec) {
     return (Vector2f){v2f_dot(mat.rows[0], vec), v2f_dot(mat.rows[1], vec)};
 }
 
-// matrix operations
 static inline uint8_t m2f_is_zero(Matrix2f mat) {
     return v2f_is_zero(mat.rows[0]) && v2f_is_zero(mat.rows[1]);
 }
