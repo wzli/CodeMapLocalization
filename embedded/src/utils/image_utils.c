@@ -6,12 +6,13 @@ void img_filter(ImageMatrix* dst, const ImageMatrix src, const ImageMatrixInt8 k
 }
 
 void img_median_filter(ImageMatrix* dst, const ImageMatrix src, ImageMatrix window) {
+    assert(window.data);
     assert(IMG_SIZE(window) > 1);
     dst->n_rows = src.n_rows - (window.n_rows - 1);
     dst->n_cols = src.n_cols - (window.n_cols - 1);
     int16_t middle_index = IMG_SIZE(window) / 2;
     FOR_EACH_PIXEL(*dst) {
-        ImageWindow crop_area = {row, col, row + window.n_rows, col + window.n_cols};
+        ImageWindow crop_area = {col, row, col + window.n_cols, row + window.n_rows};
         IMG_CROP(&window, src, crop_area);
         QUICK_SELECT(window.data, IMG_SIZE(window), middle_index);
         PIXEL(*dst, row, col) = window.data[middle_index];
