@@ -14,10 +14,14 @@ Vector2f img_estimate_rotation(const ImageMatrix mat) {
     Vector2f gradient_sum = {};
     ImageMatrix bounds = {0, mat.n_cols - 2, mat.n_rows - 2};
     FOR_EACH_PIXEL(bounds) {
-        int32_t grad_x = 0, grad_y = 0;
-        IMG_APPLY_KERNEL(grad_x, sobel_x_kernel, mat, row, col);
-        IMG_APPLY_KERNEL(grad_y, sobel_y_kernel, mat, row, col);
-        Vector2f gradient = {grad_x, grad_y};
+        Vector2f gradient = {
+                PIXEL(mat, row, col + 2) - PIXEL(mat, row, col) +
+                        2 * (PIXEL(mat, row + 1, col + 2) - PIXEL(mat, row + 1, col)) +
+                        PIXEL(mat, row + 2, col + 2) - PIXEL(mat, row + 2, col),
+                PIXEL(mat, row + 2, col) - PIXEL(mat, row, col) +
+                        2 * (PIXEL(mat, row + 2, col + 1) - PIXEL(mat, row, col + 1)) +
+                        PIXEL(mat, row + 2, col + 2) - PIXEL(mat, row, col + 2),
+        };
         gradient = v2f_double_angle(gradient);
         gradient = v2f_double_angle(gradient);
         gradient_sum = v2f_add(gradient_sum, gradient);
