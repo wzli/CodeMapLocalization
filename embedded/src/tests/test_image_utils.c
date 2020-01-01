@@ -80,6 +80,9 @@ int test_image_utils() {
     FOR_EACH_PIXEL(test_img) {
         test_assert(PIXEL(test_img, row, col) == PIXEL(buf_img, row, col));
     };
+    buf_img.n_cols = 4;
+    IMG_TRANSPOSE(&buf_img, buf_img);
+    test_assert(IMG_SIZE(buf_img) == 0);
 
     IMG_NORMALIZE_RANGE(&buf_img, test_img, 5, 20);
     test_assert(buf_img.data[5] == 0);

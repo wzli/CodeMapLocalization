@@ -31,11 +31,10 @@ typedef struct {
 
 #define IMG_SIZE(MAT) ((MAT).n_rows * (MAT).n_cols)
 
-#define IMG_COPY_SIZE(DST_PTR, SRC)       \
-    do {                                  \
-        (DST_PTR)->n_rows = (SRC).n_rows; \
-        (DST_PTR)->n_cols = (SRC).n_cols; \
-    } while (0)
+#define IMG_SET_SIZE(DST_PTR, N_COLS, N_ROWS) \
+    ((DST_PTR)->n_cols = (N_COLS), (DST_PTR)->n_rows = (N_ROWS))
+
+#define IMG_COPY_SIZE(DST_PTR, SRC) IMG_SET_SIZE(DST_PTR, (SRC).n_cols, (SRC).n_rows)
 
 #define IMG_COPY(DST_PTR, SRC)                                                      \
     do {                                                                            \
@@ -61,11 +60,8 @@ typedef struct {
     FOR_EACH_NESTED_PIXEL(KERNEL, k_)                \
     ((SUM) += PIXEL(KERNEL, k_row, k_col) * PIXEL(MAT, k_row + (ROW), k_col + (COL)))
 
-#define IMG_VALID_PADDING(DST_PTR, SRC, KERNEL)                 \
-    do {                                                        \
-        (DST_PTR)->n_rows = (SRC).n_rows - (KERNEL).n_rows + 1; \
-        (DST_PTR)->n_cols = (SRC).n_cols - (KERNEL).n_cols + 1; \
-    } while (0)
+#define IMG_VALID_PADDING(DST_PTR, SRC, KERNEL) \
+    IMG_SET_SIZE(DST_PTR, (SRC).n_cols - (KERNEL).n_cols + 1, (SRC).n_rows - (KERNEL).n_rows + 1)
 
 #define IMG_CONVOLUTION(DST_PTR, SRC, KERNEL, SCALE, CLAMP_MIN, CLAMP_MAX)            \
     do {                                                                              \
@@ -101,8 +97,7 @@ typedef struct {
 
 #define IMG_CROP(DST_PTR, SRC, WIN)                                                   \
     do {                                                                              \
-        (DST_PTR)->n_cols = (WIN).x1 - (WIN).x0;                                      \
-        (DST_PTR)->n_rows = (WIN).y1 - (WIN).y0;                                      \
+        IMG_SET_SIZE(DST_PTR, (WIN).x1 - (WIN).x0, (WIN).y1 - (WIN).y0);              \
         FOR_EACH_PIXEL(*(DST_PTR)) {                                                  \
             PIXEL(*(DST_PTR), row, col) = PIXEL(SRC, row + (WIN).y0, col + (WIN).x0); \
         }                                                                             \
@@ -130,8 +125,10 @@ typedef struct {
 
 #define IMG_VFLIP(DST_PTR, SRC) IMG_FLIP(DST_PTR, SRC, (SRC).n_rows - 1 - row, col)
 #define IMG_HFLIP(DST_PTR, SRC) IMG_FLIP(DST_PTR, SRC, row, (SRC).n_cols - 1 - col)
-// transpose works for square images only
-#define IMG_TRANSPOSE(DST_PTR, SRC) IMG_FLIP(DST_PTR, SRC, col, row)
+
+#define IMG_TRANSPOSE(DST_PTR, SRC)                                  \
+    if ((SRC).n_rows == (SRC.n_cols) || IMG_SET_SIZE(DST_PTR, 0, 0)) \
+    IMG_FLIP(DST_PTR, SRC, col, row)
 
 #define IMG_NORMALIZE_RANGE(DST_PTR, SRC, MIN, MAX)                                       \
     do {                                                                                  \
@@ -158,6 +155,7 @@ typedef struct {
 
 static const ImageMatrixInt8 edge_kernel = {(int8_t[]){-1, -1, -1, -1, 8, -1, -1, -1, -1}, 3, 3};
 static const ImageMatrixInt8 sharpen_kernel = {(int8_t[]){-1, -1, -1, -1, 9, -1, -1, -1, -1}, 3, 3};
+
 static const ImageMatrixInt8 sobel_x_kernel = {(int8_t[]){-1, 0, 1, -2, 0, 2, -1, 0, 1}, 3, 3};
 static const ImageMatrixInt8 sobel_y_kernel = {(int8_t[]){-1, -2, -1, 0, 0, 0, 1, 2, 1}, 3, 3};
 static const ImageMatrixInt8 laplacian_kernel = {(int8_t[]){0, 1, 0, 1, -4, 1, 0, 1, 0}, 3, 3};
@@ -165,10 +163,9 @@ static const ImageMatrix box_2x2_kernel = {(uint8_t[]){1, 1, 1, 1}, 2, 2};
 static const ImageMatrix box_3x3_kernel = {(uint8_t[]){1, 1, 1, 1, 1, 1, 1, 1, 1}, 3, 3};
 static const ImageMatrix cross_3x3_kernel = {(uint8_t[]){0, 1, 0, 1, 1, 1, 0, 1, 0}, 3, 3};
 
+// filters also work inplace
 void img_filter(ImageMatrix* dst, const ImageMatrix src, const ImageMatrixInt8 kernel);
-#define img_dialate img_max_filter
 void img_max_filter(ImageMatrix* dst, const ImageMatrix src, const ImageMatrix kernel);
-#define img_erode img_min_filter
 void img_min_filter(ImageMatrix* dst, const ImageMatrix src, const ImageMatrix kernel);
 void img_median_filter(ImageMatrix* dst, const ImageMatrix src, ImageMatrix window);
 

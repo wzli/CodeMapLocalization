@@ -2,8 +2,7 @@
 #include <assert.h>
 
 void img_min_filter_2x2(ImageMatrix* dst, const ImageMatrix src) {
-    dst->n_rows = src.n_rows - 1;
-    dst->n_cols = src.n_cols - 1;
+    IMG_SET_SIZE(dst, src.n_cols - 1, src.n_rows - 1);
     FOR_EACH_PIXEL(*dst) {
         uint8_t top_min = MIN(PIXEL(src, row, col), PIXEL(src, row, col + 1));
         uint8_t bot_min = MIN(PIXEL(src, row + 1, col), PIXEL(src, row + 1, col + 1));
