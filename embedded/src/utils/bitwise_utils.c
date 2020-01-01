@@ -15,6 +15,17 @@ void bm32_transpose(BitMatrix32 A) {
     }
 }
 
+void bm64_transpose(BitMatrix64 A) {
+    uint64_t m = 0xFFFFFFFF00000000;
+    for (uint64_t j = 32; j != 0; j = j >> 1, m = m ^ (m >> j)) {
+        for (uint64_t k = 0; k < 64; k = (k + j + 1) & ~j) {
+            uint64_t t = (A[k] ^ (A[k + j] << j)) & m;
+            A[k] ^= t;
+            A[k + j] ^= (t >> j);
+        }
+    }
+}
+
 uint32_t reverse_bits(uint32_t x, uint32_t n) {
     assert(n <= 32);
     x &= mask_bits(n);

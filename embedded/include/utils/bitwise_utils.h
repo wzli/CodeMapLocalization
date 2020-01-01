@@ -2,6 +2,7 @@
 #include <stdint.h>
 
 typedef uint32_t BitMatrix32[32];
+typedef uint64_t BitMatrix64[64];
 
 // bit vector operations
 
@@ -32,6 +33,7 @@ static inline void bm32_clear_bit(BitMatrix32 matrix, uint8_t row, uint8_t col) 
 };
 
 void bm32_transpose(BitMatrix32 matrix);
+void bm64_transpose(BitMatrix64 matrix);
 
 // bitwise operations
 
