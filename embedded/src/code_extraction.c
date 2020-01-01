@@ -1,43 +1,6 @@
 #include "code_extraction.h"
 #include <assert.h>
 
-void img_edge_hysteresis_threshold(ImageMatrix* dst, const ImageMatrix src, uint16_t edge_thresh,
-        uint8_t value_thresh, uint8_t value_tolerance) {
-    uint8_t hi_thresh = MAX(0, value_thresh - value_tolerance);
-    uint8_t lo_thresh = MIN(UINT8_MAX, value_thresh + value_tolerance);
-    uint16_t latched_value = UINT8_MAX / 2;
-    IMG_VALID_PADDING(dst, src, edge_kernel);
-    FOR_EACH_PIXEL(*dst) {
-        int16_t s_col = row & 1 ? dst->n_cols - col - 1 : col;
-        int32_t edge = 0;
-        IMG_APPLY_KERNEL(edge, edge_kernel, src, row, s_col);
-        if (edge < -edge_thresh && PIXEL(src, row, s_col) < lo_thresh) {
-            latched_value = 0;
-        } else if (edge > edge_thresh && PIXEL(src, row, s_col) > hi_thresh) {
-            latched_value = UINT8_MAX;
-        } else if (PIXEL(src, row, s_col) == value_thresh) {
-            latched_value = UINT8_MAX / 2;
-        } else if (row > 0) {
-            uint8_t count = 1;
-            if (s_col > 0) {
-                latched_value += PIXEL(*dst, row - 1, s_col - 1);
-                ++count;
-            }
-            if (s_col < dst->n_cols - 1) {
-                latched_value += PIXEL(*dst, row - 1, s_col + 1);
-                ++count;
-            }
-            if (col > 0) {
-                latched_value += PIXEL(*dst, row - 1, s_col);
-                ++count;
-            }
-            assert(count > 1);
-            latched_value = ((2 * latched_value) >= (count * UINT8_MAX)) * UINT8_MAX;
-        }
-        PIXEL(*dst, row, s_col) = latched_value;
-    }
-}
-
 Vector2f img_estimate_rotation(const ImageMatrix mat) {
     Vector2f gradient_sum = {};
     ImageMatrix bounds = {0, mat.n_cols - 2, mat.n_rows - 2};

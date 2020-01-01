@@ -9,9 +9,6 @@ typedef struct {
     uint16_t n_samples;
 } AxisCode;
 
-void img_edge_hysteresis_threshold(ImageMatrix* dst, const ImageMatrix src, uint16_t edge_thresh,
-        uint8_t value_thresh, uint8_t value_tolerance);
-
 Vector2f img_estimate_rotation(const ImageMatrix mat);
 
 float img_estimate_scale(const ImageMatrix mat);
