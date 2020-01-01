@@ -23,9 +23,11 @@ typedef struct {
 
 #define PIXEL(MATRIX, ROW, COL) (MATRIX).data[(ROW) * (MATRIX).n_cols + (COL)]
 
-#define FOR_EACH_PIXEL(MAT)                          \
-    for (int16_t row = 0; row < (MAT).n_rows; ++row) \
-        for (int16_t col = 0; col < (MAT).n_cols; ++col)
+#define FOR_EACH_NESTED_PIXEL(MAT, LEVEL)                                 \
+    for (int16_t LEVEL##row = 0; LEVEL##row < (MAT).n_rows; ++LEVEL##row) \
+        for (int16_t LEVEL##col = 0; LEVEL##col < (MAT).n_cols; ++LEVEL##col)
+
+#define FOR_EACH_PIXEL(MAT) FOR_EACH_NESTED_PIXEL(MAT, )
 
 #define IMG_SIZE(MAT) ((MAT).n_rows * (MAT).n_cols)
 
@@ -35,10 +37,10 @@ typedef struct {
         (DST_PTR)->n_cols = (SRC).n_cols; \
     } while (0)
 
-#define IMG_COPY(DST_PTR, SRC)                                                    \
-    do {                                                                          \
-        IMG_COPY_SIZE(DST_PTR, SRC);                                              \
-        FOR_EACH_PIXEL(SRC) { PIXEL(*DST_PTR, row, col) = PIXEL(SRC, row, col); } \
+#define IMG_COPY(DST_PTR, SRC)                                                      \
+    do {                                                                            \
+        IMG_COPY_SIZE(DST_PTR, SRC);                                                \
+        FOR_EACH_PIXEL(SRC) { PIXEL(*(DST_PTR), row, col) = PIXEL(SRC, row, col); } \
     } while (0)
 
 #define IMG_FILL(MAT, VAL) FOR_EACH_PIXEL(MAT)(PIXEL(MAT, row, col) = (VAL))
@@ -55,15 +57,19 @@ typedef struct {
         AVG /= IMG_SIZE(MAT); \
     } while (0)
 
-#define IMG_APPLY_KERNEL(ACCUMULATOR, KERNEL, MAT, ROW, COL)      \
-    for (int16_t k_row = 0; k_row < (KERNEL).n_rows; ++k_row)     \
-        for (int16_t k_col = 0; k_col < (KERNEL).n_cols; ++k_col) \
-    ((ACCUMULATOR) += PIXEL(KERNEL, k_row, k_col) * PIXEL(MAT, k_row + (ROW), k_col + (COL)))
+#define IMG_APPLY_KERNEL(SUM, KERNEL, MAT, ROW, COL) \
+    FOR_EACH_NESTED_PIXEL(KERNEL, k_)                \
+    ((SUM) += PIXEL(KERNEL, k_row, k_col) * PIXEL(MAT, k_row + (ROW), k_col + (COL)))
+
+#define IMG_VALID_PADDING(DST_PTR, SRC, KERNEL)                 \
+    do {                                                        \
+        (DST_PTR)->n_rows = (SRC).n_rows - (KERNEL).n_rows + 1; \
+        (DST_PTR)->n_cols = (SRC).n_cols - (KERNEL).n_cols + 1; \
+    } while (0)
 
 #define IMG_CONVOLUTION(DST_PTR, SRC, KERNEL, SCALE, CLAMP_MIN, CLAMP_MAX)            \
     do {                                                                              \
-        (DST_PTR)->n_rows = (SRC).n_rows - ((KERNEL).n_rows - 1);                     \
-        (DST_PTR)->n_cols = (SRC).n_cols - ((KERNEL).n_cols - 1);                     \
+        IMG_VALID_PADDING(DST_PTR, SRC, KERNEL);                                      \
         FOR_EACH_PIXEL(*(DST_PTR)) {                                                  \
             int32_t value = 0;                                                        \
             IMG_APPLY_KERNEL(value, KERNEL, SRC, row, col);                           \
@@ -71,21 +77,35 @@ typedef struct {
         }                                                                             \
     } while (0)
 
-#define IMG_THRESHOLD(DST_PTR, SRC, THRESH)                                            \
-    do {                                                                               \
-        IMG_COPY_SIZE(DST_PTR, SRC);                                                   \
-        FOR_EACH_PIXEL(SRC) {                                                          \
-            PIXEL(*DST_PTR, row, col) = (PIXEL(SRC, row, col) > (THRESH)) * UINT8_MAX; \
-        }                                                                              \
+#define IMG_REDUCE_FILTER(DST_PTR, SRC, KERNEL, INIT_VAL, REDUCE_FUNC)                          \
+    do {                                                                                        \
+        IMG_VALID_PADDING(DST_PTR, SRC, KERNEL);                                                \
+        FOR_EACH_PIXEL(*(DST_PTR)) {                                                            \
+            PIXEL(*(DST_PTR), row, col) = (INIT_VAL);                                           \
+            FOR_EACH_NESTED_PIXEL(KERNEL, k_) {                                                 \
+                if (PIXEL(KERNEL, k_row, k_col)) {                                              \
+                    PIXEL(*(DST_PTR), row, col) = REDUCE_FUNC(                                  \
+                            PIXEL(*(DST_PTR), row, col), PIXEL(SRC, row + k_row, col + k_col)); \
+                }                                                                               \
+            }                                                                                   \
+        }                                                                                       \
     } while (0)
 
-#define IMG_CROP(DST_PTR, SRC, WIN)                                                 \
-    do {                                                                            \
-        (DST_PTR)->n_cols = (WIN).x1 - (WIN).x0;                                    \
-        (DST_PTR)->n_rows = (WIN).y1 - (WIN).y0;                                    \
-        FOR_EACH_PIXEL(*DST_PTR) {                                                  \
-            PIXEL(*DST_PTR, row, col) = PIXEL(SRC, row + (WIN).y0, col + (WIN).x0); \
-        }                                                                           \
+#define IMG_THRESHOLD(DST_PTR, SRC, THRESH)                                              \
+    do {                                                                                 \
+        IMG_COPY_SIZE(DST_PTR, SRC);                                                     \
+        FOR_EACH_PIXEL(SRC) {                                                            \
+            PIXEL(*(DST_PTR), row, col) = (PIXEL(SRC, row, col) > (THRESH)) * UINT8_MAX; \
+        }                                                                                \
+    } while (0)
+
+#define IMG_CROP(DST_PTR, SRC, WIN)                                                   \
+    do {                                                                              \
+        (DST_PTR)->n_cols = (WIN).x1 - (WIN).x0;                                      \
+        (DST_PTR)->n_rows = (WIN).y1 - (WIN).y0;                                      \
+        FOR_EACH_PIXEL(*(DST_PTR)) {                                                  \
+            PIXEL(*(DST_PTR), row, col) = PIXEL(SRC, row + (WIN).y0, col + (WIN).x0); \
+        }                                                                             \
     } while (0)
 
 #define IMG_FLIP_INPLACE(MAT, F_ROW, F_COL)                   \
@@ -98,14 +118,14 @@ typedef struct {
         SWAP(PIXEL(MAT, row, col), PIXEL(MAT, f_row, f_col)); \
     }
 
-#define IMG_FLIP(DST_PTR, SRC, F_ROW, F_COL)                                              \
-    do {                                                                                  \
-        if ((DST_PTR) == &(SRC)) {                                                        \
-            IMG_FLIP_INPLACE(SRC, F_ROW, F_COL);                                          \
-        } else {                                                                          \
-            IMG_COPY_SIZE(DST_PTR, SRC);                                                  \
-            FOR_EACH_PIXEL(SRC) { PIXEL(*DST_PTR, row, col) = PIXEL(SRC, F_ROW, F_COL); } \
-        }                                                                                 \
+#define IMG_FLIP(DST_PTR, SRC, F_ROW, F_COL)                                                \
+    do {                                                                                    \
+        if ((DST_PTR) == &(SRC)) {                                                          \
+            IMG_FLIP_INPLACE(SRC, F_ROW, F_COL);                                            \
+        } else {                                                                            \
+            IMG_COPY_SIZE(DST_PTR, SRC);                                                    \
+            FOR_EACH_PIXEL(SRC) { PIXEL(*(DST_PTR), row, col) = PIXEL(SRC, F_ROW, F_COL); } \
+        }                                                                                   \
     } while (0)
 
 #define IMG_VFLIP(DST_PTR, SRC) IMG_FLIP(DST_PTR, SRC, (SRC).n_rows - 1 - row, col)
@@ -118,7 +138,7 @@ typedef struct {
         IMG_COPY_SIZE(DST_PTR, SRC);                                                      \
         FOR_EACH_PIXEL(SRC) {                                                             \
             int32_t val = ((PIXEL(SRC, row, col) - (MIN)) * UINT8_MAX) / ((MAX) - (MIN)); \
-            PIXEL(*DST_PTR, row, col) = CLAMP(val, 0, UINT8_MAX);                         \
+            PIXEL(*(DST_PTR), row, col) = CLAMP(val, 0, UINT8_MAX);                       \
         }                                                                                 \
     } while (0)
 
@@ -130,7 +150,7 @@ typedef struct {
         IMG_MAX(max_pixel, SRC);                                     \
         if (max_pixel == min_pixel) {                                \
             IMG_COPY_SIZE(DST_PTR, SRC);                             \
-            IMG_FILL(*DST_PTR, 0);                                   \
+            IMG_FILL(*(DST_PTR), 0);                                 \
         } else {                                                     \
             IMG_NORMALIZE_RANGE(DST_PTR, SRC, min_pixel, max_pixel); \
         }                                                            \
@@ -141,9 +161,16 @@ static const ImageMatrixInt8 sharpen_kernel = {(int8_t[]){-1, -1, -1, -1, 9, -1,
 static const ImageMatrixInt8 sobel_x_kernel = {(int8_t[]){-1, 0, 1, -2, 0, 2, -1, 0, 1}, 3, 3};
 static const ImageMatrixInt8 sobel_y_kernel = {(int8_t[]){-1, -2, -1, 0, 0, 0, 1, 2, 1}, 3, 3};
 static const ImageMatrixInt8 laplacian_kernel = {(int8_t[]){0, 1, 0, 1, -4, 1, 0, 1, 0}, 3, 3};
+static const ImageMatrix box_2x2_kernel = {(uint8_t[]){1, 1, 1, 1}, 2, 2};
+static const ImageMatrix box_3x3_kernel = {(uint8_t[]){1, 1, 1, 1, 1, 1, 1, 1, 1}, 3, 3};
+static const ImageMatrix cross_3x3_kernel = {(uint8_t[]){0, 1, 0, 1, 1, 1, 0, 1, 0}, 3, 3};
 
-void img_median_filter(ImageMatrix* dst, const ImageMatrix src, ImageMatrix window);
 void img_filter(ImageMatrix* dst, const ImageMatrix src, const ImageMatrixInt8 kernel);
+#define img_dialate img_max_filter
+void img_max_filter(ImageMatrix* dst, const ImageMatrix src, const ImageMatrix kernel);
+#define img_erode img_min_filter
+void img_min_filter(ImageMatrix* dst, const ImageMatrix src, const ImageMatrix kernel);
+void img_median_filter(ImageMatrix* dst, const ImageMatrix src, ImageMatrix window);
 
 uint8_t img_nearest_interpolation(const ImageMatrix mat, Vector2f position);
 uint8_t img_bilinear_interpolation(const ImageMatrix mat, Vector2f position);

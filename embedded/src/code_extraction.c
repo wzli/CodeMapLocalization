@@ -6,8 +6,7 @@ void img_edge_hysteresis_threshold(ImageMatrix* dst, const ImageMatrix src, uint
     uint8_t hi_thresh = MAX(0, value_thresh - value_tolerance);
     uint8_t lo_thresh = MIN(UINT8_MAX, value_thresh + value_tolerance);
     uint16_t latched_value = UINT8_MAX / 2;
-    dst->n_rows = src.n_rows - 2;
-    dst->n_cols = src.n_cols - 2;
+    IMG_VALID_PADDING(dst, src, edge_kernel);
     FOR_EACH_PIXEL(*dst) {
         int16_t s_col = row & 1 ? dst->n_cols - col - 1 : col;
         int32_t edge = 0;

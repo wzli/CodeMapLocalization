@@ -5,11 +5,18 @@ void img_filter(ImageMatrix* dst, const ImageMatrix src, const ImageMatrixInt8 k
     IMG_CONVOLUTION(dst, src, kernel, 1, 0, UINT8_MAX);
 }
 
+void img_max_filter(ImageMatrix* dst, const ImageMatrix src, const ImageMatrix kernel) {
+    IMG_REDUCE_FILTER(dst, src, kernel, 0, MAX);
+}
+
+void img_min_filter(ImageMatrix* dst, const ImageMatrix src, const ImageMatrix kernel) {
+    IMG_REDUCE_FILTER(dst, src, kernel, UINT8_MAX, MIN);
+}
+
 void img_median_filter(ImageMatrix* dst, const ImageMatrix src, ImageMatrix window) {
     assert(window.data);
     assert(IMG_SIZE(window) > 1);
-    dst->n_rows = src.n_rows - (window.n_rows - 1);
-    dst->n_cols = src.n_cols - (window.n_cols - 1);
+    IMG_VALID_PADDING(dst, src, window);
     int16_t middle_index = IMG_SIZE(window) / 2;
     FOR_EACH_PIXEL(*dst) {
         ImageWindow crop_area = {col, row, col + window.n_cols, row + window.n_rows};
