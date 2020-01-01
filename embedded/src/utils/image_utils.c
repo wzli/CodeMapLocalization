@@ -5,6 +5,19 @@ void img_filter(ImageMatrix* dst, const ImageMatrix src, const ImageMatrixInt8 k
     IMG_CONVOLUTION(dst, src, kernel, 1, 0, UINT8_MAX);
 }
 
+void img_median_filter(ImageMatrix* dst, const ImageMatrix src, ImageMatrix window) {
+    assert(IMG_SIZE(window) > 1);
+    dst->n_rows = src.n_rows - (window.n_rows - 1);
+    dst->n_cols = src.n_cols - (window.n_cols - 1);
+    int16_t middle_index = IMG_SIZE(window) / 2;
+    FOR_EACH_PIXEL(*dst) {
+        ImageWindow crop_area = {row, col, row + window.n_rows, col + window.n_cols};
+        IMG_CROP(&window, src, crop_area);
+        QUICK_SELECT(window.data, IMG_SIZE(window), middle_index);
+        PIXEL(*dst, row, col) = window.data[middle_index];
+    }
+}
+
 uint8_t img_nearest_interpolation(const ImageMatrix mat, Vector2f position) {
     return PIXEL(mat, CLAMP((int16_t) position.y, 0, mat.n_rows - 1),
             CLAMP((int16_t) position.x, 0, mat.n_cols - 1));

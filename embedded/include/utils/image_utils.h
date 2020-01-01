@@ -146,6 +146,7 @@ static const ImageMatrixInt8 sobel_x_kernel = {(int8_t[]){-1, 0, 1, -2, 0, 2, -1
 static const ImageMatrixInt8 sobel_y_kernel = {(int8_t[]){-1, -2, -1, 0, 0, 0, 1, 2, 1}, 3, 3};
 static const ImageMatrixInt8 laplacian_kernel = {(int8_t[]){0, 1, 0, 1, -4, 1, 0, 1, 0}, 3, 3};
 
+void img_median_filter(ImageMatrix* dst, const ImageMatrix src, ImageMatrix window);
 void img_filter(ImageMatrix* dst, const ImageMatrix src, const ImageMatrixInt8 kernel);
 
 uint8_t img_nearest_interpolation(const ImageMatrix mat, Vector2f position);
