@@ -41,17 +41,13 @@ typedef struct {
         FOR_EACH_PIXEL(SRC) { PIXEL(*DST_PTR, row, col) = PIXEL(SRC, row, col); } \
     } while (0)
 
-#define IMG_FILL(MAT, VAL) \
-    FOR_EACH_PIXEL(MAT) { PIXEL(MAT, row, col) = (VAL); }
+#define IMG_FILL(MAT, VAL) FOR_EACH_PIXEL(MAT)(PIXEL(MAT, row, col) = (VAL))
 
-#define IMG_SUM(SUM, MAT) \
-    FOR_EACH_PIXEL(MAT) { SUM += PIXEL(MAT, row, col); }
+#define IMG_SUM(SUM, MAT) FOR_EACH_PIXEL(MAT)(SUM += PIXEL(MAT, row, col))
 
-#define IMG_MAX(MAX_VAL, MAT) \
-    FOR_EACH_PIXEL(MAT) { MAX_VAL = MAX(MAX_VAL, PIXEL(MAT, row, col)); }
+#define IMG_MAX(MAX_VAL, MAT) FOR_EACH_PIXEL(MAT)(MAX_VAL = MAX(MAX_VAL, PIXEL(MAT, row, col)))
 
-#define IMG_MIN(MIN_VAL, MAT) \
-    FOR_EACH_PIXEL(MAT) { MIN_VAL = MIN(MIN_VAL, PIXEL(MAT, row, col)); }
+#define IMG_MIN(MIN_VAL, MAT) FOR_EACH_PIXEL(MAT)(MIN_VAL = MIN(MIN_VAL, PIXEL(MAT, row, col)))
 
 #define IMG_AVERAGE(AVG, MAT) \
     do {                      \
@@ -59,12 +55,10 @@ typedef struct {
         AVG /= IMG_SIZE(MAT); \
     } while (0)
 
-#define IMG_APPLY_KERNEL(ACCUMULATOR, KERNEL, MAT, ROW, COL)                                \
-    for (int16_t k_row = 0; k_row < (KERNEL).n_rows; ++k_row)                               \
-        for (int16_t k_col = 0; k_col < (KERNEL).n_cols; ++k_col) {                         \
-            (ACCUMULATOR) +=                                                                \
-                    PIXEL(KERNEL, k_row, k_col) * PIXEL(MAT, k_row + (ROW), k_col + (COL)); \
-        }
+#define IMG_APPLY_KERNEL(ACCUMULATOR, KERNEL, MAT, ROW, COL)      \
+    for (int16_t k_row = 0; k_row < (KERNEL).n_rows; ++k_row)     \
+        for (int16_t k_col = 0; k_col < (KERNEL).n_cols; ++k_col) \
+    ((ACCUMULATOR) += PIXEL(KERNEL, k_row, k_col) * PIXEL(MAT, k_row + (ROW), k_col + (COL)))
 
 #define IMG_CONVOLUTION(DST_PTR, SRC, KERNEL, SCALE, CLAMP_MIN, CLAMP_MAX)            \
     do {                                                                              \
@@ -116,6 +110,8 @@ typedef struct {
 
 #define IMG_VFLIP(DST_PTR, SRC) IMG_FLIP(DST_PTR, SRC, (SRC).n_rows - 1 - row, col)
 #define IMG_HFLIP(DST_PTR, SRC) IMG_FLIP(DST_PTR, SRC, row, (SRC).n_cols - 1 - col)
+// transpose works for square images only
+#define IMG_TRANSPOSE(DST_PTR, SRC) IMG_FLIP(DST_PTR, SRC, col, row)
 
 #define IMG_NORMALIZE_RANGE(DST_PTR, SRC, MIN, MAX)                                       \
     do {                                                                                  \

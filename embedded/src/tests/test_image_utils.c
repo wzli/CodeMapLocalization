@@ -73,6 +73,14 @@ int test_image_utils() {
         test_assert(PIXEL(test_img, row, col) == PIXEL(buf_img, row, col));
     };
 
+    IMG_TRANSPOSE(&buf_img, test_img);
+    FOR_EACH_PIXEL(buf_img) { test_assert(PIXEL(buf_img, row, col) == PIXEL(test_img, col, row)); }
+
+    IMG_TRANSPOSE(&buf_img, buf_img);
+    FOR_EACH_PIXEL(test_img) {
+        test_assert(PIXEL(test_img, row, col) == PIXEL(buf_img, row, col));
+    };
+
     IMG_NORMALIZE_RANGE(&buf_img, test_img, 5, 20);
     test_assert(buf_img.data[5] == 0);
     test_assert(buf_img.data[20] == UINT8_MAX);
