@@ -39,9 +39,9 @@ int test_image_utils() {
     IMG_MIN(min, test_img);
     test_assert(min == 0);
 
-    int32_t sum = 0;
-    IMG_APPLY_KERNEL(sum, edge_kernel, test_img, 0, 0);
-    test_assert(sum == 0);
+    int32_t acc = 0;
+    IMG_APPLY_KERNEL(acc, edge_kernel, test_img, 0, 0);
+    test_assert(acc == 0);
 
     IMG_THRESHOLD(&buf_img, test_img, 4);
     FOR_EACH_PIXEL(buf_img) { test_assert(PIXEL(buf_img, row, col) == (row > 0) * UINT8_MAX); }
