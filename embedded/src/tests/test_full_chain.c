@@ -20,7 +20,7 @@ int test_full_chain() {
         img_bit_matrix_conversion(bit_matrix, bit_mask, img, 125, 130);
 
         // extract codes
-        static AxisCode row_code, col_code;
+        static AxisCode32 row_code, col_code;
         bm32_extract_axis_codes(&row_code, &col_code, bit_matrix, bit_mask, 3);
 
         // overwrite with simulate extracted code

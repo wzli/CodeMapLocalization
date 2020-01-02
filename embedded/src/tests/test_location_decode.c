@@ -3,7 +3,7 @@
 #include "mls_query.h"
 
 int test_next_valid_code_segment() {
-    AxisCode test_code = {0xFFFF00FF, 0xFFFF00FF, 0, 1};
+    AxisCode32 test_code = {0xFFFF00FF, 0xFFFF00FF, 0, 1};
     uint8_t valid_segment_length;
     valid_segment_length = next_valid_code_segment(&test_code, 1);
     test_assert(test_code.bits == 0xFFFF00FF);
@@ -13,11 +13,11 @@ int test_next_valid_code_segment() {
     test_assert(valid_segment_length == 16);
     test_assert(test_code.bits == 0x0000FFFF);
     test_assert(test_code.mask == 0x0000FFFF);
-    test_code = (AxisCode){~0, ~0, 0, 1};
+    test_code = (AxisCode32){~0, ~0, 0, 1};
     test_assert(next_valid_code_segment(&test_code, 15) == 32);
     test_assert(test_code.bits == ~0u);
     test_assert(test_code.mask == ~0u);
-    test_code = (AxisCode){0, 0, 0, 1};
+    test_code = (AxisCode32){0, 0, 0, 1};
     test_assert(next_valid_code_segment(&test_code, 15) == 0);
     test_assert(test_code.bits == 0);
     test_assert(test_code.mask == 0);
@@ -60,7 +60,7 @@ int test_location_decode() {
                 matrix[i] = src_row_code ^ -((src_col_code >> i) & 1);
             }
 
-            AxisCode row_code, col_code;
+            AxisCode32 row_code, col_code;
             bm32_extract_axis_codes(&row_code, &col_code, matrix, matrix_mask, 3);
             AxisPosition row_pos = decode_axis_position(row_code, MLS_INDEX.code_length);
             AxisPosition col_pos = decode_axis_position(col_code, MLS_INDEX.code_length);

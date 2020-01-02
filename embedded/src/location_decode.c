@@ -2,7 +2,7 @@
 #include "mls_query.h"
 #include <assert.h>
 
-uint8_t next_valid_code_segment(AxisCode* axis_code, uint8_t code_length) {
+uint8_t next_valid_code_segment(AxisCode32* axis_code, uint8_t code_length) {
     assert(axis_code);
     assert(code_length <= 32);
     uint8_t valid_segment_length = count_trailing_zeros(~axis_code->mask);
@@ -17,7 +17,7 @@ uint8_t next_valid_code_segment(AxisCode* axis_code, uint8_t code_length) {
     return valid_segment_length;
 };
 
-AxisPosition decode_axis_position(AxisCode axis_code, uint8_t code_length) {
+AxisPosition decode_axis_position(AxisCode32 axis_code, uint8_t code_length) {
     AxisPosition best_position = {};
     const uint32_t code_mask = mask_bits(code_length);
     for (uint8_t valid_segment_length = next_valid_code_segment(&axis_code, code_length);

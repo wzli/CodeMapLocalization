@@ -26,7 +26,7 @@ void print_image_matrix(ImageMatrix src) {
     puts("");
 }
 
-void print_axis_code(AxisCode axis_code) {
+void print_axis_code(AxisCode32 axis_code) {
     uint8_t leading_zeros = count_trailing_zeros(reverse_bits(axis_code.mask, 32));
     printf("samples %d errors %d\n", axis_code.n_samples, axis_code.n_errors);
     print_bits(axis_code.bits, 32 - leading_zeros);

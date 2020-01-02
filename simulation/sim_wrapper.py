@@ -15,7 +15,7 @@ class MlsIndex(ctypes.Structure):
     ]
 
 
-class AxisCode(ctypes.Structure):
+class AxisCode32(ctypes.Structure):
     _fields_ = [
         ('bits', ctypes.c_uint),
         ('mask', ctypes.c_uint),

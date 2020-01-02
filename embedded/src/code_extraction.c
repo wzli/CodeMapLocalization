@@ -86,10 +86,10 @@ void bm64_to_img(ImageMatrix* dst, const BitMatrix64 src, const BitMatrix64 mask
     }
 }
 
-AxisCode bm32_extract_column_code(uint32_t row_estimate, const BitMatrix32 matrix,
+AxisCode32 bm32_extract_column_code(uint32_t row_estimate, const BitMatrix32 matrix,
         const BitMatrix32 mask, uint8_t min_row_samples) {
     assert(matrix && mask);
-    AxisCode column_code = {};
+    AxisCode32 column_code = {};
     int8_t bit_votes[32] = {};
     for (uint8_t i = 0; i < 32; ++i) {
         uint8_t mask_sum = count_bits(mask[i]);
@@ -154,7 +154,7 @@ AxisCode64 bm64_extract_column_code(uint64_t row_estimate, const BitMatrix64 mat
     return column_code;
 }
 
-void bm32_extract_axis_codes(AxisCode* row_code, AxisCode* col_code, BitMatrix32 matrix,
+void bm32_extract_axis_codes(AxisCode32* row_code, AxisCode32* col_code, BitMatrix32 matrix,
         BitMatrix32 mask, uint8_t min_samples) {
     assert(row_code && col_code);
     *col_code = bm32_extract_column_code(0, matrix, mask, min_samples);
