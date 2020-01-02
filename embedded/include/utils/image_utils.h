@@ -21,6 +21,8 @@ typedef struct {
     int16_t y1;
 } ImageWindow;
 
+// type generic macro functions for image manipulation
+
 #define PIXEL(MATRIX, ROW, COL) (MATRIX).data[(ROW) * (MATRIX).n_cols + (COL)]
 
 #define FOR_EACH_NESTED_PIXEL(MAT, LEVEL)                                 \
@@ -153,39 +155,48 @@ typedef struct {
         }                                                            \
     } while (0)
 
-static const ImageMatrixInt8 sharpen_kernel = {(int8_t[]){-1, -1, -1, -1, 9, -1, -1, -1, -1}, 3, 3};
-static const ImageMatrixInt8 edge_detect_kernel = {
+// convolution kernels
+static const ImageMatrixInt8 img_sharpen_kernel = {
+        (int8_t[]){-1, -1, -1, -1, 9, -1, -1, -1, -1}, 3, 3};
+static const ImageMatrixInt8 img_edge_detect_kernel = {
         (int8_t[]){-1, -1, -1, -1, 8, -1, -1, -1, -1}, 3, 3};
+static const ImageMatrixInt8 img_sobel_x_kernel = {(int8_t[]){-1, 0, 1, -2, 0, 2, -1, 0, 1}, 3, 3};
+static const ImageMatrixInt8 img_sobel_y_kernel = {(int8_t[]){-1, -2, -1, 0, 0, 0, 1, 2, 1}, 3, 3};
+static const ImageMatrixInt8 img_laplacian_kernel = {(int8_t[]){0, 1, 0, 1, -4, 1, 0, 1, 0}, 3, 3};
 
-static const ImageMatrixInt8 sobel_x_kernel = {(int8_t[]){-1, 0, 1, -2, 0, 2, -1, 0, 1}, 3, 3};
-static const ImageMatrixInt8 sobel_y_kernel = {(int8_t[]){-1, -2, -1, 0, 0, 0, 1, 2, 1}, 3, 3};
-static const ImageMatrixInt8 laplacian_kernel = {(int8_t[]){0, 1, 0, 1, -4, 1, 0, 1, 0}, 3, 3};
-static const ImageMatrix box_2x2_kernel = {(uint8_t[]){1, 1, 1, 1}, 2, 2};
-static const ImageMatrix box_3x3_kernel = {(uint8_t[]){1, 1, 1, 1, 1, 1, 1, 1, 1}, 3, 3};
-static const ImageMatrix cross_3x3_kernel = {(uint8_t[]){0, 1, 0, 1, 1, 1, 0, 1, 0}, 3, 3};
+// shape min/max aka dialate/erode kernels
+static const ImageMatrix img_box_2x2_kernel = {(uint8_t[]){1, 1, 1, 1}, 2, 2};
+static const ImageMatrix img_box_3x3_kernel = {(uint8_t[]){1, 1, 1, 1, 1, 1, 1, 1, 1}, 3, 3};
+static const ImageMatrix img_cross_3x3_kernel = {(uint8_t[]){0, 1, 0, 1, 1, 1, 0, 1, 0}, 3, 3};
 
-// filters also work inplace
+// filters (they also work inplace)
 void img_convolution_filter(ImageMatrix* dst, const ImageMatrix src, const ImageMatrixInt8 kernel);
 void img_max_filter(ImageMatrix* dst, const ImageMatrix src, const ImageMatrix kernel);
 void img_min_filter(ImageMatrix* dst, const ImageMatrix src, const ImageMatrix kernel);
 void img_median_filter(ImageMatrix* dst, const ImageMatrix src, ImageMatrix window);
 
+// interpolation methods
 uint8_t img_nearest_interpolation(const ImageMatrix mat, Vector2f position);
 uint8_t img_bilinear_interpolation(const ImageMatrix mat, Vector2f position);
 uint8_t img_bicubic_interpolation(const ImageMatrix mat, Vector2f position);
 
+// image transformations
 void img_resize(ImageMatrix dst, const ImageMatrix src, ImageInterpolation interpolation);
 void img_rotate(ImageMatrix dst, const ImageMatrix src, Vector2f rotation, uint8_t bg_fill,
         ImageInterpolation interpolation);
 void img_affine_transform(ImageMatrix dst, const ImageMatrix src, Matrix2f transform,
         uint8_t bg_fill, ImageInterpolation interpolation);
 
+// histogram thresholding
 void img_histogram(uint32_t histogram[256], const ImageMatrix mat);
-uint8_t img_otsu_histogram_threshold(const uint32_t histogram[256]);
+uint8_t img_compute_otsu_threshold(const uint32_t histogram[256]);
 
+// drawing utilitites
 void img_draw_line(ImageMatrix mat, ImageWindow line, uint8_t color);
 void img_draw_rectangle(ImageMatrix mat, ImageWindow rect, uint8_t color);
 
-void img_convert_from_rgb888(ImageMatrix* dst, const ImageMatrix src);
-
+// shape detection
 void img_hough_line_transform(ImageMatrixInt32 dst, const ImageMatrix src);
+
+// format conversions
+void img_convert_from_rgb888(ImageMatrix* dst, const ImageMatrix src);

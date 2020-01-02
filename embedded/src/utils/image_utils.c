@@ -112,7 +112,7 @@ void img_histogram(uint32_t histogram[256], const ImageMatrix mat) {
     FOR_EACH_PIXEL(mat) { ++histogram[PIXEL(mat, row, col)]; }
 }
 
-uint8_t img_otsu_histogram_threshold(const uint32_t histogram[256]) {
+uint8_t img_compute_otsu_threshold(const uint32_t histogram[256]) {
     // "A C++ Implementation of Otsu’s Image Segmentation Method", 2016.
     int32_t N = 0;
     int32_t sum = 0;

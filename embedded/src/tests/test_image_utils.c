@@ -40,7 +40,7 @@ int test_image_utils() {
     test_assert(min == 0);
 
     int32_t acc = 0;
-    IMG_APPLY_KERNEL(acc, edge_detect_kernel, test_img, 0, 0);
+    IMG_APPLY_KERNEL(acc, img_edge_detect_kernel, test_img, 0, 0);
     test_assert(acc == 0);
 
     IMG_THRESHOLD(&buf_img, test_img, 4);
@@ -96,7 +96,7 @@ int test_image_utils() {
     for (int i = 0; i < 256; ++i) {
         test_assert(histogram[i] == (i < 25));
     }
-    test_assert(img_otsu_histogram_threshold(histogram) == 12);
+    test_assert(img_compute_otsu_threshold(histogram) == 12);
 
     buf_img.n_cols *= 2;
     img_resize(buf_img, test_img, img_nearest_interpolation);

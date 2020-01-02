@@ -3,14 +3,6 @@
 #include <limits.h>
 #include <math.h>
 
-#define ABS(X) ((X) < 0 ? -(X) : (X))
-#define SQR(X) ((X) * (X))
-#define CUBE(X) (SQR(X) * (X))
-#define MAX(X, Y) ((X) > (Y) ? (X) : (Y))
-#define MIN(X, Y) ((X) < (Y) ? (X) : (Y))
-#define CLAMP(X, MIN, MAX) ((X) < (MIN) ? (MIN) : (X) > (MAX) ? (MAX) : (X))
-#define IS_SIGNED(Type) ((Type) -1 < 0x7F)
-
 #ifndef M_PI
 #define M_PI (3.1415926f)
 #endif
@@ -18,6 +10,14 @@
 #ifndef M_SQRT1_2
 #define M_SQRT1_2 (0.707106781f)
 #endif
+
+#define ABS(X) ((X) < 0 ? -(X) : (X))
+#define SQR(X) ((X) * (X))
+#define CUBE(X) ((x) * (X) * (X))
+#define MAX(X, Y) ((X) > (Y) ? (X) : (Y))
+#define MIN(X, Y) ((X) < (Y) ? (X) : (Y))
+#define CLAMP(X, MIN, MAX) ((X) < (MIN) ? (MIN) : (X) > (MAX) ? (MAX) : (X))
+#define IS_SIGNED(Type) ((Type) -1 < 0x7F)
 
 #define SWAP(X, Y)                                                            \
     do {                                                                      \
