@@ -86,41 +86,38 @@ void bm64_to_img(ImageMatrix* dst, const BitMatrix64 src, const BitMatrix64 mask
     }
 }
 
-AxisCode bm32_extract_column_code(uint32_t initial_row_guess, const BitMatrix32 matrix,
+AxisCode bm32_extract_column_code(uint32_t row_estimate, const BitMatrix32 matrix,
         const BitMatrix32 mask, uint8_t min_row_samples) {
-    assert(min_row_samples > 0);
     assert(matrix && mask);
-    if (!initial_row_guess) {
-        initial_row_guess = matrix[15] & mask[15];
-    }
-    static const uint8_t FILTER_SIZE = 4;
-    uint32_t row_code_bits[FILTER_SIZE];
-    for (uint8_t j = 0; j < FILTER_SIZE; ++j) {
-        row_code_bits[j] = initial_row_guess;
-    }
+    uint8_t bit_votes[32] = {};
+    uint8_t bit_totals[32] = {};
     AxisCode column_code = {};
     for (uint8_t i = 0; i < 32; ++i) {
         uint8_t mask_sum = count_bits(mask[i]);
         if (mask_sum < min_row_samples) {
             continue;
         }
-        mask_sum *= FILTER_SIZE;
-        uint8_t row_diff = 0;
-        for (uint8_t j = 0; j < FILTER_SIZE; ++j) {
-            row_diff += count_bits((row_code_bits[j] ^ matrix[i]) & mask[i]);
-        }
-        uint8_t j = i & (FILTER_SIZE - 1);
-        row_code_bits[j] &= ~mask[i];
-        if (row_diff > mask_sum / 2) {
+        uint8_t row_diff = count_bits((row_estimate ^ matrix[i]) & mask[i]);
+        row_estimate &= ~mask[i];
+        if (2 * row_diff > mask_sum) {
+            row_estimate |= ~matrix[i] & mask[i];
             column_code.bits |= 1 << i;
-            row_code_bits[j] |= ~matrix[i] & mask[i];
             column_code.n_errors += mask_sum - row_diff;
         } else {
-            row_code_bits[j] |= matrix[i] & mask[i];
+            row_estimate |= matrix[i] & mask[i];
             column_code.n_errors += row_diff;
         }
         column_code.n_samples += mask_sum;
         column_code.mask |= 1 << i;
+        for (uint8_t j = 0; j < 32; ++j) {
+            if (!bm32_get_bit(mask, i, j)) {
+                continue;
+            }
+            bit_votes[j] += (row_estimate >> j) & 1;
+            ++bit_totals[j];
+            row_estimate &= ~(1 << j);
+            row_estimate |= ((2 * bit_votes[j]) > bit_totals[j]) << j;
+        }
     }
     return column_code;
 }
