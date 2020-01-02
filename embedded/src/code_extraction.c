@@ -77,6 +77,18 @@ IMPLEMENT_IMG_TO_BM(64);
 IMPLEMENT_BM_TO_IMG(32);
 IMPLEMENT_BM_TO_IMG(64);
 
+#define IMPLEMENT_BM_FROM_AXIS_CODES(W)                                                           \
+    void bm##W##_from_axis_codes(BitMatrix##W dst, BitMatrix##W mask, const AxisCode##W row_code, \
+            const AxisCode##W col_code) {                                                         \
+        for (uint8_t i = 0; i < (W); ++i) {                                                       \
+            dst[i] = ((col_code.bits >> i) & 1) ? ~row_code.bits : row_code.bits;                 \
+            mask[i] = ((col_code.mask >> i) & 1) ? row_code.mask : 0;                             \
+        }                                                                                         \
+    }
+
+IMPLEMENT_BM_FROM_AXIS_CODES(32);
+IMPLEMENT_BM_FROM_AXIS_CODES(64);
+
 #define IMPLEMENT_BM_EXTRACT_COLUMN_CODE(W)                                                      \
     AxisCode##W bm##W##_extract_column_code(uint##W##_t row_estimate, const BitMatrix##W matrix, \
             const BitMatrix##W mask, uint8_t min_row_samples) {                                  \

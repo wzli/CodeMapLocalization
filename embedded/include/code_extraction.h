@@ -28,6 +28,11 @@ void img_to_bm64(BitMatrix64 dst, BitMatrix64 mask, const ImageMatrix src, uint8
 void bm32_to_img(ImageMatrix* dst, const BitMatrix32 src, const BitMatrix32 mask);
 void bm64_to_img(ImageMatrix* dst, const BitMatrix64 src, const BitMatrix64 mask);
 
+void bm32_from_axis_codes(
+        BitMatrix32 dst, BitMatrix32 mask, const AxisCode32 row_code, const AxisCode32 col_code);
+void bm64_from_axis_codes(
+        BitMatrix64 dst, BitMatrix64 mask, const AxisCode64 row_code, const AxisCode64 col_code);
+
 void bm32_extract_axis_codes(AxisCode32* row_code, AxisCode32* col_code, BitMatrix32 matrix,
         BitMatrix32 mask, uint8_t min_samples);
 

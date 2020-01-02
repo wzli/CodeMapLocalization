@@ -44,6 +44,16 @@ int test_code_extract_64() {
     AxisCode64 row_code = bm64_extract_column_code(col_code.bits, matrix, matrix_mask, 5);
     test_assert((row_code.bits == src_row_code && col_code.bits == src_col_code) ||
                 (row_code.bits == ~src_row_code && col_code.bits == ~src_col_code));
+    bm64_transpose(matrix);
+    bm64_transpose(matrix_mask);
+    bm64_extract_axis_codes(&row_code, &col_code, matrix, matrix_mask, 5);
+    test_assert((row_code.bits == src_row_code && col_code.bits == src_col_code) ||
+                (row_code.bits == ~src_row_code && col_code.bits == ~src_col_code));
+    bm64_from_axis_codes(matrix, matrix_mask, row_code, col_code);
+    for (uint8_t i = 0; i < 64; ++i) {
+        test_assert(matrix_mask[i] == ~0ull);
+        test_assert(matrix[i] == src_row_code || matrix[i] == ~src_row_code);
+    }
     return 0;
 }
 
