@@ -17,7 +17,7 @@ int test_full_chain() {
 
         // convert to bit matrix
         static BitMatrix32 bit_matrix, bit_mask;
-        img_bit_matrix_conversion(bit_matrix, bit_mask, img, 125, 130);
+        img_to_bm32(bit_matrix, bit_mask, img, 125, 130);
 
         // extract codes
         static AxisCode32 row_code, col_code;

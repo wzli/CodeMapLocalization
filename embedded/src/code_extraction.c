@@ -41,130 +41,95 @@ float img_estimate_scale(const ImageMatrix mat) {
     return bounds.n_rows * bounds.n_cols * max_val / (2 * sum + 0.00001f) - 1;
 }
 
-void img_bit_matrix_conversion(BitMatrix32 dst, BitMatrix32 mask, const ImageMatrix src,
-        uint8_t low_thresh, uint8_t high_thresh) {
-    assert(src.n_rows == 32 && src.n_cols == 32);
-    assert(high_thresh >= low_thresh);
-    for (uint8_t row = 0; row < 32; ++row) {
-        dst[row] = 0;
-        mask[row] = ~0;
+#define IMPLEMENT_IMG_TO_BM(W)                                                    \
+    void img_to_bm##W(BitMatrix##W dst, BitMatrix##W mask, const ImageMatrix src, \
+            uint8_t low_thresh, uint8_t high_thresh) {                            \
+        assert(high_thresh >= low_thresh);                                        \
+        for (uint8_t row = 0; row < (W); ++row) {                                 \
+            dst[row] = 0;                                                         \
+            mask[row] = 0;                                                        \
+        }                                                                         \
+        FOR_EACH_PIXEL(src) {                                                     \
+            if (row >= (W) || col >= (W)) {                                       \
+                break;                                                            \
+            } else if (PIXEL(src, row, col) > high_thresh) {                      \
+                bm##W##_set_bit(dst, row, col);                                   \
+                bm##W##_set_bit(mask, row, col);                                  \
+            } else if (PIXEL(src, row, col) < low_thresh) {                       \
+                bm##W##_set_bit(mask, row, col);                                  \
+            }                                                                     \
+        }                                                                         \
     }
-    FOR_EACH_PIXEL(src) {
-        if (PIXEL(src, row, col) >= high_thresh) {
-            bm32_set_bit(dst, row, col);
-        } else if (PIXEL(src, row, col) > low_thresh) {
-            bm32_clear_bit(mask, row, col);
-        }
-    }
-}
 
-void img_to_bm64(BitMatrix64 dst, BitMatrix64 mask, const ImageMatrix src, uint8_t low_thresh,
-        uint8_t high_thresh) {
-    assert(high_thresh >= low_thresh);
-    for (uint8_t row = 0; row < 64; ++row) {
-        dst[row] = 0ull;
-        mask[row] = 0ull;
-    }
-    FOR_EACH_PIXEL(src) {
-        if (row >= 64 || col >= 64) {
-            break;
-        } else if (PIXEL(src, row, col) > high_thresh) {
-            bm64_set_bit(dst, row, col);
-            bm64_set_bit(mask, row, col);
-        } else if (PIXEL(src, row, col) < low_thresh) {
-            bm64_set_bit(mask, row, col);
-        }
-    }
-}
+IMPLEMENT_IMG_TO_BM(32);
+IMPLEMENT_IMG_TO_BM(64);
 
-void bm64_to_img(ImageMatrix* dst, const BitMatrix64 src, const BitMatrix64 mask) {
-    IMG_SET_SIZE(dst, 64, 64);
-    FOR_EACH_PIXEL(*dst) {
-        PIXEL(*dst, row, col) = bm64_get_bit(mask, row, col)
-                                        ? bm64_get_bit(src, row, col) * UINT8_MAX
-                                        : UINT8_MAX / 2;
+#define IMPLEMENT_BM_TO_IMG(W)                                                               \
+    void bm##W##_to_img(ImageMatrix* dst, const BitMatrix##W src, const BitMatrix##W mask) { \
+        IMG_SET_SIZE(dst, (W), (W));                                                         \
+        FOR_EACH_PIXEL(*dst) {                                                               \
+            PIXEL(*dst, row, col) = bm##W##_get_bit(mask, row, col)                          \
+                                            ? bm##W##_get_bit(src, row, col) * UINT8_MAX     \
+                                            : UINT8_MAX / 2;                                 \
+        }                                                                                    \
     }
-}
 
-AxisCode32 bm32_extract_column_code(uint32_t row_estimate, const BitMatrix32 matrix,
-        const BitMatrix32 mask, uint8_t min_row_samples) {
-    assert(matrix && mask);
-    AxisCode32 column_code = {};
-    int8_t bit_votes[32] = {};
-    for (uint8_t i = 0; i < 32; ++i) {
-        uint8_t mask_sum = count_bits(mask[i]);
-        if (mask_sum < min_row_samples) {
-            continue;
-        }
-        uint8_t row_diff = count_bits((row_estimate ^ matrix[i]) & mask[i]);
-        row_estimate &= ~mask[i];
-        if (2 * row_diff > mask_sum) {
-            row_estimate |= ~matrix[i] & mask[i];
-            column_code.bits |= 1 << i;
-            column_code.n_errors += mask_sum - row_diff;
-        } else {
-            row_estimate |= matrix[i] & mask[i];
-            column_code.n_errors += row_diff;
-        }
-        column_code.n_samples += mask_sum;
-        column_code.mask |= 1 << i;
-        for (uint8_t j = 0; j < 32; ++j) {
-            if (!bm32_get_bit(mask, i, j)) {
-                continue;
-            }
-            bit_votes[j] += (row_estimate >> j) & 1 ? 1 : -1;
-            row_estimate &= ~(1 << j);
-            row_estimate |= ((bit_votes[j]) > 0) << j;
-        }
+IMPLEMENT_BM_TO_IMG(32);
+IMPLEMENT_BM_TO_IMG(64);
+
+#define IMPLEMENT_BM_EXTRACT_COLUMN_CODE(W)                                                      \
+    AxisCode##W bm##W##_extract_column_code(uint##W##_t row_estimate, const BitMatrix##W matrix, \
+            const BitMatrix##W mask, uint8_t min_row_samples) {                                  \
+        assert(matrix&& mask);                                                                   \
+        AxisCode##W column_code = {};                                                            \
+        int8_t bit_votes[(W)] = {};                                                              \
+        for (uint8_t i = 0; i < (W); ++i) {                                                      \
+            uint8_t mask_sum = count_bits(mask[i]);                                              \
+            if (mask_sum < min_row_samples) {                                                    \
+                continue;                                                                        \
+            }                                                                                    \
+            uint8_t row_diff = count_bits((row_estimate ^ matrix[i]) & mask[i]);                 \
+            row_estimate &= ~mask[i];                                                            \
+            if (2 * row_diff > mask_sum) {                                                       \
+                row_estimate |= ~matrix[i] & mask[i];                                            \
+                column_code.bits |= (uint##W##_t) 1 << i;                                        \
+                column_code.n_errors += mask_sum - row_diff;                                     \
+            } else {                                                                             \
+                row_estimate |= matrix[i] & mask[i];                                             \
+                column_code.n_errors += row_diff;                                                \
+            }                                                                                    \
+            column_code.n_samples += mask_sum;                                                   \
+            column_code.mask |= (uint##W##_t) 1 << i;                                            \
+            for (uint8_t j = 0; j < (W); ++j) {                                                  \
+                if (!bm##W##_get_bit(mask, i, j)) {                                              \
+                    continue;                                                                    \
+                }                                                                                \
+                bit_votes[j] += (row_estimate >> j) & 1 ? 1 : -1;                                \
+                row_estimate &= ~((uint##W##_t) 1 << j);                                         \
+                row_estimate |= (uint##W##_t)((bit_votes[j]) > 0) << j;                          \
+            }                                                                                    \
+        }                                                                                        \
+        return column_code;                                                                      \
     }
-    return column_code;
-}
 
-AxisCode64 bm64_extract_column_code(uint64_t row_estimate, const BitMatrix64 matrix,
-        const BitMatrix64 mask, uint8_t min_row_samples) {
-    assert(matrix && mask);
-    AxisCode64 column_code = {};
-    int8_t bit_votes[64] = {};
-    for (uint8_t i = 0; i < 64; ++i) {
-        uint8_t mask_sum = count_bits_64(mask[i]);
-        if (mask_sum < min_row_samples) {
-            continue;
-        }
-        uint8_t row_diff = count_bits_64((row_estimate ^ matrix[i]) & mask[i]);
-        row_estimate &= ~mask[i];
-        if (2 * row_diff > mask_sum) {
-            row_estimate |= ~matrix[i] & mask[i];
-            column_code.bits |= 1ull << i;
-            column_code.n_errors += mask_sum - row_diff;
-        } else {
-            row_estimate |= matrix[i] & mask[i];
-            column_code.n_errors += row_diff;
-        }
-        column_code.n_samples += mask_sum;
-        column_code.mask |= 1ull << i;
-        for (uint8_t j = 0; j < 64; ++j) {
-            if (!bm64_get_bit(mask, i, j)) {
-                continue;
-            }
-            bit_votes[j] += (row_estimate >> j) & 1 ? 1 : -1;
-            row_estimate &= ~(1ull << j);
-            row_estimate |= (uint64_t)((bit_votes[j]) > 0) << j;
-        }
+IMPLEMENT_BM_EXTRACT_COLUMN_CODE(32);
+IMPLEMENT_BM_EXTRACT_COLUMN_CODE(64);
+
+#define IMPLEMENT_BM_EXTRACT_AXIS_CODES(W)                                                  \
+    void bm##W##_extract_axis_codes(AxisCode##W* row_code, AxisCode##W* col_code,           \
+            BitMatrix##W matrix, BitMatrix##W mask, uint8_t min_samples) {                  \
+        assert(row_code&& col_code);                                                        \
+        *col_code = bm##W##_extract_column_code(0, matrix, mask, min_samples);              \
+        bm##W##_transpose(matrix);                                                          \
+        bm##W##_transpose(mask);                                                            \
+        *row_code = bm##W##_extract_column_code(col_code->bits, matrix, mask, min_samples); \
+        uint8_t offset = count_trailing_zeros(col_code->mask);                              \
+        col_code->bits >>= offset;                                                          \
+        col_code->mask >>= offset;                                                          \
+        offset = count_trailing_zeros(row_code->mask);                                      \
+        row_code->bits >>= offset;                                                          \
+        row_code->mask >>= offset;                                                          \
     }
-    return column_code;
-}
 
-void bm32_extract_axis_codes(AxisCode32* row_code, AxisCode32* col_code, BitMatrix32 matrix,
-        BitMatrix32 mask, uint8_t min_samples) {
-    assert(row_code && col_code);
-    *col_code = bm32_extract_column_code(0, matrix, mask, min_samples);
-    bm32_transpose(matrix);
-    bm32_transpose(mask);
-    *row_code = bm32_extract_column_code(col_code->bits, matrix, mask, min_samples);
-    uint8_t offset = count_trailing_zeros(col_code->mask);
-    col_code->bits >>= offset;
-    col_code->mask >>= offset;
-    offset = count_trailing_zeros(row_code->mask);
-    row_code->bits >>= offset;
-    row_code->mask >>= offset;
-}
+IMPLEMENT_BM_EXTRACT_AXIS_CODES(32);
+IMPLEMENT_BM_EXTRACT_AXIS_CODES(64);

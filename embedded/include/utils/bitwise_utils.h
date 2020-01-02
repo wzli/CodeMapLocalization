@@ -20,12 +20,12 @@ static inline uint32_t bv32_get_bit(const uint32_t* vector, uint32_t k) {
 
 // bit matrix operations
 
-static inline uint32_t bm32_get_bit(const BitMatrix32 matrix, uint8_t row, uint8_t col) {
+static inline uint8_t bm32_get_bit(const BitMatrix32 matrix, uint8_t row, uint8_t col) {
     return (matrix[row] >> col) & 1u;
 };
 
-static inline uint32_t bm64_get_bit(const BitMatrix64 matrix, uint8_t row, uint8_t col) {
-    return (matrix[row] >> col) & 1ull;
+static inline uint8_t bm64_get_bit(const BitMatrix64 matrix, uint8_t row, uint8_t col) {
+    return (matrix[row] >> col) & 1u;
 };
 
 static inline void bm32_set_bit(BitMatrix32 matrix, uint8_t row, uint8_t col) {

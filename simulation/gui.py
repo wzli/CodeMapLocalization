@@ -199,8 +199,8 @@ class BitMatrixProcessor:
         # convert to bit matrix
         bit_matrix = BitMatrix32()
         bit_mask = BitMatrix32()
-        libsim.img_bit_matrix_conversion(bit_matrix, bit_mask,
-                                         image.unrotated_matrix, 120, 135)
+        libsim.img_to_bm32(bit_matrix, bit_mask, image.unrotated_matrix, 120,
+                           135)
         # extract row and column code
         row_code = AxisCode32()
         col_code = AxisCode32()
@@ -228,8 +228,8 @@ class BitMatrixProcessor:
         actual_image = ImageMatrix.from_image(image.view_image)
         actual_bit_matrix = BitMatrix32()
         actual_bit_mask = BitMatrix32()
-        libsim.img_bit_matrix_conversion(actual_bit_matrix, actual_bit_mask,
-                                         actual_image, 125, 130)
+        libsim.img_to_bm32(actual_bit_matrix, actual_bit_mask, actual_image,
+                           125, 130)
         actual_row_code = AxisCode32()
         actual_col_code = AxisCode32()
         libsim.bm32_extract_axis_codes(ctypes.byref(actual_row_code),

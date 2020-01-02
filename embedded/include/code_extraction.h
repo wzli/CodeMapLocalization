@@ -20,13 +20,13 @@ Vector2f img_estimate_rotation(const ImageMatrix mat);
 
 float img_estimate_scale(const ImageMatrix mat);
 
+void img_to_bm32(BitMatrix32 dst, BitMatrix32 mask, const ImageMatrix src, uint8_t low_thresh,
+        uint8_t high_thresh);
 void img_to_bm64(BitMatrix64 dst, BitMatrix64 mask, const ImageMatrix src, uint8_t low_thresh,
         uint8_t high_thresh);
 
+void bm32_to_img(ImageMatrix* dst, const BitMatrix32 src, const BitMatrix32 mask);
 void bm64_to_img(ImageMatrix* dst, const BitMatrix64 src, const BitMatrix64 mask);
-
-void img_bit_matrix_conversion(BitMatrix32 dst, BitMatrix32 mask, const ImageMatrix src,
-        uint8_t low_thresh, uint8_t high_thresh);
 
 void bm32_extract_axis_codes(AxisCode32* row_code, AxisCode32* col_code, BitMatrix32 matrix,
         BitMatrix32 mask, uint8_t min_samples);
