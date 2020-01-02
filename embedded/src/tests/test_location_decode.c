@@ -24,6 +24,29 @@ int test_next_valid_code_segment() {
     return 0;
 }
 
+int test_code_extract_64() {
+    BitMatrix64 matrix, matrix_mask;
+    uint32_t src_row_pos = 1000;
+    uint32_t src_col_pos = 1001;
+    uint64_t src_row_code = mlsq_code_from_position(MLS_INDEX.sequence, 32, src_row_pos);
+    src_row_code |= (uint64_t) mlsq_code_from_position(MLS_INDEX.sequence, 32, src_row_pos + 32)
+                    << 32;
+    uint64_t src_col_code = mlsq_code_from_position(MLS_INDEX.sequence, 32, src_col_pos);
+    src_col_code |= (uint64_t) mlsq_code_from_position(MLS_INDEX.sequence, 32, src_col_pos + 32)
+                    << 32;
+    for (uint8_t i = 0; i < 64; ++i) {
+        matrix_mask[i] = ~0ull;
+        matrix[i] = src_row_code ^ -((uint64_t)(src_col_code >> i) & 1ull);
+    }
+    AxisCode64 col_code = bm64_extract_column_code(0, matrix, matrix_mask, 5);
+    bm64_transpose(matrix);
+    bm64_transpose(matrix_mask);
+    AxisCode64 row_code = bm64_extract_column_code(col_code.bits, matrix, matrix_mask, 5);
+    test_assert((row_code.bits == src_row_code && col_code.bits == src_col_code) ||
+                (row_code.bits == ~src_row_code && col_code.bits == ~src_col_code));
+    return 0;
+}
+
 int test_location_decode() {
     BitMatrix32 matrix, matrix_mask;
 
