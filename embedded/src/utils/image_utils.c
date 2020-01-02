@@ -81,14 +81,21 @@ void img_resize(ImageMatrix dst, const ImageMatrix src, ImageInterpolation inter
 
 void img_rotate(ImageMatrix dst, const ImageMatrix src, Vector2f rotation, uint8_t bg_fill,
         ImageInterpolation interpolation) {
+    Matrix2f transform = {{rotation.x, -rotation.y, rotation.y, rotation.x}};
+    img_affine_transform(dst, src, transform, bg_fill, interpolation);
+}
+
+void img_affine_transform(ImageMatrix dst, const ImageMatrix src, Matrix2f transform,
+        uint8_t bg_fill, ImageInterpolation interpolation) {
     assert(interpolation);
-    assert(!v2f_is_zero(rotation) && !v2f_is_nan(rotation));
+    assert(!m2f_is_nan(transform));
+    assert(m2f_determinant(transform) != 0.0f);
     Vector2f src_center = {0.5f * src.n_cols, 0.5f * src.n_rows};
     Vector2f dst_center = {0.5f * dst.n_cols, 0.5f * dst.n_rows};
-    rotation = v2f_flip_rotation(rotation);
+    transform = m2f_inverse(transform);
     FOR_EACH_PIXEL(dst) {
         Vector2f from_center = {0.5f + col - dst_center.x, 0.5f + row - dst_center.y};
-        Vector2f src_position = v2f_add(src_center, v2f_rotate(from_center, rotation));
+        Vector2f src_position = v2f_add(src_center, m2f_transform(transform, from_center));
         if (src_position.x < 0.0f || src_position.x >= src.n_cols || src_position.y < 0.0f ||
                 src_position.y >= src.n_rows) {
             PIXEL(dst, row, col) = bg_fill;

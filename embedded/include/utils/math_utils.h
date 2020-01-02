@@ -143,7 +143,7 @@ static inline Vector2f v2f_add_angle(Vector2f rot_a, Vector2f rot_b) {
 
 // matrix operations
 
-static inline Vector2f v2f_transform(Matrix2f mat, Vector2f vec) {
+static inline Vector2f m2f_transform(Matrix2f mat, Vector2f vec) {
     return (Vector2f){v2f_dot(mat.rows[0], vec), v2f_dot(mat.rows[1], vec)};
 }
 
@@ -152,7 +152,7 @@ static inline uint8_t m2f_is_zero(Matrix2f mat) {
 }
 
 static inline uint8_t m2f_is_nan(Matrix2f mat) {
-    return v2f_is_nan(mat.rows[0]) && v2f_is_nan(mat.rows[1]);
+    return v2f_is_nan(mat.rows[0]) || v2f_is_nan(mat.rows[1]);
 }
 
 static inline float m2f_determinant(Matrix2f mat) {

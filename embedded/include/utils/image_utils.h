@@ -177,6 +177,8 @@ uint8_t img_bicubic_interpolation(const ImageMatrix mat, Vector2f position);
 void img_resize(ImageMatrix dst, const ImageMatrix src, ImageInterpolation interpolation);
 void img_rotate(ImageMatrix dst, const ImageMatrix src, Vector2f rotation, uint8_t bg_fill,
         ImageInterpolation interpolation);
+void img_affine_transform(ImageMatrix dst, const ImageMatrix src, Matrix2f transform,
+        uint8_t bg_fill, ImageInterpolation interpolation);
 
 void img_histogram(uint32_t histogram[256], const ImageMatrix mat);
 uint8_t img_otsu_histogram_threshold(const uint32_t histogram[256]);
