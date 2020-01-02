@@ -32,13 +32,18 @@ int test_bitwise_utils() {
     }
 
     BitMatrix64 bm64 = {};
-    bm64[0] = ~0ul;
+    bm64_set_bit(bm64, 60, 60);
+    test_assert(bm64_get_bit(bm64, 60, 60) == 1);
+    bm64_clear_bit(bm64, 60, 60);
+    test_assert(bm64_get_bit(bm64, 60, 60) == 0);
+
+    bm64[0] = ~0ull;
     bm64_transpose(bm64);
     for (int i = 0; i < 64; ++i) {
         test_assert(bm64[i] == 1);
     }
     bm64_transpose(bm64);
-    test_assert(bm64[0] == ~0lu);
+    test_assert(bm64[0] == ~0ull);
     for (int i = 1; i < 64; ++i) {
         test_assert(bm64[i] == 0);
     }

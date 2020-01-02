@@ -67,6 +67,34 @@ void img_bit_matrix_conversion(BitMatrix32 dst, BitMatrix32 mask, const ImageMat
     }
 }
 
+void img_to_bm64(BitMatrix64 dst, BitMatrix64 mask, const ImageMatrix src, uint8_t low_thresh,
+        uint8_t high_thresh) {
+    assert(high_thresh >= low_thresh);
+    for (uint8_t row = 0; row < 64; ++row) {
+        dst[row] = 0ull;
+        mask[row] = 0ull;
+    }
+    FOR_EACH_PIXEL(src) {
+        if (row >= 64 || col >= 64) {
+            break;
+        } else if (PIXEL(src, row, col) > high_thresh) {
+            bm64_set_bit(dst, row, col);
+            bm64_set_bit(mask, row, col);
+        } else if (PIXEL(src, row, col) <= low_thresh) {
+            bm64_set_bit(mask, row, col);
+        }
+    }
+}
+
+void bm64_to_img(ImageMatrix* dst, const BitMatrix64 src, const BitMatrix64 mask) {
+    IMG_SET_SIZE(dst, 64, 64);
+    FOR_EACH_PIXEL(*dst) {
+        PIXEL(*dst, row, col) = bm64_get_bit(mask, row, col)
+                                        ? bm64_get_bit(src, row, col) * UINT8_MAX
+                                        : UINT8_MAX / 2;
+    }
+}
+
 AxisCode bm32_extract_column_code(uint32_t initial_row_guess, const BitMatrix32 matrix,
         const BitMatrix32 mask, uint8_t min_row_samples) {
     assert(min_row_samples > 0);

@@ -2,10 +2,10 @@
 #include "image_utils.h"
 
 static uint32_t histogram[256];
+static ImageMatrix test_img = {(uint8_t[5 * 5]){}, 5, 5};
+static ImageMatrix buf_img = {(uint8_t[5 * 5 * 2]){}, 5, 5};
 
 int test_image_utils() {
-    ImageMatrix test_img = {(uint8_t[5 * 5]){}, 5, 5};
-    ImageMatrix buf_img = {(uint8_t[5 * 5 * 2]){}, 5, 5};
     test_assert(IMG_SIZE(test_img) == 25);
 
     for (int i = 0; i < IMG_SIZE(test_img); ++i) {
@@ -39,9 +39,9 @@ int test_image_utils() {
     IMG_MIN(min, test_img);
     test_assert(min == 0);
 
-    int32_t accumulator = 0;
-    IMG_APPLY_KERNEL(accumulator, edge_kernel, test_img, 0, 0);
-    test_assert(accumulator == 0);
+    int32_t sum = 0;
+    IMG_APPLY_KERNEL(sum, edge_kernel, test_img, 0, 0);
+    test_assert(sum == 0);
 
     IMG_THRESHOLD(&buf_img, test_img, 4);
     FOR_EACH_PIXEL(buf_img) { test_assert(PIXEL(buf_img, row, col) == (row > 0) * UINT8_MAX); }
