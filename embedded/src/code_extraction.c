@@ -109,14 +109,14 @@ AxisCode bm32_extract_column_code(uint32_t initial_row_guess, const BitMatrix32 
     }
     AxisCode column_code = {};
     for (uint8_t i = 0; i < 32; ++i) {
-        uint8_t mask_sum = sum_bits(mask[i]);
+        uint8_t mask_sum = count_bits(mask[i]);
         if (mask_sum < min_row_samples) {
             continue;
         }
         mask_sum *= FILTER_SIZE;
         uint8_t row_diff = 0;
         for (uint8_t j = 0; j < FILTER_SIZE; ++j) {
-            row_diff += sum_bits((row_code_bits[j] ^ matrix[i]) & mask[i]);
+            row_diff += count_bits((row_code_bits[j] ^ matrix[i]) & mask[i]);
         }
         uint8_t j = i & (FILTER_SIZE - 1);
         row_code_bits[j] &= ~mask[i];
@@ -141,10 +141,10 @@ void bm32_extract_axis_codes(AxisCode* row_code, AxisCode* col_code, BitMatrix32
     bm32_transpose(matrix);
     bm32_transpose(mask);
     *row_code = bm32_extract_column_code(col_code->bits, matrix, mask, min_samples);
-    uint8_t offset = first_set_bit(col_code->mask);
+    uint8_t offset = count_trailing_zeros(col_code->mask);
     col_code->bits >>= offset;
     col_code->mask >>= offset;
-    offset = first_set_bit(row_code->mask);
+    offset = count_trailing_zeros(row_code->mask);
     row_code->bits >>= offset;
     row_code->mask >>= offset;
 }

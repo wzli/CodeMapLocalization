@@ -52,7 +52,7 @@ uint8_t perfect_log2_64(uint64_t x) {
     return debruijn_table[(x * 0x022fdd63cc95386dULL) >> 58];
 }
 
-uint8_t sum_bits(uint32_t x) {
+uint8_t count_bits(uint32_t x) {
     x = x - ((x >> 1) & 0x55555555);
     x = (x & 0x33333333) + ((x >> 2) & 0x33333333);
     return (((x + (x >> 4)) & 0x0F0F0F0F) * 0x01010101) >> 24;

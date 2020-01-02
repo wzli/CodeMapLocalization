@@ -62,16 +62,16 @@ uint32_t reverse_bits(uint32_t x, uint32_t n);
 uint8_t perfect_log2(uint32_t x);
 uint8_t perfect_log2_64(uint64_t x);
 
-uint8_t sum_bits(uint32_t x);
+uint8_t count_bits(uint32_t x);
 
-static inline uint8_t sum_bits_64(uint64_t x) {
-    return sum_bits(x) + sum_bits(x >> 32);
+static inline uint8_t count_bits_64(uint64_t x) {
+    return count_bits(x) + count_bits(x >> 32);
 };
 
-static inline uint8_t first_set_bit(uint32_t x) {
+static inline uint8_t count_trailing_zeros(uint32_t x) {
     return x ? perfect_log2(x & -x) : 32;
 }
 
-static inline uint8_t first_set_bit_64(uint64_t x) {
+static inline uint8_t count_trailing_zeros_64(uint64_t x) {
     return x ? perfect_log2_64(x & -x) : 64;
 }
