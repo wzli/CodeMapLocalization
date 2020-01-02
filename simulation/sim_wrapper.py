@@ -46,6 +46,17 @@ class Location(ctypes.Structure):
     ]
 
 
+class ImageWindow(ctypes.Structure):
+    _fields_ = [('x0', ctypes.c_short), ('y0', ctypes.c_short),
+                ('x1', ctypes.c_short), ('y1', ctypes.c_short)]
+
+    def __init__(self, x0, y0, x1, y1):
+        self.x0 = x0
+        self.y0 = y0
+        self.x1 = x1
+        self.y1 = y1
+
+
 class ImageMatrix(ctypes.Structure):
     _fields_ = [('data', ctypes.c_char_p), ('n_cols', ctypes.c_short),
                 ('n_rows', ctypes.c_short)]

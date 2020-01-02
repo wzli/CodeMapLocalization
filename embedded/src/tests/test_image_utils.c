@@ -40,7 +40,7 @@ int test_image_utils() {
     test_assert(min == 0);
 
     int32_t acc = 0;
-    IMG_APPLY_KERNEL(acc, edge_kernel, test_img, 0, 0);
+    IMG_APPLY_KERNEL(acc, edge_detect_kernel, test_img, 0, 0);
     test_assert(acc == 0);
 
     IMG_THRESHOLD(&buf_img, test_img, 4);

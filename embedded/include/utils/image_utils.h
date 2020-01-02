@@ -153,8 +153,9 @@ typedef struct {
         }                                                            \
     } while (0)
 
-static const ImageMatrixInt8 edge_kernel = {(int8_t[]){-1, -1, -1, -1, 8, -1, -1, -1, -1}, 3, 3};
 static const ImageMatrixInt8 sharpen_kernel = {(int8_t[]){-1, -1, -1, -1, 9, -1, -1, -1, -1}, 3, 3};
+static const ImageMatrixInt8 edge_detect_kernel = {
+        (int8_t[]){-1, -1, -1, -1, 8, -1, -1, -1, -1}, 3, 3};
 
 static const ImageMatrixInt8 sobel_x_kernel = {(int8_t[]){-1, 0, 1, -2, 0, 2, -1, 0, 1}, 3, 3};
 static const ImageMatrixInt8 sobel_y_kernel = {(int8_t[]){-1, -2, -1, 0, 0, 0, 1, 2, 1}, 3, 3};
@@ -164,7 +165,7 @@ static const ImageMatrix box_3x3_kernel = {(uint8_t[]){1, 1, 1, 1, 1, 1, 1, 1, 1
 static const ImageMatrix cross_3x3_kernel = {(uint8_t[]){0, 1, 0, 1, 1, 1, 0, 1, 0}, 3, 3};
 
 // filters also work inplace
-void img_filter(ImageMatrix* dst, const ImageMatrix src, const ImageMatrixInt8 kernel);
+void img_convolution_filter(ImageMatrix* dst, const ImageMatrix src, const ImageMatrixInt8 kernel);
 void img_max_filter(ImageMatrix* dst, const ImageMatrix src, const ImageMatrix kernel);
 void img_min_filter(ImageMatrix* dst, const ImageMatrix src, const ImageMatrix kernel);
 void img_median_filter(ImageMatrix* dst, const ImageMatrix src, ImageMatrix window);
@@ -181,6 +182,7 @@ void img_histogram(uint32_t histogram[256], const ImageMatrix mat);
 uint8_t img_otsu_histogram_threshold(const uint32_t histogram[256]);
 
 void img_draw_line(ImageMatrix mat, ImageWindow line, uint8_t color);
+void img_draw_rectangle(ImageMatrix mat, ImageWindow rect, uint8_t color);
 
 void img_convert_from_rgb888(ImageMatrix* dst, const ImageMatrix src);
 

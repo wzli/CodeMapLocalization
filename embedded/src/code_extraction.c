@@ -40,7 +40,7 @@ float img_estimate_scale(const ImageMatrix mat) {
     ImageMatrix bounds = {0, mat.n_cols - 2, mat.n_rows - 2};
     FOR_EACH_PIXEL(bounds) {
         int32_t val = 0;
-        IMG_APPLY_KERNEL(val, edge_kernel, mat, row, col);
+        IMG_APPLY_KERNEL(val, edge_detect_kernel, mat, row, col);
         if (val > 0) {
             sum += val;
             max_val = MAX(max_val, val);

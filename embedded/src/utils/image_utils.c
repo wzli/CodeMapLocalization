@@ -1,7 +1,7 @@
 #include "image_utils.h"
 #include <assert.h>
 
-void img_filter(ImageMatrix* dst, const ImageMatrix src, const ImageMatrixInt8 kernel) {
+void img_convolution_filter(ImageMatrix* dst, const ImageMatrix src, const ImageMatrixInt8 kernel) {
     IMG_CONVOLUTION(dst, src, kernel, 1, 0, UINT8_MAX);
 }
 
@@ -166,6 +166,17 @@ void img_draw_line(ImageMatrix mat, ImageWindow line, uint8_t color) {
         ITERATE_LINE(PIXEL(mat, line.x0, ABS(line.y0)));
     } else {
         ITERATE_LINE(PIXEL(mat, ABS(line.y0), line.x0));
+    }
+}
+
+void img_draw_rectangle(ImageMatrix mat, ImageWindow rect, uint8_t color) {
+    for (int16_t row = rect.y0; row <= rect.y1; ++row) {
+        PIXEL(mat, row, rect.x0) = color;
+        PIXEL(mat, row, rect.x1) = color;
+    }
+    for (int16_t col = rect.x0; col <= rect.x1; ++col) {
+        PIXEL(mat, rect.y0, col) = color;
+        PIXEL(mat, rect.y1, col) = color;
     }
 }
 
