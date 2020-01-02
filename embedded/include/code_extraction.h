@@ -9,8 +9,6 @@ typedef struct {
     uint16_t n_samples;
 } AxisCode;
 
-void img_min_filter_2x2(ImageMatrix* dst, const ImageMatrix src);
-
 Vector2f img_estimate_rotation(const ImageMatrix mat);
 
 float img_estimate_scale(const ImageMatrix mat);

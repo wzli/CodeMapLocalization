@@ -1,15 +1,6 @@
 #include "code_extraction.h"
 #include <assert.h>
 
-void img_min_filter_2x2(ImageMatrix* dst, const ImageMatrix src) {
-    IMG_SET_SIZE(dst, src.n_cols - 1, src.n_rows - 1);
-    FOR_EACH_PIXEL(*dst) {
-        uint8_t top_min = MIN(PIXEL(src, row, col), PIXEL(src, row, col + 1));
-        uint8_t bot_min = MIN(PIXEL(src, row + 1, col), PIXEL(src, row + 1, col + 1));
-        PIXEL(*dst, row, col) = MIN(top_min, bot_min);
-    }
-}
-
 Vector2f img_estimate_rotation(const ImageMatrix mat) {
     Vector2f gradient_sum = {};
     ImageMatrix bounds = {0, mat.n_cols - 2, mat.n_rows - 2};
