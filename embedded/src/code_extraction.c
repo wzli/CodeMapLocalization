@@ -80,7 +80,7 @@ void img_to_bm64(BitMatrix64 dst, BitMatrix64 mask, const ImageMatrix src, uint8
         } else if (PIXEL(src, row, col) > high_thresh) {
             bm64_set_bit(dst, row, col);
             bm64_set_bit(mask, row, col);
-        } else if (PIXEL(src, row, col) <= low_thresh) {
+        } else if (PIXEL(src, row, col) < low_thresh) {
             bm64_set_bit(mask, row, col);
         }
     }
