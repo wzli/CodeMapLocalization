@@ -14,15 +14,15 @@ int test_bitwise_utils() {
     test_assert(count_bits(1) == 1);
     test_assert(count_bits(~0) == 32);
     test_assert(count_bits(0xf0f0f0f0) == 16);
-    test_assert(count_bits_64(~0ull) == 64);
-    test_assert(count_bits_64(0xf0f0f0f000000000) == 16);
+    test_assert(count_bits(~0ull) == 64);
+    test_assert(count_bits(0xf0f0f0f000000000) == 16);
     test_assert(count_trailing_zeros(0) == 32);
     test_assert(count_trailing_zeros(~0) == 0);
     test_assert(count_trailing_zeros(1 << 7) == 7);
     test_assert(count_trailing_zeros(0xf0f0f0f0) == 4);
-    test_assert(count_trailing_zeros_64(0ull) == 64);
-    test_assert(count_trailing_zeros_64(1ull << 40) == 40);
-    test_assert(count_trailing_zeros_64(0xf0f0f0f000000000) == 36);
+    test_assert(count_trailing_zeros(0ull) == 64);
+    test_assert(count_trailing_zeros(1ull << 40) == 40);
+    test_assert(count_trailing_zeros(0xf0f0f0f000000000) == 36);
 
     BitMatrix32 bm32 = {};
     bm32[0] = ~0;
