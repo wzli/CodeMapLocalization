@@ -36,6 +36,8 @@ static camera_fb_t double_buffers[][2] = {
 static camera_fb_t* claimed_buffers[N_DOUBLE_BUFFERS + 1] = {};
 
 static uint32_t histogram[256];
+static BitMatrix64 binary_image;
+static BitMatrix64 binary_mask;
 
 /* helper functions */
 
@@ -92,35 +94,43 @@ static void main_loop(void* pvParameters) {
             images[i] = queue_fb_get(i);
         }
 
+        // find threshold of original image
+        img_histogram(histogram, images[0]);
+        uint8_t original_threshold = img_otsu_histogram_threshold(histogram);
+
+        // find rotation of original image
         Vector2f rotation = img_estimate_rotation(images[0]);
         rotation.y *= -(float) M_SQRT1_2;
         rotation.x *= (float) M_SQRT1_2;
-#define BG_FILL (0)
+
+        // unrotate and sharpen
         images[1].n_cols = 64;
         images[1].n_rows = 64;
-        img_rotate(images[1], images[0], rotation, BG_FILL, img_bilinear_interpolation);
+        img_rotate(images[1], images[0], rotation, original_threshold, img_bilinear_interpolation);
         img_filter(&images[2], images[1], sharpen_kernel);
 
-        images[3].n_cols = 32;
-        images[3].n_rows = 32;
-        img_resize(images[3], images[2], img_bilinear_interpolation);
-        img_histogram(histogram, images[3]);
-        histogram[BG_FILL] -= MIN(IMG_SIZE(images[3]) / 2, histogram[BG_FILL]);
-        uint8_t otsu_threshold = img_otsu_histogram_threshold(histogram);
-        IMG_THRESHOLD(&images[3], images[3], otsu_threshold);
+        img_histogram(histogram, images[2]);
+        histogram[original_threshold] -=
+                MIN(IMG_SIZE(images[2]) / 2, histogram[original_threshold]);
+        uint8_t filtered_threshold = img_otsu_histogram_threshold(histogram);
+        if (filtered_threshold < original_threshold) {
+            SWAP(filtered_threshold, original_threshold);
+        }
+        img_to_bm64(
+                binary_image, binary_mask, images[2], original_threshold - 1, filtered_threshold);
+        bm64_to_img(&images[3], binary_image, binary_mask);
 
+#if 0
+        img_filter(&images[1], images[1], sharpen_kernel);
+        img_min_filter_2x2(&images[2], images[1]);
+
+        // images[3].n_cols = 32;
+        // images[3].n_rows = 32;
+        // img_resize(images[3], images[2], img_bilinear_interpolation);
         img_histogram(histogram, images[2]);
         histogram[BG_FILL] -= MIN(IMG_SIZE(images[2]) / 2, histogram[BG_FILL]);
-        otsu_threshold = img_otsu_histogram_threshold(histogram);
-        IMG_THRESHOLD(&images[2], images[2], otsu_threshold);
-
-        images[1].n_cols = 32;
-        images[1].n_rows = 32;
-        img_resize(images[1], images[2], img_bilinear_interpolation);
-        img_histogram(histogram, images[1]);
-        histogram[BG_FILL] -= MIN(IMG_SIZE(images[1]) / 2, histogram[BG_FILL]);
-        otsu_threshold = img_otsu_histogram_threshold(histogram);
-        IMG_THRESHOLD(&images[1], images[1], otsu_threshold);
+        uint8_t otsu_threshold = img_otsu_histogram_threshold(histogram);
+#endif
 
         for (uint8_t i = 0; i <= N_DOUBLE_BUFFERS; ++i) {
             assert(claimed_buffers[i]);
@@ -136,7 +146,7 @@ static void main_loop(void* pvParameters) {
         if (!(frame_count & 0xF)) {
             ESP_LOGI(TAG, "frame %u time %ums rot %fdeg thresh %u", frame_count,
                     (uint32_t)((end_time - start_time) / 1000),
-                    180 * atan2(rotation.y, rotation.x) / M_PI, otsu_threshold);
+                    180 * atan2(rotation.y, rotation.x) / M_PI, original_threshold);
         }
         start_time = end_time;
     }
@@ -144,7 +154,6 @@ static void main_loop(void* pvParameters) {
 
 void app_main() {
     // assert(!run_all_tests());
-    // ESP_LOGI(TAG, "%s\ntests ran: %d\n", test_error, test_count);
 
     app_wifi_main();
     app_camera_main();

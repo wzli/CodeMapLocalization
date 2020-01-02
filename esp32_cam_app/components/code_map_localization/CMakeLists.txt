@@ -10,6 +10,7 @@ set(srcs
   src/utils/test_utils.c
   src/tests/tests.c
   src/tests/test_bitwise_utils.c
+  src/tests/test_image_utils.c
   src/tests/test_full_chain.c
   src/tests/test_location_decode.c
   src/tests/test_math_utils.c
