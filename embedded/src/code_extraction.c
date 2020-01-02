@@ -127,20 +127,20 @@ IMPLEMENT_BM_FROM_AXIS_CODES(64);
 IMPLEMENT_BM_EXTRACT_COLUMN_CODE(32);
 IMPLEMENT_BM_EXTRACT_COLUMN_CODE(64);
 
-#define IMPLEMENT_BM_EXTRACT_AXIS_CODES(W)                                                  \
-    void bm##W##_extract_axis_codes(AxisCode##W* row_code, AxisCode##W* col_code,           \
-            BitMatrix##W matrix, BitMatrix##W mask, uint8_t min_samples) {                  \
-        assert(row_code&& col_code);                                                        \
-        *col_code = bm##W##_extract_column_code(0, matrix, mask, min_samples);              \
-        bm##W##_transpose(matrix);                                                          \
-        bm##W##_transpose(mask);                                                            \
-        *row_code = bm##W##_extract_column_code(col_code->bits, matrix, mask, min_samples); \
-        uint8_t offset = count_trailing_zeros(col_code->mask);                              \
-        col_code->bits >>= offset;                                                          \
-        col_code->mask >>= offset;                                                          \
-        offset = count_trailing_zeros(row_code->mask);                                      \
-        row_code->bits >>= offset;                                                          \
-        row_code->mask >>= offset;                                                          \
+#define IMPLEMENT_BM_EXTRACT_AXIS_CODES(W)                                                   \
+    void bm##W##_extract_axis_codes(AxisCode##W* row_code, AxisCode##W* col_code,            \
+            BitMatrix##W matrix, BitMatrix##W mask, uint8_t min_samples) {                   \
+        assert(row_code&& col_code);                                                         \
+        *col_code = bm##W##_extract_column_code(matrix[(W) / 2], matrix, mask, min_samples); \
+        bm##W##_transpose(matrix);                                                           \
+        bm##W##_transpose(mask);                                                             \
+        *row_code = bm##W##_extract_column_code(col_code->bits, matrix, mask, min_samples);  \
+        uint8_t offset = count_trailing_zeros(col_code->mask);                               \
+        col_code->bits >>= offset;                                                           \
+        col_code->mask >>= offset;                                                           \
+        offset = count_trailing_zeros(row_code->mask);                                       \
+        row_code->bits >>= offset;                                                           \
+        row_code->mask >>= offset;                                                           \
     }
 
 IMPLEMENT_BM_EXTRACT_AXIS_CODES(32);

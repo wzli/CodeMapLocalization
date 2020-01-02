@@ -244,6 +244,7 @@ void app_httpd_main() {
     };
     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
     config.core_id = 0;
+    config.stack_size = 8192;
     config.max_uri_handlers = sizeof(uris) / sizeof(httpd_uri_t);
     httpd_handle_t httpd;
     if (httpd_start(&httpd, &config) == ESP_OK) {

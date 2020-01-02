@@ -96,7 +96,7 @@ static void main_loop(void* pvParameters) {
 
         // find threshold of original image
         img_histogram(histogram, images[0]);
-        uint8_t original_threshold = img_otsu_histogram_threshold(histogram);
+        uint8_t original_threshold = img_compute_otsu_threshold(histogram);
 
         // find rotation of original image
         Vector2f rotation = img_estimate_rotation(images[0]);
@@ -107,30 +107,22 @@ static void main_loop(void* pvParameters) {
         images[1].n_cols = 64;
         images[1].n_rows = 64;
         img_rotate(images[1], images[0], rotation, original_threshold, img_bilinear_interpolation);
-        img_filter(&images[2], images[1], sharpen_kernel);
+        img_convolution_filter(&images[1], images[1], img_sharpen_kernel);
 
-        img_histogram(histogram, images[2]);
+        img_histogram(histogram, images[1]);
         histogram[original_threshold] -=
-                MIN(IMG_SIZE(images[2]) / 2, histogram[original_threshold]);
-        uint8_t filtered_threshold = img_otsu_histogram_threshold(histogram);
+                MIN(IMG_SIZE(images[1]) / 2, histogram[original_threshold]);
+        uint8_t filtered_threshold = img_compute_otsu_threshold(histogram);
         if (filtered_threshold < original_threshold) {
             SWAP(filtered_threshold, original_threshold);
         }
-        img_to_bm64(
-                binary_image, binary_mask, images[2], original_threshold - 1, filtered_threshold);
+        img_to_bm64(binary_image, binary_mask, images[1], original_threshold, filtered_threshold);
+        bm64_to_img(&images[2], binary_image, binary_mask);
+
+        AxisCode64 row_code, col_code;
+        bm64_extract_axis_codes(&row_code, &col_code, binary_image, binary_mask, 5);
+        bm64_from_axis_codes(binary_image, binary_mask, row_code, col_code);
         bm64_to_img(&images[3], binary_image, binary_mask);
-
-#if 0
-        img_filter(&images[1], images[1], sharpen_kernel);
-        img_min_filter_2x2(&images[2], images[1]);
-
-        // images[3].n_cols = 32;
-        // images[3].n_rows = 32;
-        // img_resize(images[3], images[2], img_bilinear_interpolation);
-        img_histogram(histogram, images[2]);
-        histogram[BG_FILL] -= MIN(IMG_SIZE(images[2]) / 2, histogram[BG_FILL]);
-        uint8_t otsu_threshold = img_otsu_histogram_threshold(histogram);
-#endif
 
         for (uint8_t i = 0; i <= N_DOUBLE_BUFFERS; ++i) {
             assert(claimed_buffers[i]);
@@ -142,7 +134,6 @@ static void main_loop(void* pvParameters) {
 
         // end loop
         int64_t end_time = esp_timer_get_time();
-
         if (!(frame_count & 0xF)) {
             ESP_LOGI(TAG, "frame %u time %ums rot %fdeg thresh %u", frame_count,
                     (uint32_t)((end_time - start_time) / 1000),
@@ -158,5 +149,5 @@ void app_main() {
     app_wifi_main();
     app_camera_main();
     app_httpd_main();
-    xTaskCreatePinnedToCore(main_loop, "main_loop", 5000, NULL, 9, NULL, 1);
+    xTaskCreatePinnedToCore(main_loop, "main_loop", 10000, NULL, 9, NULL, 1);
 }
