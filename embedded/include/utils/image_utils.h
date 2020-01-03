@@ -29,6 +29,10 @@ typedef struct {
 
 #define FOR_EACH_PIXEL(MAT) FOR_EACH_NESTED_PIXEL(MAT, )
 
+#define IMG_CHECK_BOUNDS(MAT, ROW, COL, OFFSET)                                   \
+    ((ROW) >= (OFFSET) && (COL) >= (OFFSET) && (ROW) + (OFFSET) < (MAT).n_rows && \
+            (COL) + (OFFSET) < (MAT).n_cols)
+
 #define IMG_SIZE(MAT) ((MAT).n_rows * (MAT).n_cols)
 
 #define IMG_SET_SIZE(DST, N_COLS, N_ROWS) ((DST).n_cols = (N_COLS), (DST).n_rows = (N_ROWS))
@@ -94,39 +98,38 @@ typedef struct {
         }                                                                         \
     } while (0)
 
-#define IMG_CROP(DST, SRC, TOP_LEFT)                                                   \
-    do {                                                                               \
-        FOR_EACH_PIXEL(DST) {                                                          \
-            PIXEL(DST, row, col) = PIXEL(SRC, row + (TOP_LEFT).y, col + (TOP_LEFT).x); \
-        }                                                                              \
-    } while (0)
+#define IMG_CROP(DST, SRC, TOP_LEFT)                                                             \
+    if (IMG_CHECK_BOUNDS(SRC, (TOP_LEFT).y, (TOP_LEFT).x, 0) &&                                  \
+            IMG_CHECK_BOUNDS(                                                                    \
+                    SRC, (TOP_LEFT).y + (DST).n_rows - 1, (TOP_LEFT).x + (DST).n_cols - 1, 0)) { \
+        FOR_EACH_PIXEL(DST) {                                                                    \
+            PIXEL(DST, row, col) = PIXEL(SRC, row + (TOP_LEFT).y, col + (TOP_LEFT).x);           \
+        }                                                                                        \
+    } else                                                                                       \
+        IMG_SET_SIZE(DST, 0, 0)
 
 #define IMG_FLIP_INPLACE(MAT, F_ROW, F_COL)                   \
-    FOR_EACH_PIXEL(MAT) {                                     \
-        int16_t f_row = F_ROW;                                \
-        int16_t f_col = F_COL;                                \
-        if (row >= f_row && col >= f_col) {                   \
-            break;                                            \
-        }                                                     \
-        SWAP(PIXEL(MAT, row, col), PIXEL(MAT, f_row, f_col)); \
-    }
+    FOR_EACH_PIXEL(MAT)                                       \
+    if (row < (F_ROW) || col < (F_COL)) {                     \
+        SWAP(PIXEL(MAT, row, col), PIXEL(MAT, F_ROW, F_COL)); \
+    } else                                                    \
+        break
 
-#define IMG_FLIP(DST, SRC, F_ROW, F_COL)                                             \
-    do {                                                                             \
-        if (&(DST) == &(SRC)) {                                                      \
-            IMG_FLIP_INPLACE(SRC, F_ROW, F_COL);                                     \
-        } else {                                                                     \
-            IMG_COPY_SIZE(DST, SRC);                                                 \
-            FOR_EACH_PIXEL(SRC) { PIXEL(DST, row, col) = PIXEL(SRC, F_ROW, F_COL); } \
-        }                                                                            \
-    } while (0)
+#define IMG_FLIP(DST, SRC, F_ROW, F_COL)                                         \
+    if (&(DST) != &(SRC)) {                                                      \
+        IMG_COPY_SIZE(DST, SRC);                                                 \
+        FOR_EACH_PIXEL(SRC) { PIXEL(DST, row, col) = PIXEL(SRC, F_ROW, F_COL); } \
+    } else                                                                       \
+        IMG_FLIP_INPLACE(SRC, F_ROW, F_COL)
 
 #define IMG_VFLIP(DST, SRC) IMG_FLIP(DST, SRC, (SRC).n_rows - 1 - row, col)
 #define IMG_HFLIP(DST, SRC) IMG_FLIP(DST, SRC, row, (SRC).n_cols - 1 - col)
 
-#define IMG_TRANSPOSE(DST, SRC)                                  \
-    if ((SRC).n_rows == (SRC.n_cols) || IMG_SET_SIZE(DST, 0, 0)) \
-    IMG_FLIP(DST, SRC, col, row)
+#define IMG_TRANSPOSE(DST, SRC)         \
+    if ((SRC).n_rows == (SRC).n_cols) { \
+        IMG_FLIP(DST, SRC, col, row);   \
+    } else                              \
+        IMG_SET_SIZE(DST, 0, 0)
 
 #define IMG_NORMALIZE_RANGE(DST, SRC, MIN, MAX)                                           \
     do {                                                                                  \
