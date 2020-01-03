@@ -21,10 +21,12 @@
 
 #define SWAP(X, Y)                                                            \
     do {                                                                      \
+        uint8_t* swap_x_ptr = (uint8_t*) &(X);                                \
+        uint8_t* swap_y_ptr = (uint8_t*) &(Y);                                \
         for (uint16_t swap_index = 0; swap_index < sizeof(X); ++swap_index) { \
-            uint8_t swap_tmp = ((uint8_t*) &(X))[swap_index];                 \
-            ((uint8_t*) &(X))[swap_index] = ((uint8_t*) &(Y))[swap_index];    \
-            ((uint8_t*) &(Y))[swap_index] = swap_tmp;                         \
+            uint8_t swap_tmp = swap_x_ptr[swap_index];                        \
+            swap_x_ptr[swap_index] = swap_y_ptr[swap_index];                  \
+            swap_y_ptr[swap_index] = swap_tmp;                                \
         }                                                                     \
     } while (0)
 
