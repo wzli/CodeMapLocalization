@@ -112,7 +112,7 @@ IMPLEMENT_BM_FROM_AXIS_CODES(64);
             }                                                                                    \
             column_code.n_samples += mask_sum;                                                   \
             column_code.mask |= (uint##W##_t) 1 << i;                                            \
-            for (uint8_t j = 0; j < (W); ++j) {                                                  \
+            for (uint8_t j = count_trailing_zeros(mask[i]); j < (W); ++j) {                      \
                 if (!bm##W##_get_bit(mask, i, j)) {                                              \
                     continue;                                                                    \
                 }                                                                                \
