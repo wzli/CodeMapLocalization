@@ -191,7 +191,7 @@ void img_histogram(uint32_t histogram[256], const ImageMatrix mat);
 uint8_t img_compute_otsu_threshold(const uint32_t histogram[256]);
 
 // drawing utilitites
-void img_draw_line(ImageMatrix mat, ImagePoint from, ImagePoint to, uint8_t color);
+void img_draw_line(ImageMatrix mat, ImagePoint from, ImagePoint to, uint8_t color, uint8_t width);
 void img_draw_rectangle(ImageMatrix mat, ImagePoint from, ImagePoint to, uint8_t color);
 
 // shape detection

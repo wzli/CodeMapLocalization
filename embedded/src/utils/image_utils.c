@@ -144,9 +144,12 @@ uint8_t img_compute_otsu_threshold(const uint32_t histogram[256]) {
     return threshold;
 }
 
-void img_draw_line(ImageMatrix mat, ImagePoint from, ImagePoint to, uint8_t color) {
+void img_draw_line(ImageMatrix mat, ImagePoint from, ImagePoint to, uint8_t color, uint8_t width) {
     // Bresenham's Line Algorithm
-    uint8_t swap_xy = ABS(to.y - from.y) > ABS(to.x - from.x);
+    assert(width);
+    int16_t dx = to.x - from.x;
+    int16_t dy = to.y - from.y;
+    uint8_t swap_xy = ABS(dy) > ABS(dx);
     if (swap_xy) {
         SWAP(from.x, from.y);
         SWAP(to.x, to.y);
@@ -155,24 +158,29 @@ void img_draw_line(ImageMatrix mat, ImagePoint from, ImagePoint to, uint8_t colo
         SWAP(from.x, to.x);
         SWAP(from.y, to.y);
     }
-    int16_t dx = to.x - from.x;
-    int16_t dy = to.y - from.y;
+    dx = to.x - from.x;
+    dy = to.y - from.y;
     if (dy < 0) {
         dy = -dy;
         from.y = -from.y;
     }
+    float slope = (float) dy / dx;
+    width *= sqrtf(1.0f + SQR(slope));
     int16_t error = dy * 2 - dx;
-#define ITERATE_LINE(EDIT_PIXEL)              \
-    EDIT_PIXEL = color;                       \
-    while (from.x++ < to.x) {                 \
-        error += 2 * (dy - (error > 0) * dx); \
-        from.y += error > 0;                  \
-        EDIT_PIXEL = color;                   \
+#define ITERATE_LINE(ROW_INDEX, COL_INDEX)                                  \
+    for (int16_t y = from.y; from.x <= to.x; ++from.x, y += error > 0) {    \
+        to.y = ABS(y) + width / 2;                                          \
+        for (from.y = ABS(y) - (width - 1) / 2; from.y <= to.y; ++from.y) { \
+            int16_t row = CLAMP(ROW_INDEX, 0, mat.n_rows - 1);              \
+            int16_t col = CLAMP(COL_INDEX, 0, mat.n_cols - 1);              \
+            PIXEL(mat, row, col) = color;                                   \
+        }                                                                   \
+        error += 2 * (dy - (error > 0) * dx);                               \
     }
     if (swap_xy) {
-        ITERATE_LINE(PIXEL(mat, from.x, ABS(from.y)));
+        ITERATE_LINE(from.x, from.y);
     } else {
-        ITERATE_LINE(PIXEL(mat, ABS(from.y), from.x));
+        ITERATE_LINE(from.y, from.x);
     }
 }
 

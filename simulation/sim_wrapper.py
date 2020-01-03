@@ -51,9 +51,8 @@ class Location(ctypes.Structure):
     ]
 
 
-class ImageWindow(ctypes.Structure):
-    _fields_ = [('x0', ctypes.c_short), ('y0', ctypes.c_short),
-                ('x1', ctypes.c_short), ('y1', ctypes.c_short)]
+class ImagePoint(ctypes.Structure):
+    _fields_ = [('x', ctypes.c_short), ('y', ctypes.c_short)]
 
 
 class ImageMatrix(ctypes.Structure):

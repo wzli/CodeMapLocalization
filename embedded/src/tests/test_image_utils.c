@@ -106,5 +106,12 @@ int test_image_utils() {
     FOR_EACH_PIXEL(buf_img) {
         test_assert(PIXEL(buf_img, row, col) == PIXEL(test_img, row, col / 2));
     }
+
+    IMG_COPY(buf_img, test_img);
+    img_draw_line(buf_img, (ImagePoint){0, 0}, (ImagePoint){5, 0}, 255, 2);
+    FOR_EACH_PIXEL(buf_img) {
+        test_assert((row < 2) == (PIXEL(buf_img, row, col) == 255));
+    }
+
     return 0;
 }
