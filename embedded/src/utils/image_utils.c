@@ -2,25 +2,25 @@
 #include <assert.h>
 
 void img_convolution_filter(ImageMatrix* dst, const ImageMatrix src, const ImageMatrixInt8 kernel) {
-    IMG_CONVOLUTION(dst, src, kernel, 1, 0, UINT8_MAX);
+    IMG_CONVOLUTION(*dst, src, kernel, 1, 0, UINT8_MAX);
 }
 
 void img_max_filter(ImageMatrix* dst, const ImageMatrix src, const ImageMatrix kernel) {
-    IMG_REDUCE_FILTER(dst, src, kernel, 0, MAX);
+    IMG_REDUCE_FILTER(*dst, src, kernel, 0, MAX);
 }
 
 void img_min_filter(ImageMatrix* dst, const ImageMatrix src, const ImageMatrix kernel) {
-    IMG_REDUCE_FILTER(dst, src, kernel, UINT8_MAX, MIN);
+    IMG_REDUCE_FILTER(*dst, src, kernel, UINT8_MAX, MIN);
 }
 
 void img_median_filter(ImageMatrix* dst, const ImageMatrix src, ImageMatrix window) {
     assert(window.data);
     assert(IMG_SIZE(window) > 1);
-    IMG_VALID_PADDING(dst, src, window);
+    IMG_VALID_PADDING(*dst, src, window);
     int16_t middle_index = IMG_SIZE(window) / 2;
     FOR_EACH_PIXEL(*dst) {
-        ImageWindow crop_area = {col, row, col + window.n_cols, row + window.n_rows};
-        IMG_CROP(&window, src, crop_area);
+        ImagePoint top_left = {col, row};
+        IMG_CROP(window, src, top_left);
         QUICK_SELECT(window.data, IMG_SIZE(window), middle_index);
         PIXEL(*dst, row, col) = window.data[middle_index];
     }
@@ -144,46 +144,46 @@ uint8_t img_compute_otsu_threshold(const uint32_t histogram[256]) {
     return threshold;
 }
 
-void img_draw_line(ImageMatrix mat, ImageWindow line, uint8_t color) {
+void img_draw_line(ImageMatrix mat, ImagePoint from, ImagePoint to, uint8_t color) {
     // Bresenham's Line Algorithm
-    uint8_t swap_xy = ABS(line.y1 - line.y0) > ABS(line.x1 - line.x0);
+    uint8_t swap_xy = ABS(to.y - from.y) > ABS(to.x - from.x);
     if (swap_xy) {
-        SWAP(line.x0, line.y0);
-        SWAP(line.x1, line.y1);
+        SWAP(from.x, from.y);
+        SWAP(to.x, to.y);
     }
-    if (line.x0 > line.x1) {
-        SWAP(line.x0, line.x1);
-        SWAP(line.y0, line.y1);
+    if (from.x > to.x) {
+        SWAP(from.x, to.x);
+        SWAP(from.y, to.y);
     }
-    int16_t dx = line.x1 - line.x0;
-    int16_t dy = line.y1 - line.y0;
+    int16_t dx = to.x - from.x;
+    int16_t dy = to.y - from.y;
     if (dy < 0) {
         dy = -dy;
-        line.y0 = -line.y0;
+        from.y = -from.y;
     }
     int16_t error = dy * 2 - dx;
 #define ITERATE_LINE(EDIT_PIXEL)              \
     EDIT_PIXEL = color;                       \
-    while (line.x0++ < line.x1) {             \
+    while (from.x++ < to.x) {                 \
         error += 2 * (dy - (error > 0) * dx); \
-        line.y0 += error > 0;                 \
+        from.y += error > 0;                  \
         EDIT_PIXEL = color;                   \
     }
     if (swap_xy) {
-        ITERATE_LINE(PIXEL(mat, line.x0, ABS(line.y0)));
+        ITERATE_LINE(PIXEL(mat, from.x, ABS(from.y)));
     } else {
-        ITERATE_LINE(PIXEL(mat, ABS(line.y0), line.x0));
+        ITERATE_LINE(PIXEL(mat, ABS(from.y), from.x));
     }
 }
 
-void img_draw_rectangle(ImageMatrix mat, ImageWindow rect, uint8_t color) {
-    for (int16_t row = rect.y0; row <= rect.y1; ++row) {
-        PIXEL(mat, row, rect.x0) = color;
-        PIXEL(mat, row, rect.x1) = color;
+void img_draw_rectangle(ImageMatrix mat, ImagePoint from, ImagePoint to, uint8_t color) {
+    for (int16_t row = from.y; row <= to.y; ++row) {
+        PIXEL(mat, row, from.x) = color;
+        PIXEL(mat, row, to.x) = color;
     }
-    for (int16_t col = rect.x0; col <= rect.x1; ++col) {
-        PIXEL(mat, rect.y0, col) = color;
-        PIXEL(mat, rect.y1, col) = color;
+    for (int16_t col = from.x; col <= to.x; ++col) {
+        PIXEL(mat, from.y, col) = color;
+        PIXEL(mat, to.y, col) = color;
     }
 }
 
@@ -193,7 +193,7 @@ void img_convert_from_rgb888(ImageMatrix* dst, const ImageMatrix src) {
     for (int32_t i = 0; i < data_len; ++i) {
         dst->data[i] = (data_rgb888[i][0] + data_rgb888[i][1] + data_rgb888[i][2]) / 3;
     }
-    IMG_COPY_SIZE(dst, src);
+    IMG_COPY_SIZE(*dst, src);
 }
 
 void img_hough_line_transform(ImageMatrixInt32 dst, const ImageMatrix src) {
@@ -209,5 +209,5 @@ void img_hough_line_transform(ImageMatrixInt32 dst, const ImageMatrix src) {
                     PIXEL(src, row, col);
         }
     }
-    IMG_NORMALIZE(&dst, dst);
+    IMG_NORMALIZE(dst, dst);
 }

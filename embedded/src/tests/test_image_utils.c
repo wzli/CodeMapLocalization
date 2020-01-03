@@ -16,7 +16,7 @@ int test_image_utils() {
     int i = 0;
     FOR_EACH_PIXEL(test_img) { test_assert(PIXEL(test_img, row, col) == i++); };
 
-    IMG_COPY(&buf_img, test_img);
+    IMG_COPY(buf_img, test_img);
     FOR_EACH_PIXEL(test_img) {
         test_assert(PIXEL(test_img, row, col) == PIXEL(buf_img, row, col));
     };
@@ -44,53 +44,54 @@ int test_image_utils() {
     IMG_APPLY_KERNEL(acc, img_edge_detect_kernel, test_img, 0, 0);
     test_assert(acc == 0);
 
-    IMG_THRESHOLD(&buf_img, test_img, 4);
+    IMG_THRESHOLD(buf_img, test_img, 4);
     FOR_EACH_PIXEL(buf_img) { test_assert(PIXEL(buf_img, row, col) == (row > 0) * UINT8_MAX); }
 
-    ImageWindow win = {3, 3, 5, 5};
-    IMG_CROP(&buf_img, test_img, win);
+    IMG_SET_SIZE(buf_img, 2, 2);
+    ImagePoint top_left = {3, 3};
+    IMG_CROP(buf_img, test_img, top_left);
     test_assert(IMG_SIZE(buf_img) == 4);
     FOR_EACH_PIXEL(buf_img) {
         test_assert(PIXEL(buf_img, row, col) == PIXEL(test_img, row + 3, col + 3));
     }
 
-    IMG_TRANSPOSE(&buf_img, test_img);
+    IMG_TRANSPOSE(buf_img, test_img);
     FOR_EACH_PIXEL(buf_img) { test_assert(PIXEL(buf_img, row, col) == PIXEL(test_img, col, row)); }
 
-    IMG_TRANSPOSE(&buf_img, buf_img);
+    IMG_TRANSPOSE(buf_img, buf_img);
     FOR_EACH_PIXEL(test_img) {
         test_assert(PIXEL(test_img, row, col) == PIXEL(buf_img, row, col));
     };
 
-    IMG_VFLIP(&buf_img, test_img);
+    IMG_VFLIP(buf_img, test_img);
     FOR_EACH_PIXEL(buf_img) {
         test_assert(PIXEL(buf_img, row, col) == PIXEL(test_img, test_img.n_rows - 1 - row, col));
     }
 
-    IMG_VFLIP(&buf_img, buf_img);
+    IMG_VFLIP(buf_img, buf_img);
     FOR_EACH_PIXEL(test_img) {
         test_assert(PIXEL(test_img, row, col) == PIXEL(buf_img, row, col));
     };
 
-    IMG_HFLIP(&buf_img, test_img);
+    IMG_HFLIP(buf_img, test_img);
     FOR_EACH_PIXEL(buf_img) {
         test_assert(PIXEL(buf_img, row, col) == PIXEL(test_img, row, test_img.n_cols - 1 - col));
     }
 
-    IMG_HFLIP(&buf_img, buf_img);
+    IMG_HFLIP(buf_img, buf_img);
     FOR_EACH_PIXEL(test_img) {
         test_assert(PIXEL(test_img, row, col) == PIXEL(buf_img, row, col));
     };
 
     buf_img.n_cols = 4;
-    IMG_TRANSPOSE(&buf_img, buf_img);
+    IMG_TRANSPOSE(buf_img, buf_img);
     test_assert(IMG_SIZE(buf_img) == 0);
 
-    IMG_NORMALIZE_RANGE(&buf_img, test_img, 5, 20);
+    IMG_NORMALIZE_RANGE(buf_img, test_img, 5, 20);
     test_assert(buf_img.data[5] == 0);
     test_assert(buf_img.data[20] == UINT8_MAX);
 
-    IMG_NORMALIZE(&buf_img, test_img);
+    IMG_NORMALIZE(buf_img, test_img);
     test_assert(PIXEL(buf_img, 0, 0) == 0);
     test_assert(PIXEL(buf_img, 4, 4) == UINT8_MAX);
 

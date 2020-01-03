@@ -66,7 +66,7 @@ IMPLEMENT_IMG_TO_BM(64);
 
 #define IMPLEMENT_BM_TO_IMG(W)                                                               \
     void bm##W##_to_img(ImageMatrix* dst, const BitMatrix##W src, const BitMatrix##W mask) { \
-        IMG_SET_SIZE(dst, (W), (W));                                                         \
+        IMG_SET_SIZE(*dst, (W), (W));                                                        \
         FOR_EACH_PIXEL(*dst) {                                                               \
             PIXEL(*dst, row, col) = bm##W##_get_bit(mask, row, col)                          \
                                             ? bm##W##_get_bit(src, row, col) * UINT8_MAX     \
