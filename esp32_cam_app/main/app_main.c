@@ -109,18 +109,22 @@ static void main_loop(void* pvParameters) {
         img_rotate(images[1], images[0], rotation, original_threshold, img_bilinear_interpolation);
         img_convolution_filter(&images[1], images[1], img_sharpen_kernel);
 
+        // find threshold of filtered image
         img_histogram(histogram, images[1]);
-        histogram[original_threshold] -=
-                MIN(IMG_SIZE(images[1]) / 2, histogram[original_threshold]);
+        histogram[original_threshold] = 0;
         uint8_t filtered_threshold = img_compute_otsu_threshold(histogram);
         if (filtered_threshold < original_threshold) {
             SWAP(filtered_threshold, original_threshold);
         }
+        // binarize to bit matrix
         img_to_bm64(binary_image, binary_mask, images[1], original_threshold, filtered_threshold);
         bm64_to_img(&images[2], binary_image, binary_mask);
 
+        // extract row and column codes
         AxisCode64 row_code, col_code;
         bm64_extract_axis_codes(&row_code, &col_code, binary_image, binary_mask, 5);
+
+        // display results
         bm64_from_axis_codes(binary_image, binary_mask, row_code, col_code);
         bm64_to_img(&images[3], binary_image, binary_mask);
 
