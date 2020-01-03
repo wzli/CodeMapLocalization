@@ -214,6 +214,18 @@ void img_draw_box(ImageMatrix mat, ImagePoint from, ImagePoint to, uint8_t color
     }
 }
 
+void img_draw_regular_polygon(ImageMatrix mat, ImagePoint center, Vector2f center_to_vertex,
+        uint8_t order, uint8_t color, uint8_t width) {
+    Vector2f rotation_increment = {cosf(2 * M_PI / order), sinf(2 * M_PI / order)};
+    ImagePoint previous_vertex = {center.x + center_to_vertex.x, center.y + center_to_vertex.y};
+    for (uint8_t i = 0; i < order; ++i) {
+        center_to_vertex = v2f_rotate(center_to_vertex, rotation_increment);
+        ImagePoint next_vertex = {center.x + center_to_vertex.x, center.y + center_to_vertex.y};
+        img_draw_line(mat, previous_vertex, next_vertex, color, width);
+        previous_vertex = next_vertex;
+    };
+}
+
 void img_convert_from_rgb888(ImageMatrix* dst, const ImageMatrix src) {
     const uint8_t(*data_rgb888)[3] = (uint8_t(*)[3]) src.data;
     int32_t data_len = IMG_SIZE(src);
