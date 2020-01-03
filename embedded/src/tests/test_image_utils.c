@@ -2,10 +2,11 @@
 #include "image_utils.h"
 
 static uint32_t histogram[256];
-static ImageMatrix test_img = {(uint8_t[5 * 5]){}, 5, 5};
-static ImageMatrix buf_img = {(uint8_t[5 * 5 * 2]){}, 5, 5};
 
 int test_image_utils() {
+    ImageMatrix test_img = {(uint8_t[5 * 5]){}, 5, 5};
+    ImageMatrix buf_img = {(uint8_t[5 * 5 * 2]){}, 5, 5};
+
     test_assert(IMG_SIZE(test_img) == 25);
 
     for (int i = 0; i < IMG_SIZE(test_img); ++i) {
@@ -53,6 +54,14 @@ int test_image_utils() {
         test_assert(PIXEL(buf_img, row, col) == PIXEL(test_img, row + 3, col + 3));
     }
 
+    IMG_TRANSPOSE(&buf_img, test_img);
+    FOR_EACH_PIXEL(buf_img) { test_assert(PIXEL(buf_img, row, col) == PIXEL(test_img, col, row)); }
+
+    IMG_TRANSPOSE(&buf_img, buf_img);
+    FOR_EACH_PIXEL(test_img) {
+        test_assert(PIXEL(test_img, row, col) == PIXEL(buf_img, row, col));
+    };
+
     IMG_VFLIP(&buf_img, test_img);
     FOR_EACH_PIXEL(buf_img) {
         test_assert(PIXEL(buf_img, row, col) == PIXEL(test_img, test_img.n_rows - 1 - row, col));
@@ -73,13 +82,6 @@ int test_image_utils() {
         test_assert(PIXEL(test_img, row, col) == PIXEL(buf_img, row, col));
     };
 
-    IMG_TRANSPOSE(&buf_img, test_img);
-    FOR_EACH_PIXEL(buf_img) { test_assert(PIXEL(buf_img, row, col) == PIXEL(test_img, col, row)); }
-
-    IMG_TRANSPOSE(&buf_img, buf_img);
-    FOR_EACH_PIXEL(test_img) {
-        test_assert(PIXEL(test_img, row, col) == PIXEL(buf_img, row, col));
-    };
     buf_img.n_cols = 4;
     IMG_TRANSPOSE(&buf_img, buf_img);
     test_assert(IMG_SIZE(buf_img) == 0);

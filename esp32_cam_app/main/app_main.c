@@ -96,28 +96,29 @@ static void main_loop(void* pvParameters) {
 
         // find threshold of original image
         img_histogram(histogram, images[0]);
-        uint8_t original_threshold = img_compute_otsu_threshold(histogram);
+        uint8_t threshold0 = img_compute_otsu_threshold(histogram);
 
         // find rotation of original image
         Vector2f rotation = img_estimate_rotation(images[0]);
-        rotation.y *= -(float) M_SQRT1_2;
-        rotation.x *= (float) M_SQRT1_2;
-
-        // unrotate and sharpen
-        images[1].n_cols = 64;
-        images[1].n_rows = 64;
-        img_rotate(images[1], images[0], rotation, original_threshold, img_bilinear_interpolation);
+        if (!v2f_is_zero(rotation)) {
+            // unrotate
+            rotation.y *= -(float) M_SQRT1_2;
+            rotation.x *= (float) M_SQRT1_2;
+            IMG_SET_SIZE(&images[1], 64, 64);
+            img_rotate(images[1], images[0], rotation, threshold0, img_bilinear_interpolation);
+        }
+        // sharpen
         img_convolution_filter(&images[1], images[1], img_sharpen_kernel);
 
         // find threshold of filtered image
         img_histogram(histogram, images[1]);
-        histogram[original_threshold] = 0;
-        uint8_t filtered_threshold = img_compute_otsu_threshold(histogram);
-        if (filtered_threshold < original_threshold) {
-            SWAP(filtered_threshold, original_threshold);
+        histogram[threshold0] = 0;
+        uint8_t threshold1 = img_compute_otsu_threshold(histogram);
+        if (threshold1 < threshold0) {
+            SWAP(threshold1, threshold0);
         }
         // binarize to bit matrix
-        img_to_bm64(binary_image, binary_mask, images[1], original_threshold, filtered_threshold);
+        img_to_bm64(binary_image, binary_mask, images[1], threshold0, threshold1);
         bm64_to_img(&images[2], binary_image, binary_mask);
 
         // extract row and column codes
@@ -141,15 +142,14 @@ static void main_loop(void* pvParameters) {
         if (!(frame_count & 0xF)) {
             ESP_LOGI(TAG, "frame %u time %ums rot %fdeg thresh %u", frame_count,
                     (uint32_t)((end_time - start_time) / 1000),
-                    180 * atan2(rotation.y, rotation.x) / M_PI, original_threshold);
+                    180 * atan2(rotation.y, rotation.x) / M_PI, threshold0);
         }
         start_time = end_time;
     }
 }
 
 void app_main() {
-    // assert(!run_all_tests());
-
+    assert(!run_all_tests());
     app_wifi_main();
     app_camera_main();
     app_httpd_main();

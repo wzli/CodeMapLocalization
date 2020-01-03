@@ -60,8 +60,8 @@ int test_code_extract_64() {
 int test_location_decode() {
     BitMatrix32 matrix, matrix_mask;
 
-    for (uint32_t src_row_pos = 1000; src_row_pos < 1101; ++src_row_pos)
-        for (uint32_t src_col_pos = 1000; src_col_pos < 1101; ++src_col_pos) {
+    for (uint32_t src_row_pos = 1000; src_row_pos < 1051; ++src_row_pos)
+        for (uint32_t src_col_pos = 1000; src_col_pos < 1051; ++src_col_pos) {
             // first test, full 32 by 32 view
             uint32_t src_row_code = mlsq_code_from_position(MLS_INDEX.sequence, 32, src_row_pos);
             uint32_t src_col_code = mlsq_code_from_position(MLS_INDEX.sequence, 32, src_col_pos);

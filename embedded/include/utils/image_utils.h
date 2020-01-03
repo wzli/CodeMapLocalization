@@ -164,7 +164,7 @@ static const ImageMatrixInt8 img_sobel_x_kernel = {(int8_t[]){-1, 0, 1, -2, 0, 2
 static const ImageMatrixInt8 img_sobel_y_kernel = {(int8_t[]){-1, -2, -1, 0, 0, 0, 1, 2, 1}, 3, 3};
 static const ImageMatrixInt8 img_laplacian_kernel = {(int8_t[]){0, 1, 0, 1, -4, 1, 0, 1, 0}, 3, 3};
 
-// shape min/max aka dialate/erode kernels
+// shape min/max aka dilate/erode kernels
 static const ImageMatrix img_box_2x2_kernel = {(uint8_t[]){1, 1, 1, 1}, 2, 2};
 static const ImageMatrix img_box_3x3_kernel = {(uint8_t[]){1, 1, 1, 1, 1, 1, 1, 1, 1}, 3, 3};
 static const ImageMatrix img_cross_3x3_kernel = {(uint8_t[]){0, 1, 0, 1, 1, 1, 0, 1, 0}, 3, 3};
