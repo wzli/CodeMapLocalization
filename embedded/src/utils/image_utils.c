@@ -184,14 +184,33 @@ void img_draw_line(ImageMatrix mat, ImagePoint from, ImagePoint to, uint8_t colo
     }
 }
 
-void img_draw_rectangle(ImageMatrix mat, ImagePoint from, ImagePoint to, uint8_t color) {
+void img_draw_box(ImageMatrix mat, ImagePoint from, ImagePoint to, uint8_t color, uint8_t width) {
+    assert(width);
+    if (from.x > to.x) {
+        SWAP(from.x, to.x);
+    }
+    if (from.y > to.y) {
+        SWAP(from.y, to.y);
+    }
+    from.x = MAX(from.x, 0);
+    from.y = MAX(from.y, 0);
+    to.x = MIN(to.x, mat.n_cols - 1);
+    to.y = MIN(to.y, mat.n_rows - 1);
+    int16_t dx = to.x - from.x;
+    int16_t dy = to.y - from.y;
+    width = MIN(width, dx);
+    width = MIN(width, dy);
     for (int16_t row = from.y; row <= to.y; ++row) {
-        PIXEL(mat, row, from.x) = color;
-        PIXEL(mat, row, to.x) = color;
+        for (uint8_t i = 0; i < width; ++i) {
+            PIXEL(mat, row, from.x + i) = color;
+            PIXEL(mat, row, to.x - i) = color;
+        }
     }
     for (int16_t col = from.x; col <= to.x; ++col) {
-        PIXEL(mat, from.y, col) = color;
-        PIXEL(mat, to.y, col) = color;
+        for (uint8_t i = 0; i < width; ++i) {
+            PIXEL(mat, from.y + i, col) = color;
+            PIXEL(mat, to.y - i, col) = color;
+        }
     }
 }
 

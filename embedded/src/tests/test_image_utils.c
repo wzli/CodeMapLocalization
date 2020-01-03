@@ -109,9 +109,21 @@ int test_image_utils() {
 
     IMG_COPY(buf_img, test_img);
     img_draw_line(buf_img, (ImagePoint){0, 0}, (ImagePoint){5, 0}, 255, 2);
-    FOR_EACH_PIXEL(buf_img) {
-        test_assert((row < 2) == (PIXEL(buf_img, row, col) == 255));
-    }
+    FOR_EACH_PIXEL(buf_img) { test_assert((row < 2) == (PIXEL(buf_img, row, col) == 255)); }
+
+    IMG_FILL(buf_img, 0);
+    img_draw_box(buf_img, (ImagePoint){-3, -7}, (ImagePoint){10, 20}, 255, 100);
+    FOR_EACH_PIXEL(buf_img) { test_assert(PIXEL(buf_img, row, col) == 255); }
+
+    IMG_FILL(buf_img, 0);
+    img_draw_box(buf_img, (ImagePoint){1, 1}, (ImagePoint){3, 3}, 255, 1);
+    sum = 0;
+    IMG_SUM(sum, buf_img);
+    test_assert(sum == 8 * 255);
+    img_draw_box(buf_img, (ImagePoint){1, 1}, (ImagePoint){3, 3}, 255, 2);
+    sum = 0;
+    IMG_SUM(sum, buf_img);
+    test_assert(sum == 9 * 255);
 
     return 0;
 }
