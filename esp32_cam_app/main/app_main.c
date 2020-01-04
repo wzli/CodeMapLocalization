@@ -36,8 +36,10 @@ static camera_fb_t double_buffers[][2] = {
 static camera_fb_t* claimed_buffers[N_DOUBLE_BUFFERS + 1] = {};
 
 static uint32_t histogram[256];
-static BitMatrix64 binary_image;
-static BitMatrix64 binary_mask;
+static BitMatrix64 binary_image_64;
+static BitMatrix64 binary_mask_64;
+static BitMatrix32 binary_image_32;
+static BitMatrix32 binary_mask_32;
 
 /* helper functions */
 
@@ -122,16 +124,18 @@ static void main_loop(void* pvParameters) {
             SWAP(threshold1, threshold0);
         }
         // binarize to bit matrix
-        img_to_bm64(binary_image, binary_mask, images[1], threshold0, threshold1);
-        bm64_to_img(&images[2], binary_image, binary_mask);
+        img_to_bm64(binary_image_64, binary_mask_64, images[1], threshold0, threshold1);
+        bm64_to_img(&images[2], binary_image_64, binary_mask_64);
 
         // extract row and column codes
-        AxisCode64 row_code, col_code;
-        bm64_extract_axis_codes(&row_code, &col_code, binary_image, binary_mask, 5);
+        AxisCode64 row_code_64, col_code_64;
+        bm64_extract_axis_codes(&row_code_64, &col_code_64, binary_image_64, binary_mask_64, 5);
+        AxisCode32 row_code_32 = downsample_axis_code(row_code_64);
+        AxisCode32 col_code_32 = downsample_axis_code(col_code_64);
 
         // display results
-        bm64_from_axis_codes(binary_image, binary_mask, row_code, col_code);
-        bm64_to_img(&images[3], binary_image, binary_mask);
+        bm32_from_axis_codes(binary_image_32, binary_mask_32, row_code_32, col_code_32);
+        bm32_to_img(&images[3], binary_image_32, binary_mask_32);
 
         for (uint8_t i = 0; i <= N_DOUBLE_BUFFERS; ++i) {
             assert(claimed_buffers[i]);
