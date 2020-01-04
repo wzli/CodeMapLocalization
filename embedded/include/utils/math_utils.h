@@ -11,6 +11,7 @@
 #define M_SQRT1_2 (0.707106781f)
 #endif
 
+#define SGN(X) (((X) > 0) - ((X) < 0))
 #define ABS(X) ((X) < 0 ? -(X) : (X))
 #define SQR(X) ((X) * (X))
 #define CUBE(X) ((x) * (X) * (X))

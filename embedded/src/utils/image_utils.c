@@ -160,27 +160,31 @@ void img_draw_line(ImageMatrix mat, ImagePoint from, ImagePoint to, uint8_t colo
     }
     dx = to.x - from.x;
     dy = to.y - from.y;
+    int8_t dir = 1;
     if (dy < 0) {
         dy = -dy;
-        from.y = -from.y;
+        dir = -1;
     }
     float slope = (float) dy / dx;
     width *= sqrtf(1.0f + SQR(slope));
     int16_t error = dy * 2 - dx;
-#define ITERATE_LINE(ROW_INDEX, COL_INDEX)                                  \
-    for (int16_t y = from.y; from.x <= to.x; ++from.x, y += error > 0) {    \
-        to.y = ABS(y) + width / 2;                                          \
-        for (from.y = ABS(y) - (width - 1) / 2; from.y <= to.y; ++from.y) { \
-            int16_t row = CLAMP(ROW_INDEX, 0, mat.n_rows - 1);              \
-            int16_t col = CLAMP(COL_INDEX, 0, mat.n_cols - 1);              \
-            PIXEL(mat, row, col) = color;                                   \
-        }                                                                   \
-        error += 2 * (dy - (error > 0) * dx);                               \
+#define ITERATE_LINE(X, Y)                                                       \
+    for (int16_t y = from.y, x = from.x; x <= to.x;                              \
+            ++x, error += 2 * (dy - (error > 0) * dx), y += dir * (error > 0)) { \
+        from.y = y - (width - 1) / 2;                                            \
+        from.y = MAX(from.y, 0);                                                 \
+        from.x = MAX(x, 0);                                                      \
+        to.y = y + width / 2;                                                    \
+        to.Y = MIN(to.Y, mat.n_rows - 1);                                        \
+        to.X = MIN(to.X, mat.n_cols - 1);                                        \
+        for (; from.y <= to.y; ++from.y) {                                       \
+            PIXEL(mat, from.Y, from.X) = color;                                  \
+        }                                                                        \
     }
     if (swap_xy) {
-        ITERATE_LINE(from.x, from.y);
+        ITERATE_LINE(y, x);
     } else {
-        ITERATE_LINE(from.y, from.x);
+        ITERATE_LINE(x, y);
     }
 }
 
