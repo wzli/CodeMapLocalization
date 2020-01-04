@@ -110,11 +110,10 @@ static void main_loop(void* pvParameters) {
         }
         // sharpen
         img_convolution_filter(&images[1], images[1], img_hyper_sharpen_kernel);
-        rotation = v2f_rotate(
+        Vector2f vertex = v2f_rotate(
                 rotation, (Vector2f){2 + images[1].n_cols / 2, 2 + images[1].n_rows / 2});
         img_draw_regular_polygon(images[1],
-                (ImagePoint){images[1].n_cols / 2, images[1].n_rows / 2}, rotation, 4, threshold0,
-                5);
+                (ImagePoint){images[1].n_cols / 2, images[1].n_rows / 2}, vertex, 4, threshold0, 5);
 
         // find threshold of filtered image
         img_histogram(histogram, images[1]);
@@ -137,6 +136,12 @@ static void main_loop(void* pvParameters) {
         bm32_from_axis_codes(binary_image_32, binary_mask_32, row_code_32, col_code_32);
         bm32_to_img(&images[3], binary_image_32, binary_mask_32);
 
+        // decode posiiton
+        AxisPosition row_pos = decode_axis_position(row_code_32, MLS_INDEX.code_length);
+        AxisPosition col_pos = decode_axis_position(col_code_32, MLS_INDEX.code_length);
+        Location loc = deduce_location(row_pos, col_pos);
+        loc.rotation = v2f_add_angle(loc.rotation, rotation);
+
         for (uint8_t i = 0; i <= N_DOUBLE_BUFFERS; ++i) {
             assert(claimed_buffers[i]);
             claimed_buffers[i]->width = images[i].n_cols;
@@ -147,10 +152,13 @@ static void main_loop(void* pvParameters) {
 
         // end loop
         int64_t end_time = esp_timer_get_time();
-        if (!(frame_count & 0xF)) {
-            ESP_LOGI(TAG, "frame %u time %ums rot %fdeg thresh %u", frame_count,
-                    (uint32_t)((end_time - start_time) / 1000),
-                    180 * atan2(rotation.y, rotation.x) / M_PI, threshold0);
+        if (loc.match_size > 0) {
+            ESP_LOGI(TAG, "fr %u t %ums thresh %u (x %d y %d r %f m %d) row %d/%d col %d/%d \n",
+                    frame_count, (uint32_t)((end_time - start_time) / 1000),
+                    (threshold0 + threshold1) / 2, loc.x, loc.y,
+                    180 * atan2(loc.rotation.y, loc.rotation.x) / M_PI, loc.match_size,
+                    row_code_32.n_errors, row_code_32.n_samples, col_code_32.n_errors,
+                    col_code_32.n_samples);
         }
         start_time = end_time;
     }
@@ -161,5 +169,5 @@ void app_main() {
     app_wifi_main();
     app_camera_main();
     app_httpd_main();
-    xTaskCreatePinnedToCore(main_loop, "main_loop", 10000, NULL, 9, NULL, 1);
+    xTaskCreatePinnedToCore(main_loop, "main_loop", 20000, NULL, 9, NULL, 1);
 }
