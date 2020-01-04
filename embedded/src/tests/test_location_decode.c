@@ -29,6 +29,25 @@ int test_downsample_axis_code() {
     AxisCode32 axis_code_32 = downsample_axis_code(axis_code_64);
     test_assert(axis_code_32.bits == 0x155555);
     test_assert(axis_code_32.mask == (1 << 21) - 1);
+
+    axis_code_64.bits = 0xF0F0;
+    axis_code_64.mask = 0xFFFF;
+    AxisCode64 scaled_axis_code = scale_axis_code(axis_code_64, 1.0f);
+    test_assert(axis_code_64.bits == scaled_axis_code.bits);
+    test_assert(axis_code_64.mask == scaled_axis_code.mask);
+
+    scaled_axis_code = scale_axis_code(axis_code_64, 2.0f);
+    test_assert(scaled_axis_code.bits == 0xFF00FF00);
+    test_assert(scaled_axis_code.mask == 0xFFFFFFFF);
+
+    scaled_axis_code = scale_axis_code(axis_code_64, 100.0f);
+    test_assert(scaled_axis_code.bits == 0ull);
+    test_assert(scaled_axis_code.mask == ~0ull);
+
+    scaled_axis_code = scale_axis_code(axis_code_64, 0.5f);
+    test_assert(scaled_axis_code.bits == 0xCC);
+    test_assert(scaled_axis_code.mask == 0xFF);
+
     return 0;
 }
 

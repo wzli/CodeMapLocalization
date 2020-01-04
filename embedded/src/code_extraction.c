@@ -177,3 +177,19 @@ AxisCode32 downsample_axis_code(AxisCode64 axis_code_64) {
     }
     return axis_code_32;
 };
+
+AxisCode64 scale_axis_code(AxisCode64 axis_code, float scale) {
+    assert(scale > 0);
+    scale = 1.0f / scale;
+    AxisCode64 scaled_axis_code = {0, 0, axis_code.n_errors, axis_code.n_samples};
+    uint64_t bit = 1;
+    for (float index = 0; index < 64; index += scale, bit <<= 1) {
+        if ((axis_code.bits >> (uint8_t) index) & 1) {
+            scaled_axis_code.bits |= bit;
+        }
+        if ((axis_code.mask >> (uint8_t) index) & 1) {
+            scaled_axis_code.mask |= bit;
+        }
+    }
+    return scaled_axis_code;
+}
