@@ -218,6 +218,13 @@ void img_draw_box(ImageMatrix mat, ImagePoint from, ImagePoint to, uint8_t color
     }
 }
 
+void img_draw_polygon(
+        ImageMatrix mat, const ImagePoint* vertices, uint8_t len, uint8_t color, uint8_t width) {
+    for (uint8_t prev = 0; len--; prev = len) {
+        img_draw_line(mat, vertices[prev], vertices[len], color, width);
+    }
+}
+
 void img_draw_regular_polygon(ImageMatrix mat, ImagePoint center, Vector2f center_to_vertex,
         uint8_t order, uint8_t color, uint8_t width) {
     Vector2f rotation_increment = {cosf(2 * M_PI / order), sinf(2 * M_PI / order)};

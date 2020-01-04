@@ -193,6 +193,8 @@ uint8_t img_compute_otsu_threshold(const uint32_t histogram[256]);
 // drawing utilitites
 void img_draw_line(ImageMatrix mat, ImagePoint from, ImagePoint to, uint8_t color, uint8_t width);
 void img_draw_box(ImageMatrix mat, ImagePoint from, ImagePoint to, uint8_t color, uint8_t width);
+void img_draw_polygon(
+        ImageMatrix mat, const ImagePoint* vertices, uint8_t len, uint8_t color, uint8_t width);
 void img_draw_regular_polygon(ImageMatrix mat, ImagePoint center, Vector2f center_to_vertex,
         uint8_t order, uint8_t color, uint8_t width);
 
