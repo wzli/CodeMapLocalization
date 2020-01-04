@@ -145,3 +145,35 @@ IMPLEMENT_BM_EXTRACT_COLUMN_CODE(64);
 
 IMPLEMENT_BM_EXTRACT_AXIS_CODES(32);
 IMPLEMENT_BM_EXTRACT_AXIS_CODES(64);
+
+AxisCode32 downsample_axis_code(AxisCode64 axis_code_64) {
+    uint64_t edges = axis_code_64.bits ^ (axis_code_64.bits >> 1);
+    uint8_t offset_index = 0;
+    uint8_t lowest_bit_errors = UINT8_MAX;
+    for (uint64_t repeating001s = 0x1249249249249249ull; repeating001s & 7; repeating001s <<= 1) {
+        uint8_t bit_errors = count_bits((edges ^ repeating001s) & axis_code_64.mask);
+        if (bit_errors < lowest_bit_errors) {
+            lowest_bit_errors = bit_errors;
+            offset_index = count_trailing_zeros((uint32_t) repeating001s);
+        }
+    }
+    if (offset_index < 2) {
+        axis_code_64.bits >>= offset_index + 1;
+        axis_code_64.mask >>= offset_index + 1;
+    }
+    AxisCode32 axis_code_32 = {0, 0, axis_code_64.n_errors, axis_code_64.n_samples};
+    static const uint8_t count_bits_3[8] = {0, 1, 1, 2, 1, 2, 2, 3};
+    uint32_t current_bit = 1;
+    while (axis_code_64.mask) {
+        if (count_bits_3[axis_code_64.mask & 7] >= 3) {
+            axis_code_32.mask |= current_bit;
+            if (2 * count_bits_3[axis_code_64.bits & 7] > 3) {
+                axis_code_32.bits |= current_bit;
+            }
+        }
+        current_bit <<= 1;
+        axis_code_64.bits >>= 3;
+        axis_code_64.mask >>= 3;
+    }
+    return axis_code_32;
+};

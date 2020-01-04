@@ -24,6 +24,14 @@ int test_next_valid_code_segment() {
     return 0;
 }
 
+int test_downsample_axis_code() {
+    AxisCode64 axis_code_64 = {0x71C71C71C71C71C7ull, ~0ull, 0, 0};
+    AxisCode32 axis_code_32 = downsample_axis_code(axis_code_64);
+    test_assert(axis_code_32.bits == 0x155555);
+    test_assert(axis_code_32.mask == (1 << 21) - 1);
+    return 0;
+}
+
 int test_code_extract_64() {
     BitMatrix64 matrix, matrix_mask;
     uint32_t src_row_pos = 1000;
