@@ -102,13 +102,17 @@ static void main_loop(void* pvParameters) {
         Vector2f rotation = img_estimate_rotation(images[0]);
         if (!v2f_is_zero(rotation)) {
             // unrotate
-            rotation.y *= -(float) M_SQRT1_2;
-            rotation.x *= (float) M_SQRT1_2;
-            IMG_SET_SIZE(&images[1], 64, 64);
+            rotation.y *= -1;
+            IMG_SET_SIZE(images[1], 64, 64);
             img_rotate(images[1], images[0], rotation, threshold0, img_bilinear_interpolation);
         }
         // sharpen
-        img_convolution_filter(&images[1], images[1], img_sharpen_kernel);
+        img_convolution_filter(&images[1], images[1], img_hyper_sharpen_kernel);
+        rotation = v2f_rotate(
+                rotation, (Vector2f){2 + images[1].n_cols / 2, 2 + images[1].n_rows / 2});
+        img_draw_regular_polygon(images[1],
+                (ImagePoint){images[1].n_cols / 2, images[1].n_rows / 2}, rotation, 4, threshold0,
+                5);
 
         // find threshold of filtered image
         img_histogram(histogram, images[1]);

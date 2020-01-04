@@ -227,7 +227,7 @@ void img_draw_polygon(
 
 void img_draw_regular_polygon(ImageMatrix mat, ImagePoint center, Vector2f center_to_vertex,
         uint8_t order, uint8_t color, uint8_t width) {
-    Vector2f rotation_increment = {cosf(2 * M_PI / order), sinf(2 * M_PI / order)};
+    Vector2f rotation_increment = {cosf(2 * (float) M_PI / order), sinf(2 * (float) M_PI / order)};
     ImagePoint previous_vertex = {center.x + center_to_vertex.x, center.y + center_to_vertex.y};
     for (uint8_t i = 0; i < order; ++i) {
         center_to_vertex = v2f_rotate(center_to_vertex, rotation_increment);
