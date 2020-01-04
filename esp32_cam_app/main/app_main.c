@@ -129,18 +129,32 @@ static void main_loop(void* pvParameters) {
         // extract row and column codes
         AxisCode64 row_code_64, col_code_64;
         bm64_extract_axis_codes(&row_code_64, &col_code_64, binary_image_64, binary_mask_64, 5);
-        AxisCode32 row_code_32 = downsample_axis_code(row_code_64);
-        AxisCode32 col_code_32 = downsample_axis_code(col_code_64);
+
+        Location best_match_location = {};
+        AxisCode32 best_match_row_code, best_match_col_code;
+
+        for(float scale = 0.5f; scale < 1.5f; scale += 0.03f) {
+            // scale and down sample axis codes
+            AxisCode64 scaled_row_code = scale_axis_code(row_code_64, scale);
+            AxisCode64 scaled_col_code = scale_axis_code(col_code_64, scale);
+            AxisCode32 row_code_32 = downsample_axis_code(scaled_row_code);
+            AxisCode32 col_code_32 = downsample_axis_code(scaled_col_code);
+            // decode posiiton
+            AxisPosition row_pos = decode_axis_position(row_code_32, MLS_INDEX.code_length);
+            AxisPosition col_pos = decode_axis_position(col_code_32, MLS_INDEX.code_length);
+            Location loc = deduce_location(row_pos, col_pos);
+            if(loc.match_size > best_match_location.match_size) {
+                best_match_location = loc;
+                best_match_row_code = row_code_32;
+                best_match_col_code = col_code_32;
+            }
+        }
+
+        best_match_location.rotation = v2f_add_angle(best_match_location.rotation, rotation);
 
         // display results
-        bm32_from_axis_codes(binary_image_32, binary_mask_32, row_code_32, col_code_32);
+        bm32_from_axis_codes(binary_image_32, binary_mask_32, best_match_row_code, best_match_col_code);
         bm32_to_img(&images[3], binary_image_32, binary_mask_32);
-
-        // decode posiiton
-        AxisPosition row_pos = decode_axis_position(row_code_32, MLS_INDEX.code_length);
-        AxisPosition col_pos = decode_axis_position(col_code_32, MLS_INDEX.code_length);
-        Location loc = deduce_location(row_pos, col_pos);
-        loc.rotation = v2f_add_angle(loc.rotation, rotation);
 
         for (uint8_t i = 0; i <= N_DOUBLE_BUFFERS; ++i) {
             assert(claimed_buffers[i]);
@@ -152,13 +166,13 @@ static void main_loop(void* pvParameters) {
 
         // end loop
         int64_t end_time = esp_timer_get_time();
-        if (loc.match_size > 0) {
+        if (best_match_location.match_size > 16) {
             ESP_LOGI(TAG, "fr %u t %ums thresh %u (x %d y %d r %f m %d) row %d/%d col %d/%d \n",
                     frame_count, (uint32_t)((end_time - start_time) / 1000),
-                    (threshold0 + threshold1) / 2, loc.x, loc.y,
-                    180 * atan2(loc.rotation.y, loc.rotation.x) / M_PI, loc.match_size,
-                    row_code_32.n_errors, row_code_32.n_samples, col_code_32.n_errors,
-                    col_code_32.n_samples);
+                    (threshold0 + threshold1) / 2, best_match_location.x, best_match_location.y,
+                    180 * atan2(best_match_location.rotation.y, best_match_location.rotation.x) / M_PI, best_match_location.match_size,
+                    best_match_row_code.n_errors, best_match_row_code.n_samples, best_match_col_code.n_errors,
+                    best_match_col_code.n_samples);
         }
         start_time = end_time;
     }
