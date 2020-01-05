@@ -1,9 +1,11 @@
 #include "test_utils.h"
 #include "code_extraction.h"
 #include "mls_query.h"
+#include <stdlib.h>
 
 static int test_code_extract_64() {
-    BitMatrix64 matrix, matrix_mask;
+    uint64_t* matrix = malloc(64 * sizeof(uint64_t));
+    uint64_t* matrix_mask = malloc(64 * sizeof(uint64_t));
     uint32_t src_row_pos = 1000;
     uint32_t src_col_pos = 1001;
     uint64_t src_row_code = mlsq_code_from_position(MLS_INDEX.sequence, 32, src_row_pos);
@@ -32,11 +34,16 @@ static int test_code_extract_64() {
         test_assert(matrix_mask[i] == ~0ull);
         test_assert(matrix[i] == src_row_code || matrix[i] == ~src_row_code);
     }
+    free(matrix);
+    free(matrix_mask);
     return 0;
 }
 
 static int test_bit_matrix_from_axis_codes() {
-    BitMatrix32 matrix, matrix_mask, generated_matrix, generated_matrix_mask;
+    uint32_t* matrix = malloc(32 * sizeof(uint32_t));
+    uint32_t* matrix_mask = malloc(32 * sizeof(uint32_t));
+    uint32_t* generated_matrix = malloc(32 * sizeof(uint32_t));
+    uint32_t* generated_matrix_mask = malloc(32 * sizeof(uint32_t));
     uint32_t src_row_code = mlsq_code_from_position(MLS_INDEX.sequence, 32, 1000);
     uint32_t src_col_code = mlsq_code_from_position(MLS_INDEX.sequence, 32, 1100);
     for (uint8_t i = 0; i < 32; ++i) {
@@ -50,6 +57,10 @@ static int test_bit_matrix_from_axis_codes() {
         test_assert(matrix[i] == generated_matrix[i]);
         test_assert(matrix_mask[i] == generated_matrix_mask[i]);
     }
+    free(matrix);
+    free(matrix_mask);
+    free(generated_matrix);
+    free(generated_matrix_mask);
     return 0;
 }
 
