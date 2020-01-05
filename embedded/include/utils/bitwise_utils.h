@@ -59,7 +59,7 @@ static inline uint32_t invert_bits(uint32_t x, uint32_t n) {
 
 uint32_t reverse_bits(uint32_t x, uint32_t n);
 
-#define count_trailing_zeros(X) ((X) ? perfect_log2((X) & -(X)) : sizeof(X) * CHAR_BIT)
+#define count_trailing_zeros(X) ((X) ? perfect_log2((X) & -(X)) : sizeof(X) * 8)
 #define perfect_log2(X) (sizeof(X) <= sizeof(uint32_t) ? perfect_log2_32(X) : perfect_log2_64(X))
 uint8_t perfect_log2_32(uint32_t x);
 uint8_t perfect_log2_64(uint64_t x);

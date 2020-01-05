@@ -1,8 +1,9 @@
-#include "test_utils.h"
+#include "debug_prints.h"
+#include "stdio.h"
 
-void print_bits(uint32_t word, int8_t word_length) {
+void print_bits(uint64_t word, int8_t word_length) {
     for (word_length--; word_length >= 0; word_length--) {
-        printf(" %u", (word >> word_length) & 1);
+        printf(" %lu", (word >> word_length) & 1);
     }
     puts("");
 }
@@ -46,5 +47,6 @@ Vector2f test_add_angle(Vector2f rot_a, Vector2f rot_b) {
 }
 
 uint8_t test_diff_bits(uint32_t a, uint32_t b) {
-    return MIN(count_bits(a ^ b), count_bits(~a ^ b));
+    uint8_t diff = count_bits(a ^ b);
+    return diff > 16 ? 32 - diff : diff;
 }
