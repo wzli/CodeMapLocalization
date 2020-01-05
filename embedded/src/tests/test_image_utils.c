@@ -25,19 +25,19 @@ int test_image_utils() {
     FOR_EACH_PIXEL(test_img) { test_assert(PIXEL(buf_img, row, col) == 0); };
 
     int sum = 0;
-    IMG_SUM(sum, test_img);
+    IMG_PIXEL_SUM(sum, test_img);
     test_assert(sum == 300);
 
     int avg = 0;
-    IMG_AVERAGE(avg, test_img);
+    IMG_PIXEL_AVERAGE(avg, test_img);
     test_assert(avg == 12);
 
     uint8_t max = 0;
-    IMG_MAX(max, test_img);
+    IMG_PIXEL_MAX(max, test_img);
     test_assert(max == 24);
 
     uint8_t min = max;
-    IMG_MIN(min, test_img);
+    IMG_PIXEL_MIN(min, test_img);
     test_assert(min == 0);
 
     int32_t acc = 0;
@@ -118,11 +118,11 @@ int test_image_utils() {
     IMG_FILL(buf_img, 0);
     img_draw_box(buf_img, (ImagePoint){1, 1}, (ImagePoint){3, 3}, 255, 1);
     sum = 0;
-    IMG_SUM(sum, buf_img);
+    IMG_PIXEL_SUM(sum, buf_img);
     test_assert(sum == 8 * 255);
     img_draw_box(buf_img, (ImagePoint){1, 1}, (ImagePoint){3, 3}, 255, 2);
     sum = 0;
-    IMG_SUM(sum, buf_img);
+    IMG_PIXEL_SUM(sum, buf_img);
     test_assert(sum == 9 * 255);
 
     return 0;

@@ -47,16 +47,18 @@ typedef struct {
 
 #define IMG_FILL(MAT, VAL) FOR_EACH_PIXEL(MAT)(PIXEL(MAT, row, col) = (VAL))
 
-#define IMG_SUM(SUM, MAT) FOR_EACH_PIXEL(MAT)(SUM += PIXEL(MAT, row, col))
+#define IMG_PIXEL_SUM(SUM, MAT) FOR_EACH_PIXEL(MAT)(SUM += PIXEL(MAT, row, col))
 
-#define IMG_MAX(MAX_VAL, MAT) FOR_EACH_PIXEL(MAT)(MAX_VAL = MAX(MAX_VAL, PIXEL(MAT, row, col)))
+#define IMG_PIXEL_MAX(MAX_VAL, MAT) \
+    FOR_EACH_PIXEL(MAT)(MAX_VAL = MAX(MAX_VAL, PIXEL(MAT, row, col)))
 
-#define IMG_MIN(MIN_VAL, MAT) FOR_EACH_PIXEL(MAT)(MIN_VAL = MIN(MIN_VAL, PIXEL(MAT, row, col)))
+#define IMG_PIXEL_MIN(MIN_VAL, MAT) \
+    FOR_EACH_PIXEL(MAT)(MIN_VAL = MIN(MIN_VAL, PIXEL(MAT, row, col)))
 
-#define IMG_AVERAGE(AVG, MAT) \
-    do {                      \
-        IMG_SUM(AVG, MAT);    \
-        AVG /= IMG_SIZE(MAT); \
+#define IMG_PIXEL_AVERAGE(AVG, MAT) \
+    do {                            \
+        IMG_PIXEL_SUM(AVG, MAT);    \
+        AVG /= IMG_SIZE(MAT);       \
     } while (0)
 
 #define IMG_APPLY_KERNEL(SUM, KERNEL, MAT, ROW, COL) \
@@ -144,8 +146,8 @@ typedef struct {
     do {                                                         \
         int32_t min_pixel = PIXEL(SRC, 0, 0);                    \
         int32_t max_pixel = PIXEL(SRC, 0, 0);                    \
-        IMG_MIN(min_pixel, SRC);                                 \
-        IMG_MAX(max_pixel, SRC);                                 \
+        IMG_PIXEL_MIN(min_pixel, SRC);                           \
+        IMG_PIXEL_MAX(max_pixel, SRC);                           \
         if (max_pixel == min_pixel) {                            \
             IMG_COPY_SIZE(DST, SRC);                             \
             IMG_FILL(DST, 0);                                    \
