@@ -133,7 +133,7 @@ static void main_loop(void* pvParameters) {
         Location best_match_location = {};
         AxisCode32 best_match_row_code, best_match_col_code;
 
-        for (float scale = 0.5f; scale < 1.5f; scale += 0.03f) {
+        for (float scale = 0.8f; scale < 1.2f; scale += 0.02f) {
             // scale and down sample axis codes
             AxisCode64 scaled_row_code = scale_axis_code(row_code_64, scale);
             AxisCode64 scaled_col_code = scale_axis_code(col_code_64, scale);
@@ -143,7 +143,7 @@ static void main_loop(void* pvParameters) {
             AxisPosition row_pos = decode_axis_position(row_code_32, MLS_INDEX.code_length);
             AxisPosition col_pos = decode_axis_position(col_code_32, MLS_INDEX.code_length);
             Location loc = deduce_location(row_pos, col_pos);
-            if (loc.match_size > best_match_location.match_size) {
+            if (loc.match_size >= best_match_location.match_size) {
                 best_match_location = loc;
                 best_match_row_code = row_code_32;
                 best_match_col_code = col_code_32;
@@ -186,5 +186,5 @@ void app_main() {
     app_wifi_main();
     app_camera_main();
     app_httpd_main();
-    xTaskCreatePinnedToCore(main_loop, "main_loop", 20000, NULL, 9, NULL, 1);
+    xTaskCreatePinnedToCore(main_loop, "main_loop", 8192, NULL, 9, NULL, 1);
 }
