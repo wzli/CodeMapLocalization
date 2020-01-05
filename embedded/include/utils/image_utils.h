@@ -159,8 +159,6 @@ typedef struct {
 // convolution kernels
 static const ImageMatrixInt8 img_sharpen_kernel = {
         (int8_t[]){-1, -1, -1, -1, 9, -1, -1, -1, -1}, 3, 3};
-static const ImageMatrixInt8 img_hyper_sharpen_kernel = {
-        (int8_t[]){-3, -3, -3, -3, 25, -3, -3, -3, -3}, 3, 3};
 static const ImageMatrixInt8 img_edge_detect_kernel = {
         (int8_t[]){-1, -1, -1, -1, 8, -1, -1, -1, -1}, 3, 3};
 static const ImageMatrixInt8 img_sobel_x_kernel = {(int8_t[]){-1, 0, 1, -2, 0, 2, -1, 0, 1}, 3, 3};

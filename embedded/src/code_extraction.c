@@ -1,6 +1,18 @@
 #include "code_extraction.h"
 #include <assert.h>
 
+void img_hyper_sharpen(ImageMatrix* dst, const ImageMatrix src) {
+    IMG_SET_SIZE(*dst, src.n_cols - 2, src.n_rows - 2);
+    FOR_EACH_PIXEL(*dst) {
+        int16_t value = 25 * PIXEL(src, row + 1, col + 1) -
+                        3 * (PIXEL(src, row, col) + PIXEL(src, row, col + 1) +
+                                    PIXEL(src, row, col + 2) + PIXEL(src, row + 1, col) +
+                                    PIXEL(src, row + 1, col + 2) + PIXEL(src, row + 2, col) +
+                                    PIXEL(src, row + 2, col + 1) + PIXEL(src, row + 2, col + 2));
+        PIXEL(*dst, row, col) = CLAMP(value, 0, UINT8_MAX);
+    }
+}
+
 Vector2f img_estimate_rotation(const ImageMatrix mat) {
     Vector2f gradient_sum = {};
     ImageMatrix bounds = {0, mat.n_cols - 2, mat.n_rows - 2};

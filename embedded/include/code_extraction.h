@@ -16,6 +16,8 @@ typedef struct {
     uint16_t n_samples;
 } AxisCode64;
 
+void img_hyper_sharpen(ImageMatrix* dst, const ImageMatrix src);
+
 Vector2f img_estimate_rotation(const ImageMatrix mat);
 
 float img_estimate_scale(const ImageMatrix mat);

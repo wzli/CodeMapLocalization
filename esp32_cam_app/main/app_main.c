@@ -109,7 +109,7 @@ static void main_loop(void* pvParameters) {
             img_rotate(images[1], images[0], rotation, threshold0, img_bilinear_interpolation);
         }
         // sharpen
-        img_convolution_filter(&images[1], images[1], img_hyper_sharpen_kernel);
+        img_hyper_sharpen(&images[1], images[1]);
         Vector2f vertex = v2f_rotate(
                 rotation, (Vector2f){2 + images[1].n_cols / 2, 2 + images[1].n_rows / 2});
         img_draw_regular_polygon(images[1],

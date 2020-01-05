@@ -3,6 +3,20 @@
 #include "mls_query.h"
 #include <stdlib.h>
 
+static int test_hyper_sharpen() {
+    ImageMatrix img = {malloc(32 * 32), 32, 32};
+    ImageMatrix ref_img = {malloc(32 * 32), 32, 32};
+    ImageMatrixInt8 kernel = {(int8_t[9]){-3, -3, -3, -3, 25, -3, -3, -3, -3}, 3, 3};
+    IMG_FILL(img, 0);
+    FOR_EACH_PIXEL(img) { PIXEL(img, row, col) = 255 * (row & 1); }
+    img_convolution_filter(&ref_img, img, kernel);
+    img_hyper_sharpen(&img, img);
+    FOR_EACH_PIXEL(img) { test_assert(PIXEL(img, row, col) == PIXEL(ref_img, row, col)); }
+    free(img.data);
+    free(ref_img.data);
+    return 0;
+}
+
 static int test_code_extract_64() {
     uint64_t* matrix = malloc(64 * sizeof(uint64_t));
     uint64_t* matrix_mask = malloc(64 * sizeof(uint64_t));
@@ -91,6 +105,7 @@ static int test_downsample_axis_code() {
 }
 
 int test_code_extraction() {
+    test_run(test_hyper_sharpen);
     test_run(test_code_extract_64);
     test_run(test_bit_matrix_from_axis_codes);
     test_run(test_downsample_axis_code);

@@ -83,7 +83,7 @@ static int test_full_chain_real_life() {
                 img_rotate(buf_image, raw_image, rotation, threshold0, img_bilinear_interpolation);
             }
             // sharpen
-            img_convolution_filter(&buf_image, buf_image, img_hyper_sharpen_kernel);
+            img_hyper_sharpen(&buf_image, buf_image);
             Vector2f vertex = v2f_rotate(
                     rotation, (Vector2f){2 + buf_image.n_cols / 2, 2 + buf_image.n_rows / 2});
             img_draw_regular_polygon(buf_image,
