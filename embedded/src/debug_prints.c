@@ -3,7 +3,7 @@
 
 void print_bits(uint64_t word, int8_t word_length) {
     for (word_length--; word_length >= 0; word_length--) {
-        printf(" %lu", (word >> word_length) & 1);
+        printf(" %llu", (word >> word_length) & 1);
     }
     puts("");
 }
