@@ -2,22 +2,22 @@
 #include "mls_query.h"
 #include <assert.h>
 
-uint8_t next_valid_code_segment(AxisCode* axis_code, uint8_t code_length) {
+uint8_t next_valid_code_segment(AxisCode32* axis_code, uint8_t code_length) {
     assert(axis_code);
     assert(code_length <= 32);
-    uint8_t valid_segment_length = first_set_bit(~axis_code->mask);
+    uint8_t valid_segment_length = count_trailing_zeros(~axis_code->mask);
     while (axis_code->mask && valid_segment_length < code_length) {
         axis_code->mask >>= valid_segment_length;
         axis_code->bits >>= valid_segment_length;
-        valid_segment_length = first_set_bit(axis_code->mask);
+        valid_segment_length = count_trailing_zeros(axis_code->mask);
         axis_code->mask >>= valid_segment_length;
         axis_code->bits >>= valid_segment_length;
-        valid_segment_length = first_set_bit(~axis_code->mask);
+        valid_segment_length = count_trailing_zeros(~axis_code->mask);
     }
     return valid_segment_length;
 };
 
-AxisPosition decode_axis_position(AxisCode axis_code, uint8_t code_length) {
+AxisPosition decode_axis_position(AxisCode32 axis_code, uint8_t code_length) {
     AxisPosition best_position = {};
     const uint32_t code_mask = mask_bits(code_length);
     for (uint8_t valid_segment_length = next_valid_code_segment(&axis_code, code_length);
@@ -54,7 +54,7 @@ AxisPosition decode_axis_position(AxisCode axis_code, uint8_t code_length) {
                                       valid_segment_length)
                             : mlsq_code_from_position_indexed(
                                       valid_segment_length, position.center);
-            uint8_t first_diff = first_set_bit(extended_code ^ expected_code);
+            uint8_t first_diff = count_trailing_zeros(extended_code ^ expected_code);
             position.span += MIN(first_diff, valid_segment_length) - code_length;
         }
         if (position.span > best_position.span) {

@@ -20,37 +20,26 @@ extern QueueHandle_t frame_queues[];
 /* static data */
 static const char* TAG = "main_loop";
 
-static uint8_t buf_64x64[6][64 * 64];
-// static uint8_t buf_32x32[4][32 * 32];
+#define STATIC_FRAME_BUFFER(SIZE) \
+    (camera_fb_t) { (uint8_t[SQR(SIZE)]){}, SQR(SIZE), SIZE, SIZE, PIXFORMAT_GRAYSCALE }
+
+#define STATIC_DOUBLE_BUFFER(SIZE) \
+    { STATIC_FRAME_BUFFER(SIZE), STATIC_FRAME_BUFFER(SIZE) }
 
 static camera_fb_t double_buffers[][2] = {
-        {
-                {buf_64x64[0], 64 * 64, 64, 64, PIXFORMAT_GRAYSCALE},
-                {buf_64x64[1], 64 * 64, 64, 64, PIXFORMAT_GRAYSCALE},
-        },
-        {
-                {buf_64x64[2], 62 * 62, 62, 62, PIXFORMAT_GRAYSCALE},
-                {buf_64x64[3], 62 * 62, 62, 62, PIXFORMAT_GRAYSCALE},
-        },
-        {
-                {buf_64x64[4], 62 * 62, 62, 62, PIXFORMAT_GRAYSCALE},
-                {buf_64x64[5], 62 * 62, 62, 62, PIXFORMAT_GRAYSCALE},
-        },
-#if 0
-        {
-                {buf_32x32[0], 32 * 32, 32, 32, PIXFORMAT_GRAYSCALE},
-                {buf_32x32[1], 32 * 32, 32, 32, PIXFORMAT_GRAYSCALE},
-        },
-        {
-                {buf_32x32[2], 32 * 32, 32, 32, PIXFORMAT_GRAYSCALE},
-                {buf_32x32[3], 32 * 32, 32, 32, PIXFORMAT_GRAYSCALE},
-        },
-#endif
+        STATIC_DOUBLE_BUFFER(64),
+        STATIC_DOUBLE_BUFFER(64),
+        STATIC_DOUBLE_BUFFER(64),
 };
 
 #define N_DOUBLE_BUFFERS (sizeof(double_buffers) / sizeof(double_buffers[0]))
-
 static camera_fb_t* claimed_buffers[N_DOUBLE_BUFFERS + 1] = {};
+
+static uint32_t histogram[256];
+static BitMatrix64 binary_image_64;
+static BitMatrix64 binary_mask_64;
+static BitMatrix32 binary_image_32;
+static BitMatrix32 binary_mask_32;
 
 /* helper functions */
 
@@ -70,7 +59,7 @@ static inline camera_fb_t* camera_fb_swap(camera_fb_t* fb) {
 }
 
 static ImageMatrix queue_fb_get(uint8_t queue_index) {
-    assert(queue_index < N_DOUBLE_BUFFERS + 1);
+    assert(queue_index <= N_DOUBLE_BUFFERS);
     assert(!claimed_buffers[queue_index]);
     xQueueReceive(frame_queues[queue_index], &claimed_buffers[queue_index], 0);
     assert(claimed_buffers[queue_index]);
@@ -81,7 +70,7 @@ static ImageMatrix queue_fb_get(uint8_t queue_index) {
 }
 
 static void queue_fb_return(uint8_t queue_index) {
-    assert(queue_index < N_DOUBLE_BUFFERS + 1);
+    assert(queue_index <= N_DOUBLE_BUFFERS);
     assert(claimed_buffers[queue_index]);
     if (pdTRUE == xQueueSendToBack(frame_queues[queue_index], &claimed_buffers[queue_index], 0)) {
         claimed_buffers[queue_index] = NULL;
@@ -92,7 +81,7 @@ static void queue_fb_return(uint8_t queue_index) {
 /* run */
 static void main_loop(void* pvParameters) {
     // initialize queues
-    for (int i = 0; i <= sizeof(double_buffers) / sizeof(double_buffers[0]); ++i) {
+    for (int i = 0; i <= N_DOUBLE_BUFFERS; ++i) {
         for (int j = 0; j < 2; ++j) {
             camera_fb_t* fb_ptr = i ? &double_buffers[i - 1][j] : esp_camera_fb_get();
             xQueueSendToBack(frame_queues[i], &fb_ptr, 0);
@@ -101,38 +90,101 @@ static void main_loop(void* pvParameters) {
     }
     int64_t start_time = esp_timer_get_time();
     // main loop
-    for (;;) {
-        ImageMatrix original_image = queue_fb_get(0);
-        ImageMatrix unrotated_image = queue_fb_get(1);
-        ImageMatrix thresholded_image = queue_fb_get(2);
-        ImageMatrix final_image = queue_fb_get(3);
+    for (uint32_t frame_count = 0;; ++frame_count) {
+        ImageMatrix images[N_DOUBLE_BUFFERS + 1];
+        for (uint8_t i = 0; i <= N_DOUBLE_BUFFERS; ++i) {
+            images[i] = queue_fb_get(i);
+        }
 
-        img_normalize(&original_image, original_image);
-        uint8_t pixel_average = img_average(original_image);
-        Vector2f rotation = img_estimate_rotation(original_image);
-        rotation.y *= -1.0f;
-        img_rotate(unrotated_image, original_image, rotation, pixel_average);
-        img_edge_hysteresis_threshold(&final_image, unrotated_image, 30, pixel_average, 60);
+        // find threshold of original image
+        img_histogram(histogram, images[0]);
+        uint8_t threshold0 = img_compute_otsu_threshold(histogram);
 
-        queue_fb_return(0);
-        queue_fb_return(1);
-        queue_fb_return(2);
-        queue_fb_return(3);
+        // find rotation of original image
+        Vector2f rotation = img_estimate_rotation(images[0]);
+        if (!v2f_is_zero(rotation)) {
+            // unrotate
+            rotation.y *= -1;
+            IMG_SET_SIZE(images[1], 64, 64);
+            img_rotate(images[1], images[0], rotation, threshold0, img_bilinear_interpolation);
+        }
+        // sharpen
+        img_hyper_sharpen(&images[1], images[1]);
+        Vector2f vertex = v2f_rotate(
+                rotation, (Vector2f){2 + images[1].n_cols / 2, 2 + images[1].n_rows / 2});
+        img_draw_regular_polygon(images[1],
+                (ImagePoint){images[1].n_cols / 2, images[1].n_rows / 2}, vertex, 4, threshold0, 5);
+
+        // find threshold of filtered image
+        img_histogram(histogram, images[1]);
+        histogram[threshold0] = 0;
+        uint8_t threshold1 = img_compute_otsu_threshold(histogram);
+        if (threshold1 < threshold0) {
+            SWAP(threshold1, threshold0);
+        }
+        // binarize to bit matrix
+        img_to_bm64(binary_image_64, binary_mask_64, images[1], threshold0, threshold1);
+        bm64_to_img(&images[2], binary_image_64, binary_mask_64);
+
+        // extract row and column codes
+        AxisCode64 row_code_64, col_code_64;
+        bm64_extract_axis_codes(&row_code_64, &col_code_64, binary_image_64, binary_mask_64, 5);
+
+        Location best_match_location = {};
+        AxisCode32 best_match_row_code, best_match_col_code;
+
+        for (float scale = 0.8f; scale < 1.2f; scale += 0.02f) {
+            // scale and down sample axis codes
+            AxisCode64 scaled_row_code = scale_axis_code(row_code_64, scale);
+            AxisCode64 scaled_col_code = scale_axis_code(col_code_64, scale);
+            AxisCode32 row_code_32 = downsample_axis_code(scaled_row_code);
+            AxisCode32 col_code_32 = downsample_axis_code(scaled_col_code);
+            // decode posiiton
+            AxisPosition row_pos = decode_axis_position(row_code_32, MLS_INDEX.code_length);
+            AxisPosition col_pos = decode_axis_position(col_code_32, MLS_INDEX.code_length);
+            Location loc = deduce_location(row_pos, col_pos);
+            if (loc.match_size >= best_match_location.match_size) {
+                best_match_location = loc;
+                best_match_row_code = row_code_32;
+                best_match_col_code = col_code_32;
+            }
+        }
+
+        best_match_location.rotation = v2f_add_angle(best_match_location.rotation, rotation);
+
+        // display results
+        bm32_from_axis_codes(
+                binary_image_32, binary_mask_32, best_match_row_code, best_match_col_code);
+        bm32_to_img(&images[3], binary_image_32, binary_mask_32);
+
+        for (uint8_t i = 0; i <= N_DOUBLE_BUFFERS; ++i) {
+            assert(claimed_buffers[i]);
+            claimed_buffers[i]->width = images[i].n_cols;
+            claimed_buffers[i]->height = images[i].n_rows;
+            claimed_buffers[i]->len = IMG_SIZE(images[i]);
+            queue_fb_return(i);
+        }
 
         // end loop
         int64_t end_time = esp_timer_get_time();
-        ESP_LOGI(TAG, "%ums %f", (uint32_t)((end_time - start_time) / 1000),
-                180 * atan2(rotation.y, rotation.x) / M_PI);
+        if (best_match_location.match_size > 16) {
+            ESP_LOGI(TAG, "fr %u t %ums thresh %u (x %d y %d r %f m %d) row %d/%d col %d/%d \n",
+                    frame_count, (uint32_t)((end_time - start_time) / 1000),
+                    (threshold0 + threshold1) / 2, best_match_location.x, best_match_location.y,
+                    180 * atan2(best_match_location.rotation.y, best_match_location.rotation.x) /
+                            M_PI,
+                    best_match_location.match_size, best_match_row_code.n_errors,
+                    best_match_row_code.n_samples, best_match_col_code.n_errors,
+                    best_match_col_code.n_samples);
+        }
         start_time = end_time;
     }
 }
 
 void app_main() {
-    // assert(!run_all_tests());
-    // ESP_LOGI(TAG, "%s\ntests ran: %d\n", test_error, test_count);
-
+    assert(!run_all_tests());
     app_wifi_main();
     app_camera_main();
     app_httpd_main();
-    xTaskCreatePinnedToCore(main_loop, "main_loop", 5000, NULL, 9, NULL, 1);
+    xTaskCreatePinnedToCore(main_loop, "main_loop", 8192, NULL, 9, NULL, 1);
 }

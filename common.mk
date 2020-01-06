@@ -9,7 +9,14 @@ DEPS := $(OBJS:.o=.d)
 INC_DIRS := $(shell find -L $(INC_DIR) -type d)
 INC_FLAGS := $(addprefix -I,$(INC_DIRS))
 
-COMMONFLAGS =  -Wall -Wextra -Ofast -DNDEBUG #-Og -g -DDEBUG
+COMMONFLAGS = -Wall -Wextra
+
+ifeq ($(mode), debug)
+    COMMONFLAGS += -Og -g -DDEBUG
+else
+    COMMONFLAGS += -Ofast -DNDEBUG
+endif
+
 CXXFLAGS ?= -std=c++11 $(COMMONFLAGS)
 CXX ?= g++
 
@@ -38,3 +45,4 @@ clean:
 	$(RM) -r $(BUILD_DIR)
 
 .DEFAULT_GOAL := 
+

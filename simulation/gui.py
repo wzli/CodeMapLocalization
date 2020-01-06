@@ -179,7 +179,8 @@ class ImageProcessor:
         rotation.y *= -self.bits_per_pixel
         # reverse rotation
         unrotated_matrix = ImageMatrix(32, 32)
-        libsim.img_rotate(unrotated_matrix, matrix, rotation, 127)
+        libsim.img_rotate(unrotated_matrix, matrix, rotation, 127,
+                          libsim.img_bilinear_interpolation)
         # store bit mask and matrix in image
         new_image = unrotated_matrix.to_image()
         new_image.unrotated_matrix = unrotated_matrix
@@ -198,11 +199,11 @@ class BitMatrixProcessor:
         # convert to bit matrix
         bit_matrix = BitMatrix32()
         bit_mask = BitMatrix32()
-        libsim.img_bit_matrix_conversion(bit_matrix, bit_mask,
-                                         image.unrotated_matrix, 120, 135)
+        libsim.img_to_bm32(bit_matrix, bit_mask, image.unrotated_matrix, 120,
+                           135)
         # extract row and column code
-        row_code = AxisCode()
-        col_code = AxisCode()
+        row_code = AxisCode32()
+        col_code = AxisCode32()
         libsim.bm32_extract_axis_codes(ctypes.byref(row_code),
                                        ctypes.byref(col_code), bit_matrix,
                                        bit_mask, 3)
@@ -227,10 +228,10 @@ class BitMatrixProcessor:
         actual_image = ImageMatrix.from_image(image.view_image)
         actual_bit_matrix = BitMatrix32()
         actual_bit_mask = BitMatrix32()
-        libsim.img_bit_matrix_conversion(actual_bit_matrix, actual_bit_mask,
-                                         actual_image, 125, 130)
-        actual_row_code = AxisCode()
-        actual_col_code = AxisCode()
+        libsim.img_to_bm32(actual_bit_matrix, actual_bit_mask, actual_image,
+                           125, 130)
+        actual_row_code = AxisCode32()
+        actual_col_code = AxisCode32()
         libsim.bm32_extract_axis_codes(ctypes.byref(actual_row_code),
                                        ctypes.byref(actual_col_code),
                                        actual_bit_matrix, actual_bit_mask, 3)

@@ -2,6 +2,7 @@
 #include <stdint.h>
 
 typedef uint32_t BitMatrix32[32];
+typedef uint64_t BitMatrix64[64];
 
 // bit vector operations
 
@@ -19,7 +20,11 @@ static inline uint32_t bv32_get_bit(const uint32_t* vector, uint32_t k) {
 
 // bit matrix operations
 
-static inline uint32_t bm32_get_bit(const BitMatrix32 matrix, uint8_t row, uint8_t col) {
+static inline uint8_t bm32_get_bit(const BitMatrix32 matrix, uint8_t row, uint8_t col) {
+    return (matrix[row] >> col) & 1u;
+};
+
+static inline uint8_t bm64_get_bit(const BitMatrix64 matrix, uint8_t row, uint8_t col) {
     return (matrix[row] >> col) & 1u;
 };
 
@@ -27,11 +32,20 @@ static inline void bm32_set_bit(BitMatrix32 matrix, uint8_t row, uint8_t col) {
     matrix[row] |= 1u << col;
 };
 
+static inline void bm64_set_bit(BitMatrix64 matrix, uint8_t row, uint8_t col) {
+    matrix[row] |= 1ull << col;
+};
+
 static inline void bm32_clear_bit(BitMatrix32 matrix, uint8_t row, uint8_t col) {
     matrix[row] &= ~(1u << col);
 };
 
+static inline void bm64_clear_bit(BitMatrix64 matrix, uint8_t row, uint8_t col) {
+    matrix[row] &= ~(1ull << col);
+};
+
 void bm32_transpose(BitMatrix32 matrix);
+void bm64_transpose(BitMatrix64 matrix);
 
 // bitwise operations
 
@@ -44,5 +58,14 @@ static inline uint32_t invert_bits(uint32_t x, uint32_t n) {
 }
 
 uint32_t reverse_bits(uint32_t x, uint32_t n);
-uint8_t first_set_bit(uint32_t x);
-uint8_t sum_bits(uint32_t x);
+
+#define count_trailing_zeros(X) ((X) ? perfect_log2((X) & -(X)) : sizeof(X) * 8)
+#define perfect_log2(X) (sizeof(X) <= sizeof(uint32_t) ? perfect_log2_32(X) : perfect_log2_64(X))
+uint8_t perfect_log2_32(uint32_t x);
+uint8_t perfect_log2_64(uint64_t x);
+
+#define count_bits(X) (sizeof(X) <= sizeof(uint32_t) ? count_bits_32(X) : count_bits_64(X))
+uint8_t count_bits_32(uint32_t x);
+static inline uint8_t count_bits_64(uint64_t x) {
+    return count_bits_32(x) + count_bits_32(x >> 32);
+};

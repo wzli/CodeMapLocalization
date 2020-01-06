@@ -15,17 +15,22 @@ class MlsIndex(ctypes.Structure):
     ]
 
 
-class AxisCode(ctypes.Structure):
+class AxisCode32(ctypes.Structure):
     _fields_ = [
         ('bits', ctypes.c_uint),
         ('mask', ctypes.c_uint),
-        ('n_errors', ctypes.c_uint),
-        ('n_samples', ctypes.c_uint),
+        ('n_errors', ctypes.c_ushort),
+        ('n_samples', ctypes.c_ushort),
     ]
 
 
 class Vector2f(ctypes.Structure):
     _fields_ = [('x', ctypes.c_float), ('y', ctypes.c_float)]
+
+
+class Matrix2f(ctypes.Structure):
+    _fields_ = [('a', ctypes.c_float), ('b', ctypes.c_float),
+                ('c', ctypes.c_float), ('d', ctypes.c_float)]
 
 
 class AxisPosition(ctypes.Structure):
@@ -46,39 +51,61 @@ class Location(ctypes.Structure):
     ]
 
 
+class ImagePoint(ctypes.Structure):
+    _fields_ = [('x', ctypes.c_short), ('y', ctypes.c_short)]
+
+
 class ImageMatrix(ctypes.Structure):
-    _fields_ = [('data', ctypes.c_char_p), ('n_cols', ctypes.c_int),
-                ('n_rows', ctypes.c_int)]
+    _fields_ = [('data', ctypes.c_char_p), ('n_cols', ctypes.c_short),
+                ('n_rows', ctypes.c_short)]
 
     def __init__(self, width, height, buf=None):
-        self.buf = buf if buf else bytes(libsim.sizeof_img_type() * width *
-                                         height)
+        self.buf = buf if buf else bytes(width * height)
         self.data = self.buf
         self.n_cols = width
         self.n_rows = height
 
     def from_image(image):
-        buf = image.tobytes() * 2 if image.mode == 'L' else image.convert(
-            'L').tobytes() * 2
+        buf = image.tobytes() if image.mode == 'L' else image.convert(
+            'L').tobytes()
         image_matrix = ImageMatrix(image.width, image.height, buf)
-        if libsim.sizeof_img_type() == 2:
-            libsim.img_convert_uint8_to_int16(image_matrix)
         return image_matrix
 
     def to_image(self):
-        #libsim.img_normalize(ctypes.byref(self), self)
-        if libsim.sizeof_img_type() == 2:
-            libsim.img_convert_int16_to_uint8(self)
         image = Image.frombuffer('L', (self.n_cols, self.n_rows), self.buf,
                                  'raw', 'L', 0, 1).copy()
-        if libsim.sizeof_img_type() == 2:
-            libsim.img_convert_uint8_to_int16(self)
         return image
 
     def print(self):
         libsim.print_image_matrix(self)
 
     def show(self, scale=10):
+        self.to_image().resize(
+            (int(self.n_cols * scale), int(self.n_rows * scale))).show()
+
+
+class ImageMatrixInt32(ctypes.Structure):
+    _fields_ = [('data', ctypes.c_char_p), ('n_cols', ctypes.c_short),
+                ('n_rows', ctypes.c_short)]
+
+    def __init__(self, width, height, buf=None):
+        self.buf = buf if buf else bytes(4 * width * height)
+        self.data = self.buf
+        self.n_cols = width
+        self.n_rows = height
+
+    def from_image(image):
+        buf = image.tobytes() if image.mode == 'I' else image.convert(
+            'I').tobytes()
+        image_matrix = ImageMatrix(image.width, image.height, buf)
+        return image_matrix
+
+    def to_image(self):
+        image = Image.frombuffer('I', (self.n_cols, self.n_rows), self.buf,
+                                 'raw', 'I', 0, 1).copy()
+        return image
+
+    def show(self, scale=1):
         self.to_image().resize(
             (int(self.n_cols * scale), int(self.n_rows * scale))).show()
 
