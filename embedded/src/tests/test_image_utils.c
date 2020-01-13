@@ -181,6 +181,20 @@ static int test_image_draw_box() {
     return 0;
 }
 
+static int test_image_l1_distance_transform() {
+    IMG_FILL(buf_img, 255);
+    PIXEL(buf_img, 2, 2) = 0;
+    ImageMatrixInt32 dist_img = {(int32_t[25]){}, 5, 5};
+    img_l1_distance_transform(dist_img, buf_img);
+    FOR_EACH_PIXEL(dist_img) {
+        if (!col) {
+            puts("");
+        }
+        printf("%d ", PIXEL(dist_img, row, col));
+    }
+    return 0;
+}
+
 int test_image_utils() {
     test_img.data = malloc(IMG_SIZE(test_img));
     buf_img.data = malloc(2 * IMG_SIZE(buf_img));
@@ -203,6 +217,7 @@ int test_image_utils() {
     test_run(test_image_resize);
     test_run(test_image_draw_line);
     test_run(test_image_draw_box);
+    test_run(test_image_l1_distance_transform);
     free(test_img.data);
     free(buf_img.data);
     return 0;

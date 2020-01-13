@@ -261,3 +261,38 @@ void img_hough_line_transform(ImageMatrixInt32 dst, const ImageMatrix src) {
     }
     IMG_NORMALIZE(dst, dst);
 }
+
+static void l1_distance_transform_1d(
+        int32_t* dst, const uint8_t* src, int16_t len, int16_t stride) {
+    dst[0] = src[0];
+    for (int16_t i = 1; i < len; ++i) {
+        dst[i * stride] = MIN(dst[(i - 1) * stride] + 1, src[i * stride]);
+    }
+    while (--len) {
+        dst[(len - 1) * stride] = MIN(dst[len * stride] + 1, dst[(len - 1) * stride]);
+    }
+}
+
+#define L1_DISTANCE_TRANSFORM_1D(DST, SRC, LEN, STRIDE)                                            \
+    do {                                                                                           \
+        (DST)[0] = (SRC)[0];                                                                       \
+        for (int16_t stride_index = 1; stride_index < (LEN); ++stride_index) {                     \
+            (DST)[stride_index * (STRIDE)] =                                                       \
+                    MIN((DST)[(stride_index - 1) * (STRIDE)] + 1, (SRC)[stride_index * (STRIDE)]); \
+        }                                                                                          \
+        for (int16_t stride_index = (LEN) -2; stride_index >= 0; --stride_index) {                 \
+            (DST)[stride_index * (STRIDE)] =                                                       \
+                    MIN((DST)[(stride_index + 1) * (STRIDE)] + 1, (DST)[stride_index * (STRIDE)]); \
+        }                                                                                          \
+    } while (0)
+
+void img_l1_distance_transform(ImageMatrixInt32 dst, const ImageMatrix src) {
+    IMG_COPY_SIZE(dst, src);
+    for (int16_t i = 0; i < src.n_rows; ++i) {
+        L1_DISTANCE_TRANSFORM_1D(
+                dst.data + i * src.n_cols, src.data + i * src.n_cols, src.n_cols, 1);
+    }
+    for (int16_t i = 0; i < src.n_cols; ++i) {
+        L1_DISTANCE_TRANSFORM_1D(dst.data + i, dst.data + i, src.n_rows, src.n_cols);
+    }
+}
