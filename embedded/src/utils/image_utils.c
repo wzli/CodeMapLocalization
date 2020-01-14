@@ -242,11 +242,12 @@ void img_hough_line_transform(ImageMatrixInt32 dst, const ImageMatrix src) {
     float angle_resolution = M_PI / dst.n_rows;
     float scale_to_index =
             dst.n_cols / sqrtf((src.n_rows * src.n_rows) + (src.n_cols * src.n_cols));
+    const Vector2f rot_inc = {cosf(angle_resolution), sinf(angle_resolution)};
+    Vector2f rot = {1, 0};
     for (int16_t i = 0; i < dst.n_rows; ++i) {
-        float sin = sinf(i * angle_resolution);
-        float cos = cosf(i * angle_resolution);
+        rot = v2f_rotate(rot, rot_inc);
         FOR_EACH_PIXEL(src) {
-            PIXEL(dst, i, (int16_t)(((sin * row) + (cos * col)) * scale_to_index)) +=
+            PIXEL(dst, i, (int16_t)(((rot.y * row) + (rot.x * col)) * scale_to_index)) +=
                     PIXEL(src, row, col);
         }
     }
