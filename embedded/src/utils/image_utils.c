@@ -237,15 +237,6 @@ void img_draw_regular_polygon(ImageMatrix mat, ImagePoint center, Vector2f cente
     };
 }
 
-void img_convert_from_rgb888(ImageMatrix* dst, const ImageMatrix src) {
-    const uint8_t(*data_rgb888)[3] = (uint8_t(*)[3]) src.data;
-    int32_t data_len = IMG_SIZE(src);
-    for (int32_t i = 0; i < data_len; ++i) {
-        dst->data[i] = (data_rgb888[i][0] + data_rgb888[i][1] + data_rgb888[i][2]) / 3;
-    }
-    IMG_COPY_SIZE(*dst, src);
-}
-
 void img_hough_line_transform(ImageMatrixInt32 dst, const ImageMatrix src) {
     IMG_FILL(dst, 0);
     float angle_resolution = M_PI / dst.n_rows;
@@ -262,37 +253,73 @@ void img_hough_line_transform(ImageMatrixInt32 dst, const ImageMatrix src) {
     IMG_NORMALIZE(dst, dst);
 }
 
-static void l1_distance_transform_1d(
-        int32_t* dst, const uint8_t* src, int16_t len, int16_t stride) {
-    dst[0] = src[0];
-    for (int16_t i = 1; i < len; ++i) {
-        dst[i * stride] = MIN(dst[(i - 1) * stride] + 1, src[i * stride]);
-    }
-    while (--len) {
-        dst[(len - 1) * stride] = MIN(dst[len * stride] + 1, dst[(len - 1) * stride]);
-    }
-}
+#define L1_DISTANCE_TRANSFORM_1D(DST, SRC, LEN, STRIDE)                                    \
+    do {                                                                                   \
+        (DST)[0] = (SRC)[0];                                                               \
+        for (int16_t I = 1; I < (LEN); ++I) {                                              \
+            (DST)[I * (STRIDE)] = MIN((DST)[(I - 1) * (STRIDE)] + 1, (SRC)[I * (STRIDE)]); \
+        }                                                                                  \
+        for (int16_t I = (LEN) -2; I >= 0; --I) {                                          \
+            (DST)[I * (STRIDE)] = MIN((DST)[(I + 1) * (STRIDE)] + 1, (DST)[I * (STRIDE)]); \
+        }                                                                                  \
+    } while (0)
 
-#define L1_DISTANCE_TRANSFORM_1D(DST, SRC, LEN, STRIDE)                                            \
-    do {                                                                                           \
-        (DST)[0] = (SRC)[0];                                                                       \
-        for (int16_t stride_index = 1; stride_index < (LEN); ++stride_index) {                     \
-            (DST)[stride_index * (STRIDE)] =                                                       \
-                    MIN((DST)[(stride_index - 1) * (STRIDE)] + 1, (SRC)[stride_index * (STRIDE)]); \
-        }                                                                                          \
-        for (int16_t stride_index = (LEN) -2; stride_index >= 0; --stride_index) {                 \
-            (DST)[stride_index * (STRIDE)] =                                                       \
-                    MIN((DST)[(stride_index + 1) * (STRIDE)] + 1, (DST)[stride_index * (STRIDE)]); \
-        }                                                                                          \
+#define SQUARE_DISTANCE_TRANSFORM_1D(DST, SRC, LEN, STRIDE)           \
+    do {                                                              \
+        int16_t x1 = 0;                                               \
+        int32_t y1 = (SRC)[0];                                        \
+        (DST)[0] = y1;                                                \
+        for (int16_t x2 = 1; x2 < (LEN); ++x2) {                      \
+            int16_t dx = x2 - x1;                                     \
+            int32_t dy = (SRC)[x2 * (STRIDE)] - (DST)[x1 * (STRIDE)]; \
+            int32_t intersection = dy + dx * (x2 + x1);               \
+            if (2 * dx * x2 >= intersection) {                        \
+                x1 = x2;                                              \
+                y1 = (SRC)[x2 * (STRIDE)];                            \
+                (DST)[x2 * (STRIDE)] = y1;                            \
+                for (dx = 1; dx <= x2; ++dx) {                        \
+                    int32_t y = SQR(dx) + y1;                         \
+                    if (y < (DST)[(x2 - dx) * (STRIDE)]) {            \
+                        (DST)[(x2 - dx) * (STRIDE)] = y;              \
+                    } else {                                          \
+                        break;                                        \
+                    }                                                 \
+                }                                                     \
+            } else {                                                  \
+                (DST)[x2 * (STRIDE)] = y1 + SQR(dx);                  \
+                if (2 * (dx + 1) * (x2 + 1) >= intersection) {        \
+                    x1 = x2;                                          \
+                    y1 = (SRC)[x2 * (STRIDE)];                        \
+                }                                                     \
+            }                                                         \
+        }                                                             \
+    } while (0)
+
+#define SEPARABLE_2D_TRANSFORM(DST, SRC, TRANSFORM_1D)                                    \
+    do {                                                                                  \
+        IMG_COPY_SIZE(DST, SRC);                                                          \
+        for (int16_t row = 0; row < (SRC).n_rows; ++row, (DST).data += (SRC).n_cols) {    \
+            TRANSFORM_1D((DST).data, (SRC).data + row * (SRC).n_cols, (SRC).n_cols, 1);   \
+        }                                                                                 \
+        (DST).data -= IMG_SIZE(DST);                                                      \
+        for (int16_t col = 0; col < (SRC).n_cols; ++col) {                                \
+            TRANSFORM_1D((DST).data + col, (DST).data + col, (SRC).n_rows, (SRC).n_cols); \
+        }                                                                                 \
     } while (0)
 
 void img_l1_distance_transform(ImageMatrixInt32 dst, const ImageMatrix src) {
-    IMG_COPY_SIZE(dst, src);
-    for (int16_t i = 0; i < src.n_rows; ++i) {
-        L1_DISTANCE_TRANSFORM_1D(
-                dst.data + i * src.n_cols, src.data + i * src.n_cols, src.n_cols, 1);
+    SEPARABLE_2D_TRANSFORM(dst, src, L1_DISTANCE_TRANSFORM_1D);
+}
+
+void img_square_distance_transform(ImageMatrixInt32 dst, const ImageMatrix src) {
+    SEPARABLE_2D_TRANSFORM(dst, src, SQUARE_DISTANCE_TRANSFORM_1D);
+}
+
+void img_convert_from_rgb888(ImageMatrix* dst, const ImageMatrix src) {
+    const uint8_t(*data_rgb888)[3] = (uint8_t(*)[3]) src.data;
+    int32_t data_len = IMG_SIZE(src);
+    for (int32_t i = 0; i < data_len; ++i) {
+        dst->data[i] = (data_rgb888[i][0] + data_rgb888[i][1] + data_rgb888[i][2]) / 3;
     }
-    for (int16_t i = 0; i < src.n_cols; ++i) {
-        L1_DISTANCE_TRANSFORM_1D(dst.data + i, dst.data + i, src.n_rows, src.n_cols);
-    }
+    IMG_COPY_SIZE(*dst, src);
 }

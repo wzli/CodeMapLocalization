@@ -181,7 +181,7 @@ uint8_t img_nearest_interpolation(const ImageMatrix mat, Vector2f position);
 uint8_t img_bilinear_interpolation(const ImageMatrix mat, Vector2f position);
 uint8_t img_bicubic_interpolation(const ImageMatrix mat, Vector2f position);
 
-// image transformations
+// geometric transformations
 void img_resize(ImageMatrix dst, const ImageMatrix src, ImageInterpolation interpolation);
 void img_rotate(ImageMatrix dst, const ImageMatrix src, Vector2f rotation, uint8_t bg_fill,
         ImageInterpolation interpolation);
@@ -200,9 +200,10 @@ void img_draw_polygon(
 void img_draw_regular_polygon(ImageMatrix mat, ImagePoint center, Vector2f center_to_vertex,
         uint8_t order, uint8_t color, uint8_t width);
 
-// shape detection
+// domain transforms
 void img_hough_line_transform(ImageMatrixInt32 dst, const ImageMatrix src);
 void img_l1_distance_transform(ImageMatrixInt32 dst, const ImageMatrix src);
+void img_square_distance_transform(ImageMatrixInt32 dst, const ImageMatrix src);
 
 // format conversions
 void img_convert_from_rgb888(ImageMatrix* dst, const ImageMatrix src);
