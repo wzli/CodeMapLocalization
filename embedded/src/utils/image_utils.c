@@ -265,35 +265,30 @@ void img_hough_line_transform(ImageMatrixInt32 dst, const ImageMatrix src) {
         }                                                                                  \
     } while (0)
 
-#define SQUARE_DISTANCE_TRANSFORM_1D(DST, SRC, LEN, STRIDE)           \
-    do {                                                              \
-        int16_t x1 = 0;                                               \
-        int32_t y1 = (SRC)[0];                                        \
-        (DST)[0] = y1;                                                \
-        for (int16_t x2 = 1; x2 < (LEN); ++x2) {                      \
-            int16_t dx = x2 - x1;                                     \
-            int32_t dy = (SRC)[x2 * (STRIDE)] - (DST)[x1 * (STRIDE)]; \
-            int32_t intersection = dy + dx * (x2 + x1);               \
-            if (2 * dx * x2 >= intersection) {                        \
-                x1 = x2;                                              \
-                y1 = (SRC)[x2 * (STRIDE)];                            \
-                (DST)[x2 * (STRIDE)] = y1;                            \
-                for (dx = 1; dx <= x2; ++dx) {                        \
-                    int32_t y = SQR(dx) + y1;                         \
-                    if (y < (DST)[(x2 - dx) * (STRIDE)]) {            \
-                        (DST)[(x2 - dx) * (STRIDE)] = y;              \
-                    } else {                                          \
-                        break;                                        \
-                    }                                                 \
-                }                                                     \
-            } else {                                                  \
-                (DST)[x2 * (STRIDE)] = y1 + SQR(dx);                  \
-                if (2 * (dx + 1) * (x2 + 1) >= intersection) {        \
-                    x1 = x2;                                          \
-                    y1 = (SRC)[x2 * (STRIDE)];                        \
-                }                                                     \
-            }                                                         \
-        }                                                             \
+#define SQUARE_DISTANCE_TRANSFORM_1D(DST, SRC, LEN, STRIDE) \
+    do {                                                    \
+        int16_t x1 = 0;                                     \
+        int32_t y1 = (SRC)[0];                              \
+        (DST)[0] = y1;                                      \
+        for (int16_t x2 = 1; x2 < (LEN); ++x2) {            \
+            int16_t dx = x2 - x1;                           \
+            int32_t dy = (SRC)[x2 * (STRIDE)] - y1;         \
+            if (SQR(dx) > dy) {                             \
+                x1 = x2;                                    \
+                y1 = (SRC)[x2 * (STRIDE)];                  \
+                (DST)[x2 * (STRIDE)] = y1;                  \
+                for (dx = 1; dx <= x2; ++dx) {              \
+                    int32_t y = SQR(dx) + y1;               \
+                    if (y < (DST)[(x2 - dx) * (STRIDE)]) {  \
+                        (DST)[(x2 - dx) * (STRIDE)] = y;    \
+                    } else {                                \
+                        break;                              \
+                    }                                       \
+                }                                           \
+            } else {                                        \
+                (DST)[x2 * (STRIDE)] = y1 + SQR(dx);        \
+            }                                               \
+        }                                                   \
     } while (0)
 
 #define SEPARABLE_2D_TRANSFORM(DST, SRC, TRANSFORM_1D)                                    \
