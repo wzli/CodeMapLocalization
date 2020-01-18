@@ -44,7 +44,7 @@ static BitMatrix32 binary_mask_32;
 /* helper functions */
 
 static inline ImageMatrix fb_to_img(camera_fb_t fb) {
-    return (ImageMatrix){fb.buf, fb.width, fb.height};
+    return (ImageMatrix){fb.buf, {fb.width, fb.height}};
 }
 
 static inline camera_fb_t* camera_fb_swap(camera_fb_t* fb) {
@@ -111,9 +111,9 @@ static void main_loop(void* pvParameters) {
         // sharpen
         img_hyper_sharpen(&images[1], images[1]);
         Vector2f vertex = v2f_rotate(
-                rotation, (Vector2f){2 + images[1].n_cols / 2, 2 + images[1].n_rows / 2});
+                rotation, (Vector2f){2 + images[1].size.x / 2, 2 + images[1].size.y / 2});
         img_draw_regular_polygon(images[1],
-                (ImagePoint){images[1].n_cols / 2, images[1].n_rows / 2}, vertex, 4, threshold0, 5);
+                (ImagePoint){images[1].size.x / 2, images[1].size.y / 2}, vertex, 4, threshold0, 5);
 
         // find threshold of filtered image
         img_histogram(histogram, images[1]);
@@ -159,8 +159,8 @@ static void main_loop(void* pvParameters) {
 
         for (uint8_t i = 0; i <= N_DOUBLE_BUFFERS; ++i) {
             assert(claimed_buffers[i]);
-            claimed_buffers[i]->width = images[i].n_cols;
-            claimed_buffers[i]->height = images[i].n_rows;
+            claimed_buffers[i]->width = images[i].size.x;
+            claimed_buffers[i]->height = images[i].size.y;
             claimed_buffers[i]->len = IMG_SIZE(images[i]);
             queue_fb_return(i);
         }
