@@ -254,70 +254,12 @@ void img_hough_line_transform(ImageMatrixInt32 dst, const ImageMatrix src) {
     IMG_NORMALIZE(dst, dst);
 }
 
-#define CH_DATA(ARRAY, INDEX, CHANNEL) (ARRAY)[(INDEX) * (CHANNEL)]
-
-#define L1_DISTANCE_TRANSFORM_1D(DST, SRC, LEN, STRIDE)                            \
-    do {                                                                           \
-        (DST)[0] = (SRC)[0];                                                       \
-        for (int16_t I = 1; I < (LEN); ++I) {                                      \
-            CH_DATA(DST, I, STRIDE) =                                              \
-                    MIN(CH_DATA(DST, I - 1, STRIDE) + 1, CH_DATA(SRC, I, STRIDE)); \
-        }                                                                          \
-        for (int16_t I = (LEN) -2; I >= 0; --I) {                                  \
-            CH_DATA(DST, I, STRIDE) =                                              \
-                    MIN(CH_DATA(DST, I + 1, STRIDE) + 1, CH_DATA(DST, I, STRIDE)); \
-        }                                                                          \
-    } while (0)
-
-#define SQUARE_DISTANCE_TRANSFORM_1D(DST, SRC, LEN, STRIDE)                                       \
-    do {                                                                                          \
-        for (int16_t x = 0; x < (LEN); ++x) {                                                     \
-            CH_DATA(DST, x, STRIDE) = 0;                                                          \
-        }                                                                                         \
-        for (int16_t x = 1; x < (LEN); ++x) {                                                     \
-            CH_DATA(DST, x, STRIDE) = MAX(CH_DATA(DST, x, STRIDE), CH_DATA(DST, x - 1, STRIDE));  \
-            int16_t dx = x - CH_DATA(DST, x, STRIDE);                                             \
-            int16_t dy = CH_DATA(SRC, x, STRIDE) - CH_DATA(SRC, CH_DATA(DST, x, STRIDE), STRIDE); \
-            int16_t s = (dy + dx * (x + CH_DATA(DST, x, STRIDE) + 1)) / (2 * dx);                 \
-            if (s < x) {                                                                          \
-                CH_DATA(DST, x, STRIDE) = x;                                                      \
-            } else if (s < (LEN)) {                                                               \
-                CH_DATA(DST, s, STRIDE) = x;                                                      \
-            }                                                                                     \
-        }                                                                                         \
-        for (int16_t x = (LEN) -1, min_x = CH_DATA(DST, (LEN) -1, STRIDE); x >= 0; --x) {         \
-            int16_t dx = x - CH_DATA(DST, x, STRIDE);                                             \
-            int16_t y = SQR(dx) + CH_DATA(SRC, CH_DATA(DST, x, STRIDE), STRIDE);                  \
-            int16_t min_dx = x - min_x;                                                           \
-            int16_t min_y = SQR(min_dx) + CH_DATA(SRC, min_x, STRIDE);                            \
-            if (y <= min_y) {                                                                     \
-                min_x = CH_DATA(DST, x, STRIDE);                                                  \
-                CH_DATA(DST, x, STRIDE) = y;                                                      \
-            } else {                                                                              \
-                CH_DATA(DST, x, STRIDE) = min_y;                                                  \
-            }                                                                                     \
-        }                                                                                         \
-    } while (0)
-
-#define SEPARABLE_2D_TRANSFORM(DST, SRC, TRANSFORM_1D, LINE_BUFFER)                               \
-    do {                                                                                          \
-        IMG_COPY_SIZE(DST, SRC);                                                                  \
-        (DST).data += (SRC).n_cols * (LINE_BUFFER);                                               \
-        for (int16_t col = 0; col < (SRC).n_cols; ++col) {                                        \
-            TRANSFORM_1D((DST).data + col, (SRC).data + col, (SRC).n_rows, (SRC).n_cols);         \
-        }                                                                                         \
-        for (int16_t row = 0; row < (SRC).n_rows; ++row, (DST).data += (SRC).n_cols) {            \
-            TRANSFORM_1D((DST).data - (SRC).n_cols * (LINE_BUFFER), (DST).data, (SRC).n_cols, 1); \
-        }                                                                                         \
-        (DST).data -= IMG_SIZE(DST) + (SRC).n_cols * (LINE_BUFFER);                               \
-    } while (0)
-
 void img_l1_distance_transform(ImageMatrixInt32 dst, const ImageMatrix src) {
-    SEPARABLE_2D_TRANSFORM(dst, src, L1_DISTANCE_TRANSFORM_1D, 0);
+    IMG_SEPARABLE_2D_TRANSFORM(dst, src, L1_DISTANCE_TRANSFORM_1D, 0);
 }
 
 void img_square_distance_transform(ImageMatrixInt32 dst, const ImageMatrix src) {
-    SEPARABLE_2D_TRANSFORM(dst, src, SQUARE_DISTANCE_TRANSFORM_1D, 1);
+    IMG_SEPARABLE_2D_TRANSFORM(dst, src, SQUARE_DISTANCE_TRANSFORM_1D, 1);
 }
 
 void img_convert_from_rgb888(ImageMatrix* dst, const ImageMatrix src) {
