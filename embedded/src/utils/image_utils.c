@@ -27,8 +27,8 @@ void img_median_filter(ImageMatrix* dst, const ImageMatrix src, ImageMatrix wind
 }
 
 uint8_t img_nearest_interpolation(const ImageMatrix mat, Vector2f position) {
-    return PIXEL(mat, CLAMP((int16_t) position.y, 0, mat.n_rows - 1),
-            CLAMP((int16_t) position.x, 0, mat.n_cols - 1));
+    return PIXEL(mat, CLAMP((int16_t) position.y, 0, mat.size.y - 1),
+            CLAMP((int16_t) position.x, 0, mat.size.x - 1));
 }
 
 uint8_t img_bilinear_interpolation(const ImageMatrix mat, Vector2f position) {
@@ -36,8 +36,8 @@ uint8_t img_bilinear_interpolation(const ImageMatrix mat, Vector2f position) {
     int16_t bottom = position.y + 0.5f;
     int16_t left = MAX(right - 1, 0);
     int16_t top = MAX(bottom - 1, 0);
-    right = MIN(right, mat.n_cols - 1);
-    bottom = MIN(bottom, mat.n_rows - 1);
+    right = MIN(right, mat.size.x - 1);
+    bottom = MIN(bottom, mat.size.y - 1);
     Vector2f progress = {position.x - 0.5f - left, position.y - 0.5f - top};
     float top_average = (float) PIXEL(mat, top, left) +
                         progress.x * (PIXEL(mat, top, right) - PIXEL(mat, top, left));
@@ -58,10 +58,10 @@ uint8_t img_bicubic_interpolation(const ImageMatrix mat, Vector2f position) {
     int16_t col0 = position.x - 1.5f;
     float y_points[4];
     for (int16_t i = 0; i < 4; ++i) {
-        int16_t row = CLAMP(row0 + i, 0, mat.n_rows - 1);
+        int16_t row = CLAMP(row0 + i, 0, mat.size.y - 1);
         float x_points[4];
         for (int16_t j = 0; j < 4; ++j) {
-            int16_t col = CLAMP(col0 + j, 0, mat.n_cols - 1);
+            int16_t col = CLAMP(col0 + j, 0, mat.size.x - 1);
             x_points[j] = PIXEL(mat, row, col);
         }
         y_points[i] = cubic_interpolation(x_points, position.x - col0 - 1.5f);
@@ -72,7 +72,7 @@ uint8_t img_bicubic_interpolation(const ImageMatrix mat, Vector2f position) {
 
 void img_resize(ImageMatrix dst, const ImageMatrix src, ImageInterpolation interpolation) {
     assert(interpolation);
-    Vector2f scale = {(float) src.n_cols / dst.n_cols, (float) src.n_rows / dst.n_rows};
+    Vector2f scale = {(float) src.size.x / dst.size.x, (float) src.size.y / dst.size.y};
     FOR_EACH_PIXEL(dst) {
         Vector2f position = {0.5f + col, 0.5f + row};
         PIXEL(dst, row, col) = interpolation(src, v2f_multiply(position, scale));
@@ -90,14 +90,14 @@ void img_affine_transform(ImageMatrix dst, const ImageMatrix src, Matrix2f trans
     assert(interpolation);
     assert(!m2f_is_nan(transform));
     assert(m2f_determinant(transform) != 0.0f);
-    Vector2f src_center = {0.5f * src.n_cols, 0.5f * src.n_rows};
-    Vector2f dst_center = {0.5f * dst.n_cols, 0.5f * dst.n_rows};
+    Vector2f src_center = {0.5f * src.size.x, 0.5f * src.size.y};
+    Vector2f dst_center = {0.5f * dst.size.x, 0.5f * dst.size.y};
     transform = m2f_inverse(transform);
     FOR_EACH_PIXEL(dst) {
         Vector2f from_center = {0.5f + col - dst_center.x, 0.5f + row - dst_center.y};
         Vector2f src_position = v2f_add(src_center, m2f_transform(transform, from_center));
-        if (src_position.x < 0.0f || src_position.x >= src.n_cols || src_position.y < 0.0f ||
-                src_position.y >= src.n_rows) {
+        if (src_position.x < 0.0f || src_position.x >= src.size.x || src_position.y < 0.0f ||
+                src_position.y >= src.size.y) {
             PIXEL(dst, row, col) = bg_fill;
             continue;
         }
@@ -175,8 +175,8 @@ void img_draw_line(ImageMatrix mat, ImagePoint from, ImagePoint to, uint8_t colo
         from.y = MAX(from.y, 0);                                                 \
         from.x = MAX(x, 0);                                                      \
         to.y = y + width / 2;                                                    \
-        to.Y = MIN(to.Y, mat.n_rows - 1);                                        \
-        to.X = MIN(to.X, mat.n_cols - 1);                                        \
+        to.Y = MIN(to.Y, mat.size.y - 1);                                        \
+        to.X = MIN(to.X, mat.size.x - 1);                                        \
         for (; from.y <= to.y; ++from.y) {                                       \
             PIXEL(mat, from.Y, from.X) = color;                                  \
         }                                                                        \
@@ -198,8 +198,8 @@ void img_draw_box(ImageMatrix mat, ImagePoint from, ImagePoint to, uint8_t color
     }
     from.x = MAX(from.x, 0);
     from.y = MAX(from.y, 0);
-    to.x = MIN(to.x, mat.n_cols - 1);
-    to.y = MIN(to.y, mat.n_rows - 1);
+    to.x = MIN(to.x, mat.size.x - 1);
+    to.y = MIN(to.y, mat.size.y - 1);
     int16_t dx = to.x - from.x;
     int16_t dy = to.y - from.y;
     width = MIN(width, dx);
@@ -239,12 +239,12 @@ void img_draw_regular_polygon(ImageMatrix mat, ImagePoint center, Vector2f cente
 
 void img_hough_line_transform(ImageMatrixInt32 dst, const ImageMatrix src) {
     IMG_FILL(dst, 0);
-    float angle_resolution = M_PI / dst.n_rows;
+    float angle_resolution = M_PI / dst.size.y;
     float scale_to_index =
-            dst.n_cols / sqrtf((src.n_rows * src.n_rows) + (src.n_cols * src.n_cols));
+            dst.size.x / sqrtf((src.size.y * src.size.y) + (src.size.x * src.size.x));
     const Vector2f rot_inc = {cosf(angle_resolution), sinf(angle_resolution)};
     Vector2f rot = {1, 0};
-    for (int16_t i = 0; i < dst.n_rows; ++i) {
+    for (int16_t i = 0; i < dst.size.y; ++i) {
         rot = v2f_rotate(rot, rot_inc);
         FOR_EACH_PIXEL(src) {
             PIXEL(dst, i, (int16_t)(((rot.y * row) + (rot.x * col)) * scale_to_index)) +=
@@ -268,5 +268,5 @@ void img_convert_from_rgb888(ImageMatrix* dst, const ImageMatrix src) {
     for (int32_t i = 0; i < data_len; ++i) {
         dst->data[i] = (data_rgb888[i][0] + data_rgb888[i][1] + data_rgb888[i][2]) / 3;
     }
-    IMG_COPY_SIZE(*dst, src);
+    dst->size = src.size;
 }

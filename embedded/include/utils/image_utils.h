@@ -3,17 +3,20 @@
 
 // convolution kernels
 static const ImageMatrixInt8 img_sharpen_kernel = {
-        (int8_t[]){-1, -1, -1, -1, 9, -1, -1, -1, -1}, 3, 3};
+        (int8_t[]){-1, -1, -1, -1, 9, -1, -1, -1, -1}, {3, 3}};
 static const ImageMatrixInt8 img_edge_detect_kernel = {
-        (int8_t[]){-1, -1, -1, -1, 8, -1, -1, -1, -1}, 3, 3};
-static const ImageMatrixInt8 img_sobel_x_kernel = {(int8_t[]){-1, 0, 1, -2, 0, 2, -1, 0, 1}, 3, 3};
-static const ImageMatrixInt8 img_sobel_y_kernel = {(int8_t[]){-1, -2, -1, 0, 0, 0, 1, 2, 1}, 3, 3};
-static const ImageMatrixInt8 img_laplacian_kernel = {(int8_t[]){0, 1, 0, 1, -4, 1, 0, 1, 0}, 3, 3};
+        (int8_t[]){-1, -1, -1, -1, 8, -1, -1, -1, -1}, {3, 3}};
+static const ImageMatrixInt8 img_sobel_x_kernel = {
+        (int8_t[]){-1, 0, 1, -2, 0, 2, -1, 0, 1}, {3, 3}};
+static const ImageMatrixInt8 img_sobel_y_kernel = {
+        (int8_t[]){-1, -2, -1, 0, 0, 0, 1, 2, 1}, {3, 3}};
+static const ImageMatrixInt8 img_laplacian_kernel = {
+        (int8_t[]){0, 1, 0, 1, -4, 1, 0, 1, 0}, {3, 3}};
 
 // min/max aka dilate/erode kernels
-static const ImageMatrix img_box_2x2_kernel = {(uint8_t[]){1, 1, 1, 1}, 2, 2};
-static const ImageMatrix img_box_3x3_kernel = {(uint8_t[]){1, 1, 1, 1, 1, 1, 1, 1, 1}, 3, 3};
-static const ImageMatrix img_cross_3x3_kernel = {(uint8_t[]){0, 1, 0, 1, 1, 1, 0, 1, 0}, 3, 3};
+static const ImageMatrix img_box_2x2_kernel = {(uint8_t[]){1, 1, 1, 1}, {2, 2}};
+static const ImageMatrix img_box_3x3_kernel = {(uint8_t[]){1, 1, 1, 1, 1, 1, 1, 1, 1}, {3, 3}};
+static const ImageMatrix img_cross_3x3_kernel = {(uint8_t[]){0, 1, 0, 1, 1, 1, 0, 1, 0}, {3, 3}};
 
 // basic type generic functions
 
@@ -65,7 +68,7 @@ void img_draw_regular_polygon(ImageMatrix mat, ImagePoint center, Vector2f cente
 // domain transforms
 void img_hough_line_transform(ImageMatrixInt32 dst, const ImageMatrix src);
 void img_l1_distance_transform(ImageMatrixInt32 dst, const ImageMatrix src);
-// below transforms require one row of line buffer, Eg dst size = (n_cols)(n_rows + 1)
+// below transforms require one row of line buffer, Eg dst size = (size.x)(size.y + 1)
 void img_square_distance_transform(ImageMatrixInt32 dst, const ImageMatrix src);
 
 // format conversions

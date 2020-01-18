@@ -4,9 +4,9 @@
 #include <stdlib.h>
 
 static int test_hyper_sharpen() {
-    ImageMatrix img = {malloc(32 * 32), 32, 32};
-    ImageMatrix ref_img = {malloc(32 * 32), 32, 32};
-    ImageMatrixInt8 kernel = {(int8_t[9]){-3, -3, -3, -3, 25, -3, -3, -3, -3}, 3, 3};
+    ImageMatrix img = {malloc(32 * 32), {32, 32}};
+    ImageMatrix ref_img = {malloc(32 * 32), {32, 32}};
+    ImageMatrixInt8 kernel = {(int8_t[9]){-3, -3, -3, -3, 25, -3, -3, -3, -3}, {3, 3}};
     IMG_FILL(img, 0);
     FOR_EACH_PIXEL(img) { PIXEL(img, row, col) = 255 * (row & 1); }
     img_convolution_filter(&ref_img, img, kernel);

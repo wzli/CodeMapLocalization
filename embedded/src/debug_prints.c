@@ -16,8 +16,8 @@ void print_bit_matrix(BitMatrix32 matrix) {
 }
 
 void print_image_matrix(ImageMatrix src) {
-    for (int16_t row = 0; row < src.n_rows; ++row) {
-        for (int16_t col = 0; col < src.n_cols; ++col) {
+    for (int16_t row = 0; row < src.size.y; ++row) {
+        for (int16_t col = 0; col < src.size.x; ++col) {
             printf("%6d ", PIXEL(src, row, col));
         }
         puts("");
@@ -43,13 +43,13 @@ void print_location(Location location) {
 
 void img_save_to_pgm(ImageMatrix image, const char* file_name) {
     FILE* pgm_file = fopen(file_name, "wb");
-    fprintf(pgm_file, "P5\n%u %u\n%u\n", image.n_cols, image.n_rows, 255);
+    fprintf(pgm_file, "P5\n%u %u\n%u\n", image.size.x, image.size.y, 255);
     fwrite(image.data, sizeof(image.data[0]), IMG_SIZE(image), pgm_file);
     fclose(pgm_file);
 }
 
 void bm64_save_to_pgm(BitMatrix64 bit_matrix, BitMatrix64 bit_mask, const char* file_name) {
-    ImageMatrix image = {malloc(64 * 64), 64, 64};
+    ImageMatrix image = {malloc(64 * 64), {64, 64}};
     bm64_to_img(&image, bit_matrix, bit_mask);
     img_save_to_pgm(image, file_name);
 }

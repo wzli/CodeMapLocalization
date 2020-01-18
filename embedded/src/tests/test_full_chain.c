@@ -7,8 +7,8 @@
 #define TEST_VECTOR_SIZE 10
 
 static int test_full_chain_simulation() {
-    ImageMatrix src_img = {malloc(30 * 30), 30, 30};
-    ImageMatrix img = {malloc(32 * 32), 32, 32};
+    ImageMatrix src_img = {malloc(30 * 30), {30, 30}};
+    ImageMatrix img = {malloc(32 * 32), {32, 32}};
     uint32_t* bit_matrix = malloc(32 * sizeof(uint32_t));
     uint32_t* bit_mask = malloc(32 * sizeof(uint32_t));
     for (int i = 0; i < TEST_VECTOR_SIZE; ++i) {
@@ -50,8 +50,8 @@ static int test_full_chain_simulation() {
 }
 
 static int test_full_chain_real_life() {
-    ImageMatrix raw_image = {malloc(64 * 64), 64, 64};
-    ImageMatrix buf_image = {malloc(64 * 64), 64, 64};
+    ImageMatrix raw_image = {malloc(64 * 64), {64, 64}};
+    ImageMatrix buf_image = {malloc(64 * 64), {64, 64}};
     uint64_t* bit_matrix_64 = malloc(64 * sizeof(uint64_t));
     uint64_t* bit_mask_64 = malloc(64 * sizeof(uint64_t));
     uint32_t* bit_matrix_32 = malloc(32 * sizeof(uint32_t));
@@ -85,9 +85,9 @@ static int test_full_chain_real_life() {
             // sharpen
             img_hyper_sharpen(&buf_image, buf_image);
             Vector2f vertex = v2f_rotate(
-                    rotation, (Vector2f){2 + buf_image.n_cols / 2, 2 + buf_image.n_rows / 2});
+                    rotation, (Vector2f){2 + buf_image.size.x / 2, 2 + buf_image.size.y / 2});
             img_draw_regular_polygon(buf_image,
-                    (ImagePoint){buf_image.n_cols / 2, buf_image.n_rows / 2}, vertex, 4, threshold0,
+                    (ImagePoint){buf_image.size.x / 2, buf_image.size.y / 2}, vertex, 4, threshold0,
                     5);
 
             // find threshold of filtered image

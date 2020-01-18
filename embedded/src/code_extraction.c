@@ -2,7 +2,7 @@
 #include <assert.h>
 
 void img_hyper_sharpen(ImageMatrix* dst, const ImageMatrix src) {
-    IMG_SET_SIZE(*dst, src.n_cols - 2, src.n_rows - 2);
+    IMG_SET_SIZE(*dst, src.size.x - 2, src.size.y - 2);
     FOR_EACH_PIXEL(*dst) {
         int16_t value = 25 * PIXEL(src, row + 1, col + 1) -
                         3 * (PIXEL(src, row, col) + PIXEL(src, row, col + 1) +
@@ -15,7 +15,7 @@ void img_hyper_sharpen(ImageMatrix* dst, const ImageMatrix src) {
 
 Vector2f img_estimate_rotation(const ImageMatrix mat) {
     Vector2f gradient_sum = {};
-    ImageMatrix bounds = {0, mat.n_cols - 2, mat.n_rows - 2};
+    ImageMatrix bounds = {0, {mat.size.x - 2, mat.size.y - 2}};
     FOR_EACH_PIXEL(bounds) {
         Vector2f gradient = {
                 PIXEL(mat, row, col + 2) - PIXEL(mat, row, col) +
@@ -40,7 +40,7 @@ Vector2f img_estimate_rotation(const ImageMatrix mat) {
 
 float img_estimate_scale(const ImageMatrix mat) {
     int32_t sum = 0, max_val = 0;
-    ImageMatrix bounds = {0, mat.n_cols - 2, mat.n_rows - 2};
+    ImageMatrix bounds = {0, {mat.size.x - 2, mat.size.y - 2}};
     FOR_EACH_PIXEL(bounds) {
         int32_t val = 0;
         IMG_APPLY_KERNEL(val, img_edge_detect_kernel, mat, row, col);
@@ -50,7 +50,7 @@ float img_estimate_scale(const ImageMatrix mat) {
         }
     }
     assert(sum >= 0);
-    return bounds.n_rows * bounds.n_cols * max_val / (2 * sum + 0.00001f) - 1;
+    return bounds.size.y * bounds.size.x * max_val / (2 * sum + 0.00001f) - 1;
 }
 
 #define IMPLEMENT_IMG_TO_BM(W)                                                    \

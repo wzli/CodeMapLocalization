@@ -9,8 +9,7 @@ typedef struct {
 #define IMG_MATRIX_TYPEDEF(NAME, TYPE) \
     typedef struct {                   \
         TYPE* data;                    \
-        int16_t n_cols;                \
-        int16_t n_rows;                \
+        ImagePoint size;               \
     } NAME
 
 IMG_MATRIX_TYPEDEF(ImageMatrix, uint8_t);
@@ -19,27 +18,25 @@ IMG_MATRIX_TYPEDEF(ImageMatrixInt32, int32_t);
 
 // type generic macro functions for image manipulation
 
-#define PIXEL(MAT, ROW, COL) (MAT).data[(ROW) * (MAT).n_cols + (COL)]
+#define PIXEL(MAT, ROW, COL) (MAT).data[(ROW) * (MAT).size.x + (COL)]
 
 #define FOR_EACH_NESTED_PIXEL(MAT, LEVEL)                                 \
-    for (int16_t LEVEL##row = 0; LEVEL##row < (MAT).n_rows; ++LEVEL##row) \
-        for (int16_t LEVEL##col = 0; LEVEL##col < (MAT).n_cols; ++LEVEL##col)
+    for (int16_t LEVEL##row = 0; LEVEL##row < (MAT).size.y; ++LEVEL##row) \
+        for (int16_t LEVEL##col = 0; LEVEL##col < (MAT).size.x; ++LEVEL##col)
 
 #define FOR_EACH_PIXEL(MAT) FOR_EACH_NESTED_PIXEL(MAT, )
 
 #define IMG_CHECK_BOUNDS(MAT, ROW, COL, OFFSET)                                   \
-    ((ROW) >= (OFFSET) && (COL) >= (OFFSET) && (ROW) + (OFFSET) < (MAT).n_rows && \
-            (COL) + (OFFSET) < (MAT).n_cols)
+    ((ROW) >= (OFFSET) && (COL) >= (OFFSET) && (ROW) + (OFFSET) < (MAT).size.y && \
+            (COL) + (OFFSET) < (MAT).size.x)
 
-#define IMG_SIZE(MAT) ((MAT).n_rows * (MAT).n_cols)
+#define IMG_SIZE(MAT) ((MAT).size.y * (MAT).size.x)
 
-#define IMG_SET_SIZE(DST, N_COLS, N_ROWS) ((DST).n_cols = (N_COLS), (DST).n_rows = (N_ROWS))
-
-#define IMG_COPY_SIZE(DST, SRC) IMG_SET_SIZE(DST, (SRC).n_cols, (SRC).n_rows)
+#define IMG_SET_SIZE(DST, N_COLS, N_ROWS) ((DST).size.x = (N_COLS), (DST).size.y = (N_ROWS))
 
 #define IMG_COPY(DST, SRC)                                                   \
     do {                                                                     \
-        IMG_COPY_SIZE(DST, SRC);                                             \
+        (DST).size = (SRC).size;                                             \
         FOR_EACH_PIXEL(SRC) { PIXEL(DST, row, col) = PIXEL(SRC, row, col); } \
     } while (0)
 
@@ -64,7 +61,7 @@ IMG_MATRIX_TYPEDEF(ImageMatrixInt32, int32_t);
     ((SUM) += PIXEL(KERNEL, k_row, k_col) * PIXEL(MAT, k_row + (ROW), k_col + (COL)))
 
 #define IMG_VALID_PADDING(DST, SRC, KERNEL) \
-    IMG_SET_SIZE(DST, (SRC).n_cols - (KERNEL).n_cols + 1, (SRC).n_rows - (KERNEL).n_rows + 1)
+    IMG_SET_SIZE(DST, (SRC).size.x - (KERNEL).size.x + 1, (SRC).size.y - (KERNEL).size.y + 1)
 
 #define IMG_CONVOLUTION(DST, SRC, KERNEL, SCALE, CLAMP_MIN, CLAMP_MAX)         \
     do {                                                                       \
@@ -92,7 +89,7 @@ IMG_MATRIX_TYPEDEF(ImageMatrixInt32, int32_t);
 
 #define IMG_THRESHOLD(DST, SRC, THRESH)                                           \
     do {                                                                          \
-        IMG_COPY_SIZE(DST, SRC);                                                  \
+        (DST).size = (SRC).size;                                                  \
         FOR_EACH_PIXEL(SRC) {                                                     \
             PIXEL(DST, row, col) = (PIXEL(SRC, row, col) > (THRESH)) * UINT8_MAX; \
         }                                                                         \
@@ -101,7 +98,7 @@ IMG_MATRIX_TYPEDEF(ImageMatrixInt32, int32_t);
 #define IMG_CROP(DST, SRC, TOP_LEFT)                                                             \
     if (IMG_CHECK_BOUNDS(SRC, (TOP_LEFT).y, (TOP_LEFT).x, 0) &&                                  \
             IMG_CHECK_BOUNDS(                                                                    \
-                    SRC, (TOP_LEFT).y + (DST).n_rows - 1, (TOP_LEFT).x + (DST).n_cols - 1, 0)) { \
+                    SRC, (TOP_LEFT).y + (DST).size.y - 1, (TOP_LEFT).x + (DST).size.x - 1, 0)) { \
         FOR_EACH_PIXEL(DST) {                                                                    \
             PIXEL(DST, row, col) = PIXEL(SRC, row + (TOP_LEFT).y, col + (TOP_LEFT).x);           \
         }                                                                                        \
@@ -117,23 +114,23 @@ IMG_MATRIX_TYPEDEF(ImageMatrixInt32, int32_t);
 
 #define IMG_FLIP(DST, SRC, F_ROW, F_COL)                                         \
     if (&(DST) != &(SRC)) {                                                      \
-        IMG_COPY_SIZE(DST, SRC);                                                 \
+        (DST).size = (SRC).size;                                                 \
         FOR_EACH_PIXEL(SRC) { PIXEL(DST, row, col) = PIXEL(SRC, F_ROW, F_COL); } \
     } else                                                                       \
         IMG_FLIP_INPLACE(SRC, F_ROW, F_COL)
 
-#define IMG_VFLIP(DST, SRC) IMG_FLIP(DST, SRC, (SRC).n_rows - 1 - row, col)
-#define IMG_HFLIP(DST, SRC) IMG_FLIP(DST, SRC, row, (SRC).n_cols - 1 - col)
+#define IMG_VFLIP(DST, SRC) IMG_FLIP(DST, SRC, (SRC).size.y - 1 - row, col)
+#define IMG_HFLIP(DST, SRC) IMG_FLIP(DST, SRC, row, (SRC).size.x - 1 - col)
 
 #define IMG_TRANSPOSE(DST, SRC)         \
-    if ((SRC).n_rows == (SRC).n_cols) { \
+    if ((SRC).size.y == (SRC).size.x) { \
         IMG_FLIP(DST, SRC, col, row);   \
     } else                              \
         IMG_SET_SIZE(DST, 0, 0)
 
 #define IMG_NORMALIZE_RANGE(DST, SRC, MIN, MAX)                                           \
     do {                                                                                  \
-        IMG_COPY_SIZE(DST, SRC);                                                          \
+        (DST).size = (SRC).size;                                                          \
         FOR_EACH_PIXEL(SRC) {                                                             \
             int32_t val = ((PIXEL(SRC, row, col) - (MIN)) * UINT8_MAX) / ((MAX) - (MIN)); \
             PIXEL(DST, row, col) = CLAMP(val, 0, UINT8_MAX);                              \
@@ -147,7 +144,7 @@ IMG_MATRIX_TYPEDEF(ImageMatrixInt32, int32_t);
         IMG_PIXEL_MIN(min_pixel, SRC);                           \
         IMG_PIXEL_MAX(max_pixel, SRC);                           \
         if (max_pixel == min_pixel) {                            \
-            IMG_COPY_SIZE(DST, SRC);                             \
+            (DST).size = (SRC).size;                             \
             IMG_FILL(DST, 0);                                    \
         } else {                                                 \
             IMG_NORMALIZE_RANGE(DST, SRC, min_pixel, max_pixel); \
@@ -201,13 +198,13 @@ IMG_MATRIX_TYPEDEF(ImageMatrixInt32, int32_t);
 
 #define IMG_SEPARABLE_2D_TRANSFORM(DST, SRC, TRANSFORM_1D, LINE_BUFFER)                           \
     do {                                                                                          \
-        IMG_COPY_SIZE(DST, SRC);                                                                  \
-        (DST).data += (SRC).n_cols * (LINE_BUFFER);                                               \
-        for (int16_t col = 0; col < (SRC).n_cols; ++col) {                                        \
-            TRANSFORM_1D((DST).data + col, (SRC).data + col, (SRC).n_rows, (SRC).n_cols);         \
+        (DST).size = (SRC).size;                                                                  \
+        (DST).data += (SRC).size.x * (LINE_BUFFER);                                               \
+        for (int16_t col = 0; col < (SRC).size.x; ++col) {                                        \
+            TRANSFORM_1D((DST).data + col, (SRC).data + col, (SRC).size.y, (SRC).size.x);         \
         }                                                                                         \
-        for (int16_t row = 0; row < (SRC).n_rows; ++row, (DST).data += (SRC).n_cols) {            \
-            TRANSFORM_1D((DST).data - (SRC).n_cols * (LINE_BUFFER), (DST).data, (SRC).n_cols, 1); \
+        for (int16_t row = 0; row < (SRC).size.y; ++row, (DST).data += (SRC).size.x) {            \
+            TRANSFORM_1D((DST).data - (SRC).size.x * (LINE_BUFFER), (DST).data, (SRC).size.x, 1); \
         }                                                                                         \
-        (DST).data -= IMG_SIZE(DST) + (SRC).n_cols * (LINE_BUFFER);                               \
+        (DST).data -= IMG_SIZE(DST) + (SRC).size.x * (LINE_BUFFER);                               \
     } while (0)

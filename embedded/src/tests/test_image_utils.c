@@ -2,8 +2,8 @@
 #include "image_utils.h"
 #include <stdlib.h>
 
-static ImageMatrix test_img = {NULL, 5, 5};
-static ImageMatrix buf_img = {NULL, 5, 5};
+static ImageMatrix test_img = {NULL, {5, 5}};
+static ImageMatrix buf_img = {NULL, {5, 5}};
 
 static int test_image_size() {
     test_assert(IMG_SIZE(test_img) == 25);
@@ -94,7 +94,7 @@ static int test_image_transpose() {
         test_assert(PIXEL(test_img, row, col) == PIXEL(buf_img, row, col));
     };
 
-    buf_img.n_cols = 4;
+    buf_img.size.x = 4;
     IMG_TRANSPOSE(buf_img, buf_img);
     test_assert(IMG_SIZE(buf_img) == 0);
     return 0;
@@ -103,7 +103,7 @@ static int test_image_transpose() {
 static int test_image_vflip() {
     IMG_VFLIP(buf_img, test_img);
     FOR_EACH_PIXEL(buf_img) {
-        test_assert(PIXEL(buf_img, row, col) == PIXEL(test_img, test_img.n_rows - 1 - row, col));
+        test_assert(PIXEL(buf_img, row, col) == PIXEL(test_img, test_img.size.y - 1 - row, col));
     }
 
     IMG_VFLIP(buf_img, buf_img);
@@ -116,7 +116,7 @@ static int test_image_vflip() {
 static int test_image_hflip() {
     IMG_HFLIP(buf_img, test_img);
     FOR_EACH_PIXEL(buf_img) {
-        test_assert(PIXEL(buf_img, row, col) == PIXEL(test_img, row, test_img.n_cols - 1 - col));
+        test_assert(PIXEL(buf_img, row, col) == PIXEL(test_img, row, test_img.size.x - 1 - col));
     }
 
     IMG_HFLIP(buf_img, buf_img);
@@ -149,7 +149,7 @@ static int test_image_otsu_histogram() {
 }
 
 static int test_image_resize() {
-    buf_img.n_cols *= 2;
+    buf_img.size.x *= 2;
     img_resize(buf_img, test_img, img_nearest_interpolation);
     FOR_EACH_PIXEL(buf_img) {
         test_assert(PIXEL(buf_img, row, col) == PIXEL(test_img, row, col / 2));
@@ -184,7 +184,7 @@ static int test_image_draw_box() {
 static int test_image_distance_transform() {
     IMG_FILL(buf_img, 255);
     PIXEL(buf_img, 0, 0) = 0;
-    ImageMatrixInt32 dist_img = {(int32_t[5 * 6]){}, 5, 5};
+    ImageMatrixInt32 dist_img = {(int32_t[5 * 6]){}, {5, 5}};
     img_l1_distance_transform(dist_img, buf_img);
     FOR_EACH_PIXEL(dist_img) { test_assert(PIXEL(dist_img, row, col) == row + col); }
     img_square_distance_transform(dist_img, buf_img);
