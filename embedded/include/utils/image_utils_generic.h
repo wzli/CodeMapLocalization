@@ -183,10 +183,14 @@ IMG_MATRIX_TYPEDEF(ImageMatrixInt32, int32_t);
             }                                                                                     \
         }                                                                                         \
         for (int16_t x = (LEN) -1, min_x = CH_DATA(DST, (LEN) -1, STRIDE); x >= 0; --x) {         \
-            int16_t dx = x - CH_DATA(DST, x, STRIDE);                                             \
-            int16_t y = SQR(dx) + CH_DATA(SRC, CH_DATA(DST, x, STRIDE), STRIDE);                  \
             int16_t min_dx = x - min_x;                                                           \
             int16_t min_y = SQR(min_dx) + CH_DATA(SRC, min_x, STRIDE);                            \
+            if (CH_DATA(DST, x, STRIDE) == min_x) {                                               \
+                CH_DATA(DST, x, STRIDE) = min_y;                                                  \
+                continue;                                                                         \
+            }                                                                                     \
+            int16_t dx = x - CH_DATA(DST, x, STRIDE);                                             \
+            int16_t y = SQR(dx) + CH_DATA(SRC, CH_DATA(DST, x, STRIDE), STRIDE);                  \
             if (y <= min_y) {                                                                     \
                 min_x = CH_DATA(DST, x, STRIDE);                                                  \
                 CH_DATA(DST, x, STRIDE) = y;                                                      \
