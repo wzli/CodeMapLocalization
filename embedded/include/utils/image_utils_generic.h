@@ -166,38 +166,35 @@ IMG_MATRIX_TYPEDEF(ImageMatrixInt32, int32_t);
         }                                                                          \
     } while (0)
 
-#define SQUARE_DISTANCE_TRANSFORM_1D(DST, SRC, LEN, STRIDE)                                       \
-    do {                                                                                          \
-        for (int16_t x = 0; x < (LEN); ++x) {                                                     \
-            CH_DATA(DST, x, STRIDE) = 0;                                                          \
-        }                                                                                         \
-        for (int16_t x = 1; x < (LEN); ++x) {                                                     \
-            CH_DATA(DST, x, STRIDE) = MAX(CH_DATA(DST, x, STRIDE), CH_DATA(DST, x - 1, STRIDE));  \
-            int16_t dx = x - CH_DATA(DST, x, STRIDE);                                             \
-            int16_t dy = CH_DATA(SRC, x, STRIDE) - CH_DATA(SRC, CH_DATA(DST, x, STRIDE), STRIDE); \
-            int16_t s = (dy + dx * (x + CH_DATA(DST, x, STRIDE) + 1)) / (2 * dx);                 \
-            if (s < x) {                                                                          \
-                CH_DATA(DST, x, STRIDE) = x;                                                      \
-            } else if (s < (LEN)) {                                                               \
-                CH_DATA(DST, s, STRIDE) = x;                                                      \
-            }                                                                                     \
-        }                                                                                         \
-        for (int16_t x = (LEN) -1, min_x = CH_DATA(DST, (LEN) -1, STRIDE); x >= 0; --x) {         \
-            int16_t min_dx = x - min_x;                                                           \
-            int16_t min_y = SQR(min_dx) + CH_DATA(SRC, min_x, STRIDE);                            \
-            if (CH_DATA(DST, x, STRIDE) == min_x) {                                               \
-                CH_DATA(DST, x, STRIDE) = min_y;                                                  \
-                continue;                                                                         \
-            }                                                                                     \
-            int16_t dx = x - CH_DATA(DST, x, STRIDE);                                             \
-            int16_t y = SQR(dx) + CH_DATA(SRC, CH_DATA(DST, x, STRIDE), STRIDE);                  \
-            if (y <= min_y) {                                                                     \
-                min_x = CH_DATA(DST, x, STRIDE);                                                  \
-                CH_DATA(DST, x, STRIDE) = y;                                                      \
-            } else {                                                                              \
-                CH_DATA(DST, x, STRIDE) = min_y;                                                  \
-            }                                                                                     \
-        }                                                                                         \
+#define SQUARE_DISTANCE_TRANSFORM_1D(DST, SRC, LEN, STRIDE)                                      \
+    do {                                                                                         \
+        for (int16_t x = 0; x < (LEN); ++x) {                                                    \
+            CH_DATA(DST, x, STRIDE) = 0;                                                         \
+        }                                                                                        \
+        for (int16_t x = 1; x < (LEN); ++x) {                                                    \
+            CH_DATA(DST, x, STRIDE) = MAX(CH_DATA(DST, x, STRIDE), CH_DATA(DST, x - 1, STRIDE)); \
+            int16_t dx = x - CH_DATA(DST, x, STRIDE);                                            \
+            int16_t s = (dx * (x + CH_DATA(DST, x, STRIDE) + 1) + CH_DATA(SRC, x, STRIDE) -      \
+                                CH_DATA(SRC, CH_DATA(DST, x, STRIDE), STRIDE)) /                 \
+                        (2 * dx);                                                                \
+            if (s < x) {                                                                         \
+                CH_DATA(DST, x, STRIDE) = x;                                                     \
+            } else if (s < (LEN)) {                                                              \
+                CH_DATA(DST, s, STRIDE) = x;                                                     \
+            }                                                                                    \
+        }                                                                                        \
+        for (int16_t x = (LEN) -1, min_x = CH_DATA(DST, (LEN) -1, STRIDE); x >= 0; --x) {        \
+            int32_t min_y = INT32_MAX;                                                           \
+            for (int16_t x0 = min_x; x0 >= CH_DATA(DST, x, STRIDE); --x0) {                      \
+                int16_t dx = x - x0;                                                             \
+                int32_t y = SQR(dx) + CH_DATA(SRC, x0, STRIDE);                                  \
+                if (y <= min_y) {                                                                \
+                    min_y = y;                                                                   \
+                    min_x = x0;                                                                  \
+                }                                                                                \
+            }                                                                                    \
+            CH_DATA(DST, x, STRIDE) = min_y;                                                     \
+        }                                                                                        \
     } while (0)
 
 #define IMG_SEPARABLE_2D_TRANSFORM(DST, SRC, TRANSFORM_1D, LINE_BUFFER)                           \

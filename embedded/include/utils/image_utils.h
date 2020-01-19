@@ -67,9 +67,9 @@ void img_draw_regular_polygon(ImageMatrix mat, ImagePoint center, Vector2f cente
 
 // domain transforms
 void img_hough_line_transform(ImageMatrixInt32 dst, const ImageMatrix src);
-void img_l1_distance_transform(ImageMatrixInt32 dst, const ImageMatrix src);
+void img_l1_distance_transform(ImageMatrixInt32* dst, const ImageMatrix src);
 // below transforms require one row of line buffer, Eg dst size = (size.x)(size.y + 1)
-void img_square_distance_transform(ImageMatrixInt32 dst, const ImageMatrix src);
+void img_square_distance_transform(ImageMatrixInt32* dst, const ImageMatrix src);
 
 // format conversions
 void img_convert_from_rgb888(ImageMatrix* dst, const ImageMatrix src);

@@ -254,12 +254,12 @@ void img_hough_line_transform(ImageMatrixInt32 dst, const ImageMatrix src) {
     IMG_NORMALIZE(dst, dst);
 }
 
-void img_l1_distance_transform(ImageMatrixInt32 dst, const ImageMatrix src) {
-    IMG_SEPARABLE_2D_TRANSFORM(dst, src, L1_DISTANCE_TRANSFORM_1D, 0);
+void img_l1_distance_transform(ImageMatrixInt32* dst, const ImageMatrix src) {
+    IMG_SEPARABLE_2D_TRANSFORM(*dst, src, L1_DISTANCE_TRANSFORM_1D, 0);
 }
 
-void img_square_distance_transform(ImageMatrixInt32 dst, const ImageMatrix src) {
-    IMG_SEPARABLE_2D_TRANSFORM(dst, src, SQUARE_DISTANCE_TRANSFORM_1D, 1);
+void img_square_distance_transform(ImageMatrixInt32* dst, const ImageMatrix src) {
+    IMG_SEPARABLE_2D_TRANSFORM(*dst, src, SQUARE_DISTANCE_TRANSFORM_1D, 1);
 }
 
 void img_convert_from_rgb888(ImageMatrix* dst, const ImageMatrix src) {
