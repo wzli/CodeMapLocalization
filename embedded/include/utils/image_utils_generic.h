@@ -177,7 +177,7 @@ IMG_MATRIX_TYPEDEF(ImageMatrixInt32, int32_t);
         for (int16_t x = 1; x < (LEN); ++x) {                                                   \
             while (1) {                                                                         \
                 int16_t envelope_x = SAMPLE_DATA(DST, envelope_index, STRIDE);                  \
-                int32_t intersection = PARABOLA_INTERSECTION(x, SAMPLE_DATA(SRC, x, STRIDE),    \
+                int16_t intersection = PARABOLA_INTERSECTION(x, SAMPLE_DATA(SRC, x, STRIDE),    \
                         envelope_x, SAMPLE_DATA(SRC, envelope_x, STRIDE));                      \
                 if (envelope_start < intersection || envelope_index == 0) {                     \
                     SAMPLE_DATA(DST, ++envelope_index, STRIDE) = x;                             \
@@ -215,14 +215,11 @@ IMG_MATRIX_TYPEDEF(ImageMatrixInt32, int32_t);
         while (envelope_start-- > 0) {                                                          \
             SAMPLE_DATA(DST, envelope_start + 1, STRIDE) = SAMPLE_DATA(DST, 0, STRIDE);         \
         }                                                                                       \
-        for (int16_t x = 0; x < (LEN) -1; ++x) {                                                \
-            int16_t envelope_x = SAMPLE_DATA(DST, x + 1, STRIDE);                               \
+        for (int16_t x = 0; x < (LEN); ++x) {                                                   \
+            int16_t envelope_x = SAMPLE_DATA(DST, MIN(x, (LEN) -1), STRIDE);                    \
             int16_t dx = x - envelope_x;                                                        \
             SAMPLE_DATA(DST, x, STRIDE) = SAMPLE_DATA(SRC, envelope_x, STRIDE) + SQR(dx);       \
         }                                                                                       \
-        int16_t envelope_x = SAMPLE_DATA(DST, (LEN) -1, STRIDE);                                \
-        int16_t dx = (LEN) -1 - envelope_x;                                                     \
-        SAMPLE_DATA(DST, (LEN) -1, STRIDE) = SAMPLE_DATA(SRC, envelope_x, STRIDE) + SQR(dx);    \
     } while (0)
 
 #define IMG_SEPARABLE_2D_TRANSFORM(DST, SRC, TRANSFORM_1D, LINE_BUFFER)                           \
