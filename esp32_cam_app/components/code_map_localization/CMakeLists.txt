@@ -8,6 +8,7 @@ set(srcs
 
 #for tests
   src/debug_prints.c
+  src/tests/test_generic_algorithms.c
   src/tests/test_math_utils.c
   src/tests/test_image_utils.c
   src/tests/test_bitwise_utils.c
