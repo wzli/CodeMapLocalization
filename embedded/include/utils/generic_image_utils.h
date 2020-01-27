@@ -1,6 +1,6 @@
 #pragma once
 #include "math_utils.h"
-#include "algorithms_generic.h"
+#include "generic_algorithms.h"
 
 typedef struct {
     int16_t x;

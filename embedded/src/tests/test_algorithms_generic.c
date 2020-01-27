@@ -1,5 +1,5 @@
 #include "test_utils.h"
-#include "algorithms_generic.h"
+#include "generic_algorithms.h"
 
 static int test_swap() {
     int8_t ai = 3;
@@ -23,7 +23,7 @@ static int test_quick_select() {
     return 0;
 }
 
-int test_algorithms_generic() {
+int test_generic_algorithms() {
     test_run(test_swap);
     test_run(test_quick_select);
     return 0;

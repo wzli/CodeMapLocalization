@@ -1,5 +1,5 @@
 #pragma once
-#include "image_utils_generic.h"
+#include "generic_image_utils.h"
 
 // convolution kernels
 static const ImageMatrixInt8 img_sharpen_kernel = {
