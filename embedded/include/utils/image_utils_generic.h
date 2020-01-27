@@ -74,11 +74,11 @@ IMG_MATRIX_TYPEDEF(ImageMatrixInt32, int32_t);
         }                                                                      \
     } while (0)
 
-#define IMG_REDUCE_FILTER(DST, SRC, KERNEL, INIT_VAL, REDUCE_FUNC)                       \
+#define IMG_REDUCE_FILTER(DST, SRC, KERNEL, REDUCE_FUNC)                                 \
     do {                                                                                 \
         IMG_VALID_PADDING(DST, SRC, KERNEL);                                             \
         FOR_EACH_PIXEL(DST) {                                                            \
-            PIXEL(DST, row, col) = (INIT_VAL);                                           \
+            PIXEL(DST, row, col) = PIXEL(SRC, row, col);                                 \
             FOR_EACH_NESTED_PIXEL(KERNEL, k_) {                                          \
                 if (PIXEL(KERNEL, k_row, k_col)) {                                       \
                     PIXEL(DST, row, col) = REDUCE_FUNC(                                  \

@@ -6,11 +6,11 @@ void img_convolution_filter(ImageMatrix* dst, const ImageMatrix src, const Image
 }
 
 void img_max_filter(ImageMatrix* dst, const ImageMatrix src, const ImageMatrix kernel) {
-    IMG_REDUCE_FILTER(*dst, src, kernel, 0, MAX);
+    IMG_REDUCE_FILTER(*dst, src, kernel, MAX);
 }
 
 void img_min_filter(ImageMatrix* dst, const ImageMatrix src, const ImageMatrix kernel) {
-    IMG_REDUCE_FILTER(*dst, src, kernel, UINT8_MAX, MIN);
+    IMG_REDUCE_FILTER(*dst, src, kernel, MIN);
 }
 
 void img_median_filter(ImageMatrix* dst, const ImageMatrix src, ImageMatrix window) {
