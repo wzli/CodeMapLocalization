@@ -1,5 +1,6 @@
 #pragma once
 #include "math_utils.h"
+#include "algorithms_generic.h"
 
 typedef struct {
     int16_t x;
@@ -149,77 +150,6 @@ IMG_MATRIX_TYPEDEF(ImageMatrixInt32, int32_t);
         } else {                                                 \
             IMG_NORMALIZE_RANGE(DST, SRC, min_pixel, max_pixel); \
         }                                                        \
-    } while (0)
-
-#define SAMPLE_DATA(ARRAY, INDEX, STRIDE) (ARRAY)[(INDEX) * (STRIDE)]
-
-#define L1_DISTANCE_TRANSFORM_1D(DST, SRC, LEN, STRIDE)                                    \
-    do {                                                                                   \
-        (DST)[0] = (SRC)[0];                                                               \
-        for (int16_t I = 1; I < (LEN); ++I) {                                              \
-            SAMPLE_DATA(DST, I, STRIDE) =                                                  \
-                    MIN(SAMPLE_DATA(DST, I - 1, STRIDE) + 1, SAMPLE_DATA(SRC, I, STRIDE)); \
-        }                                                                                  \
-        for (int16_t I = (LEN) -2; I >= 0; --I) {                                          \
-            SAMPLE_DATA(DST, I, STRIDE) =                                                  \
-                    MIN(SAMPLE_DATA(DST, I + 1, STRIDE) + 1, SAMPLE_DATA(DST, I, STRIDE)); \
-        }                                                                                  \
-    } while (0)
-
-#define PARABOLA_INTERSECTION(X2, Y2, X1, Y1) \
-    (((X2) - (X1)) * ((X2) + (X1) + 1) + (Y2) - (Y1)) / (2 * ((X2) - (X1)))
-
-#define SQUARE_DISTANCE_TRANSFORM_1D(DST, SRC, LEN, STRIDE)                                     \
-    do {                                                                                        \
-        SAMPLE_DATA(DST, 0, STRIDE) = 0;                                                        \
-        int16_t envelope_index = 0;                                                             \
-        int16_t envelope_start = 0;                                                             \
-        for (int16_t x = 1; x < (LEN); ++x) {                                                   \
-            while (1) {                                                                         \
-                int16_t envelope_x = SAMPLE_DATA(DST, envelope_index, STRIDE);                  \
-                int16_t intersection = PARABOLA_INTERSECTION(x, SAMPLE_DATA(SRC, x, STRIDE),    \
-                        envelope_x, SAMPLE_DATA(SRC, envelope_x, STRIDE));                      \
-                if (envelope_start < intersection || envelope_index == 0) {                     \
-                    SAMPLE_DATA(DST, ++envelope_index, STRIDE) = x;                             \
-                    envelope_start = intersection;                                              \
-                    break;                                                                      \
-                }                                                                               \
-                if (!--envelope_index) {                                                        \
-                    envelope_start = 0;                                                         \
-                    continue;                                                                   \
-                };                                                                              \
-                envelope_x = SAMPLE_DATA(DST, envelope_index, STRIDE);                          \
-                int16_t prev_envelope_x = SAMPLE_DATA(DST, envelope_index - 1, STRIDE);         \
-                envelope_start =                                                                \
-                        PARABOLA_INTERSECTION(envelope_x, SAMPLE_DATA(SRC, envelope_x, STRIDE), \
-                                prev_envelope_x, SAMPLE_DATA(SRC, prev_envelope_x, STRIDE));    \
-            }                                                                                   \
-        }                                                                                       \
-        envelope_start = CLAMP(envelope_start, 0, (LEN) -1);                                    \
-        int16_t envelope_end = (LEN) -1;                                                        \
-        for (; envelope_end > envelope_start; --envelope_end) {                                 \
-            SAMPLE_DATA(DST, envelope_end, STRIDE) = SAMPLE_DATA(DST, envelope_index, STRIDE);  \
-        }                                                                                       \
-        while (--envelope_index) {                                                              \
-            int16_t envelope_x = SAMPLE_DATA(DST, envelope_index, STRIDE);                      \
-            int16_t prev_envelope_x = SAMPLE_DATA(DST, envelope_index - 1, STRIDE);             \
-            envelope_start =                                                                    \
-                    PARABOLA_INTERSECTION(envelope_x, SAMPLE_DATA(SRC, envelope_x, STRIDE),     \
-                            prev_envelope_x, SAMPLE_DATA(SRC, prev_envelope_x, STRIDE));        \
-            envelope_start = CLAMP(envelope_start, 0, (LEN) -1);                                \
-            for (int16_t x = envelope_start; x < envelope_end; ++x) {                           \
-                SAMPLE_DATA(DST, x + 1, STRIDE) = SAMPLE_DATA(DST, envelope_index, STRIDE);     \
-            }                                                                                   \
-            envelope_end = envelope_start;                                                      \
-        }                                                                                       \
-        while (envelope_start-- > 0) {                                                          \
-            SAMPLE_DATA(DST, envelope_start + 1, STRIDE) = SAMPLE_DATA(DST, 0, STRIDE);         \
-        }                                                                                       \
-        for (int16_t x = 0; x < (LEN); ++x) {                                                   \
-            int16_t envelope_x = SAMPLE_DATA(DST, MIN(x, (LEN) -1), STRIDE);                    \
-            int16_t dx = x - envelope_x;                                                        \
-            SAMPLE_DATA(DST, x, STRIDE) = SAMPLE_DATA(SRC, envelope_x, STRIDE) + SQR(dx);       \
-        }                                                                                       \
     } while (0)
 
 #define IMG_SEPARABLE_2D_TRANSFORM(DST, SRC, TRANSFORM_1D, LINE_BUFFER)                           \

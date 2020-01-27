@@ -20,38 +20,6 @@
 #define CLAMP(X, MIN, MAX) ((X) < (MIN) ? (MIN) : (X) > (MAX) ? (MAX) : (X))
 #define IS_SIGNED(Type) ((Type) -1 < 0x7F)
 
-#define SWAP(X, Y)                                                      \
-    do {                                                                \
-        uint8_t* swap_x_ptr = (uint8_t*) &(X);                          \
-        uint8_t* swap_y_ptr = (uint8_t*) &(Y);                          \
-        for (uint16_t swap_idx = 0; swap_idx < sizeof(X); ++swap_idx) { \
-            uint8_t swap_tmp = swap_x_ptr[swap_idx];                    \
-            swap_x_ptr[swap_idx] = swap_y_ptr[swap_idx];                \
-            swap_y_ptr[swap_idx] = swap_tmp;                            \
-        }                                                               \
-    } while (0)
-
-#define QUICK_SELECT(array, len, k)                     \
-    do {                                                \
-        for (int32_t start = 0, end = (len);;) {        \
-            int32_t pivot = start;                      \
-            for (int32_t I = start; I < end - 1; I++) { \
-                if ((array)[I] <= (array)[end - 1]) {   \
-                    SWAP((array)[I], (array)[pivot]);   \
-                    pivot++;                            \
-                }                                       \
-            }                                           \
-            SWAP((array)[end - 1], (array)[pivot]);     \
-            if ((k) == pivot) {                         \
-                break;                                  \
-            } else if (pivot > (k)) {                   \
-                end = pivot;                            \
-            } else {                                    \
-                start = pivot;                          \
-            }                                           \
-        }                                               \
-    } while (0)
-
 typedef struct {
     float x;
     float y;
