@@ -192,6 +192,36 @@ static int test_image_distance_transform() {
     return 0;
 }
 
+static int test_image_max_filter() {
+    ImageMatrix src_img = {(uint8_t[5 * 5]){}, {5, 5}};
+    IMG_FILL(src_img, 0);
+    PIXEL(src_img, 2, 2) = 255;
+    img_max_filter(&buf_img, src_img, 2);
+    FOR_EACH_PIXEL(buf_img) {
+        if (row == 0 || row == buf_img.size.y - 1 || col == 0 || col == buf_img.size.x - 1) {
+            test_assert(PIXEL(buf_img, row, col) == 0);
+        } else {
+            test_assert(PIXEL(buf_img, row, col) == 255);
+        }
+    }
+    return 0;
+}
+
+static int test_image_min_filter() {
+    ImageMatrix src_img = {(uint8_t[5 * 5]){}, {5, 5}};
+    IMG_FILL(src_img, 255);
+    PIXEL(src_img, 2, 2) = 0;
+    img_min_filter(&buf_img, src_img, 2);
+    FOR_EACH_PIXEL(buf_img) {
+        if (row == 0 || row == buf_img.size.y - 1 || col == 0 || col == buf_img.size.x - 1) {
+            test_assert(PIXEL(buf_img, row, col) == 255);
+        } else {
+            test_assert(PIXEL(buf_img, row, col) == 0);
+        }
+    }
+    return 0;
+}
+
 int test_image_utils() {
     test_img.data = malloc(IMG_SIZE(test_img));
     buf_img.data = malloc(2 * IMG_SIZE(buf_img));
@@ -215,6 +245,8 @@ int test_image_utils() {
     test_run(test_image_draw_line);
     test_run(test_image_draw_box);
     test_run(test_image_distance_transform);
+    test_run(test_image_max_filter);
+    test_run(test_image_min_filter);
     free(test_img.data);
     free(buf_img.data);
     return 0;

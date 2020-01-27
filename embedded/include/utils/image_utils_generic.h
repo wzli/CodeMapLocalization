@@ -74,18 +74,24 @@ IMG_MATRIX_TYPEDEF(ImageMatrixInt32, int32_t);
         }                                                                      \
     } while (0)
 
-#define IMG_REDUCE_FILTER(DST, SRC, KERNEL, REDUCE_FUNC)                                 \
-    do {                                                                                 \
-        IMG_VALID_PADDING(DST, SRC, KERNEL);                                             \
-        FOR_EACH_PIXEL(DST) {                                                            \
-            PIXEL(DST, row, col) = PIXEL(SRC, row, col);                                 \
-            FOR_EACH_NESTED_PIXEL(KERNEL, k_) {                                          \
-                if (PIXEL(KERNEL, k_row, k_col)) {                                       \
-                    PIXEL(DST, row, col) = REDUCE_FUNC(                                  \
-                            PIXEL(DST, row, col), PIXEL(SRC, row + k_row, col + k_col)); \
-                }                                                                        \
-            }                                                                            \
-        }                                                                                \
+#define IMG_REDUCE_FILTER(DST, SRC, BLOCK_SIZE, REDUCE_FUNC)                         \
+    do {                                                                             \
+        (DST).size = (SRC).size;                                                     \
+        (DST).size.x -= (BLOCK_SIZE) -1;                                             \
+        FOR_EACH_PIXEL(DST) {                                                        \
+            PIXEL(DST, row, col) = PIXEL(SRC, row, col);                             \
+            for (int16_t I = 1; I < (BLOCK_SIZE); ++I) {                             \
+                PIXEL(DST, row, col) =                                               \
+                        REDUCE_FUNC(PIXEL(DST, row, col), PIXEL(SRC, row, col + I)); \
+            }                                                                        \
+        }                                                                            \
+        (DST).size.y -= (BLOCK_SIZE) -1;                                             \
+        FOR_EACH_PIXEL(DST) {                                                        \
+            for (int16_t I = 1; I < (BLOCK_SIZE); ++I) {                             \
+                PIXEL(DST, row, col) =                                               \
+                        REDUCE_FUNC(PIXEL(DST, row, col), PIXEL(DST, row + I, col)); \
+            }                                                                        \
+        }                                                                            \
     } while (0)
 
 #define IMG_THRESHOLD(DST, SRC, THRESH)                                           \

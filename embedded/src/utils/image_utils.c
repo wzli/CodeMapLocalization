@@ -5,12 +5,12 @@ void img_convolution_filter(ImageMatrix* dst, const ImageMatrix src, const Image
     IMG_CONVOLUTION(*dst, src, kernel, 1, 0, UINT8_MAX);
 }
 
-void img_max_filter(ImageMatrix* dst, const ImageMatrix src, const ImageMatrix kernel) {
-    IMG_REDUCE_FILTER(*dst, src, kernel, MAX);
+void img_max_filter(ImageMatrix* dst, const ImageMatrix src, uint16_t block_size) {
+    IMG_REDUCE_FILTER(*dst, src, block_size, MAX);
 }
 
-void img_min_filter(ImageMatrix* dst, const ImageMatrix src, const ImageMatrix kernel) {
-    IMG_REDUCE_FILTER(*dst, src, kernel, MIN);
+void img_min_filter(ImageMatrix* dst, const ImageMatrix src, uint16_t block_size) {
+    IMG_REDUCE_FILTER(*dst, src, block_size, MIN);
 }
 
 void img_median_filter(ImageMatrix* dst, const ImageMatrix src, ImageMatrix window) {

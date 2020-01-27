@@ -13,11 +13,6 @@ static const ImageMatrixInt8 img_sobel_y_kernel = {
 static const ImageMatrixInt8 img_laplacian_kernel = {
         (int8_t[]){0, 1, 0, 1, -4, 1, 0, 1, 0}, {3, 3}};
 
-// min/max aka dilate/erode kernels
-static const ImageMatrix img_box_2x2_kernel = {(uint8_t[]){1, 1, 1, 1}, {2, 2}};
-static const ImageMatrix img_box_3x3_kernel = {(uint8_t[]){1, 1, 1, 1, 1, 1, 1, 1, 1}, {3, 3}};
-static const ImageMatrix img_cross_3x3_kernel = {(uint8_t[]){0, 1, 0, 1, 1, 1, 0, 1, 0}, {3, 3}};
-
 // basic type generic functions
 
 // PIXEL(MAT, ROW, COL)
@@ -36,8 +31,8 @@ static const ImageMatrix img_cross_3x3_kernel = {(uint8_t[]){0, 1, 0, 1, 1, 1, 0
 
 // filters (they also work inplace)
 void img_convolution_filter(ImageMatrix* dst, const ImageMatrix src, const ImageMatrixInt8 kernel);
-void img_max_filter(ImageMatrix* dst, const ImageMatrix src, const ImageMatrix kernel);
-void img_min_filter(ImageMatrix* dst, const ImageMatrix src, const ImageMatrix kernel);
+void img_max_filter(ImageMatrix* dst, const ImageMatrix src, uint16_t block_size);
+void img_min_filter(ImageMatrix* dst, const ImageMatrix src, uint16_t block_size);
 void img_median_filter(ImageMatrix* dst, const ImageMatrix src, ImageMatrix window);
 
 // interpolation methods
