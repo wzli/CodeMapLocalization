@@ -63,7 +63,7 @@ static int test_image_pixel_min() {
 
 static int test_image_apply_kernel() {
     int32_t acc = 0;
-    IMG_APPLY_KERNEL(acc, img_edge_detect_kernel, test_img, 0, 0);
+    IMG_PIXEL_WEIGHTED_SUM(acc, img_edge_detect_kernel, test_img, 0, 0);
     test_assert(acc == 0);
     return 0;
 }

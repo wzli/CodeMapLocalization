@@ -1,18 +1,6 @@
 #pragma once
 #include "generic_image_utils.h"
 
-// convolution kernels
-static const ImageMatrixInt8 img_sharpen_kernel = {
-        (int8_t[]){-1, -1, -1, -1, 9, -1, -1, -1, -1}, {3, 3}};
-static const ImageMatrixInt8 img_edge_detect_kernel = {
-        (int8_t[]){-1, -1, -1, -1, 8, -1, -1, -1, -1}, {3, 3}};
-static const ImageMatrixInt8 img_sobel_x_kernel = {
-        (int8_t[]){-1, 0, 1, -2, 0, 2, -1, 0, 1}, {3, 3}};
-static const ImageMatrixInt8 img_sobel_y_kernel = {
-        (int8_t[]){-1, -2, -1, 0, 0, 0, 1, 2, 1}, {3, 3}};
-static const ImageMatrixInt8 img_laplacian_kernel = {
-        (int8_t[]){0, 1, 0, 1, -4, 1, 0, 1, 0}, {3, 3}};
-
 // basic type generic functions
 
 // PIXEL(MAT, ROW, COL)
@@ -28,6 +16,18 @@ static const ImageMatrixInt8 img_laplacian_kernel = {
 // IMG_CROP(DST, SRC, TOP_LEFT)
 // IMG_VFLIP(DST, SRC)
 // IMG_HFLIP(DST, SRC)
+
+// convolution kernels
+static const ImageMatrixInt8 img_sharpen_kernel = {
+        (int8_t[]){-1, -1, -1, -1, 9, -1, -1, -1, -1}, {3, 3}};
+static const ImageMatrixInt8 img_edge_detect_kernel = {
+        (int8_t[]){-1, -1, -1, -1, 8, -1, -1, -1, -1}, {3, 3}};
+static const ImageMatrixInt8 img_sobel_x_kernel = {
+        (int8_t[]){-1, 0, 1, -2, 0, 2, -1, 0, 1}, {3, 3}};
+static const ImageMatrixInt8 img_sobel_y_kernel = {
+        (int8_t[]){-1, -2, -1, 0, 0, 0, 1, 2, 1}, {3, 3}};
+static const ImageMatrixInt8 img_laplacian_kernel = {
+        (int8_t[]){0, 1, 0, 1, -4, 1, 0, 1, 0}, {3, 3}};
 
 // filters (they also work inplace)
 void img_convolution_filter(ImageMatrix* dst, const ImageMatrix src, const ImageMatrixInt8 kernel);

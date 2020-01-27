@@ -57,8 +57,8 @@ IMG_MATRIX_TYPEDEF(ImageMatrixInt32, int32_t);
         AVG /= IMG_SIZE(MAT);       \
     } while (0)
 
-#define IMG_APPLY_KERNEL(SUM, KERNEL, MAT, ROW, COL) \
-    FOR_EACH_NESTED_PIXEL(KERNEL, k_)                \
+#define IMG_PIXEL_WEIGHTED_SUM(SUM, KERNEL, MAT, ROW, COL) \
+    FOR_EACH_NESTED_PIXEL(KERNEL, k_)                      \
     ((SUM) += PIXEL(KERNEL, k_row, k_col) * PIXEL(MAT, k_row + (ROW), k_col + (COL)))
 
 #define IMG_VALID_PADDING(DST, SRC, KERNEL) \
@@ -69,7 +69,7 @@ IMG_MATRIX_TYPEDEF(ImageMatrixInt32, int32_t);
         IMG_VALID_PADDING(DST, SRC, KERNEL);                                   \
         FOR_EACH_PIXEL(DST) {                                                  \
             int32_t value = 0;                                                 \
-            IMG_APPLY_KERNEL(value, KERNEL, SRC, row, col);                    \
+            IMG_PIXEL_WEIGHTED_SUM(value, KERNEL, SRC, row, col);              \
             PIXEL(DST, row, col) = CLAMP(value * SCALE, CLAMP_MIN, CLAMP_MAX); \
         }                                                                      \
     } while (0)
