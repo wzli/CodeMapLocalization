@@ -1,6 +1,8 @@
 #include "test_utils.h"
 #include "generic_algorithms.h"
 
+#include "debug_prints.h"
+
 static int test_swap() {
     int8_t ai = 3;
     int8_t bi = 7;
@@ -23,8 +25,18 @@ static int test_quick_select() {
     return 0;
 }
 
+static int test_bit_reverse_permutation() {
+    uint8_t test_array[] = {0, 4, 2, 6, 1, 5, 3, 7};
+    BIT_REVERSE_PERMUTATION(test_array, 8);
+    for (uint8_t i = 0; i < 8; ++i) {
+        test_assert(i == test_array[i]);
+    }
+    return 0;
+}
+
 int test_generic_algorithms() {
     test_run(test_swap);
     test_run(test_quick_select);
+    test_run(test_bit_reverse_permutation);
     return 0;
 }

@@ -103,3 +103,15 @@
             SAMPLE_DATA(DST, x, STRIDE) = SAMPLE_DATA(SRC, envelope_x, STRIDE) + SQR(dx);       \
         }                                                                                       \
     } while (0)
+
+#define BIT_REVERSE_PERMUTATION(ARRAY, LEN)  \
+    for (int I = 0, J = 0; I < (LEN); ++I) { \
+        if (J > I) {                         \
+            SWAP((ARRAY)[I], (ARRAY)[J]);    \
+        }                                    \
+        int mask = (LEN);                    \
+        while (J & (mask >>= 1)) {           \
+            J &= ~mask;                      \
+        }                                    \
+        J |= mask;                           \
+    }
