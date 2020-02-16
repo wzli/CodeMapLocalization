@@ -1,5 +1,6 @@
 #pragma once
 #include <stdint.h>
+#include <complex.h>
 
 #define SWAP(X, Y)                                                      \
     do {                                                                \
@@ -12,40 +13,38 @@
         }                                                               \
     } while (0)
 
-#define QUICK_SELECT(array, len, k)                     \
-    do {                                                \
-        for (int32_t start = 0, end = (len);;) {        \
-            int32_t pivot = start;                      \
-            for (int32_t I = start; I < end - 1; I++) { \
-                if ((array)[I] <= (array)[end - 1]) {   \
-                    SWAP((array)[I], (array)[pivot]);   \
-                    pivot++;                            \
-                }                                       \
-            }                                           \
-            SWAP((array)[end - 1], (array)[pivot]);     \
-            if ((k) == pivot) {                         \
-                break;                                  \
-            } else if (pivot > (k)) {                   \
-                end = pivot;                            \
-            } else {                                    \
-                start = pivot;                          \
-            }                                           \
-        }                                               \
-    } while (0)
+#define QUICK_SELECT(ARRAY, LEN, K)                             \
+    for (int32_t start = 0, end = (LEN);;) {                    \
+        int32_t pivot = start;                                  \
+        for (int32_t index = start; index < end - 1; index++) { \
+            if ((ARRAY)[index] <= (ARRAY)[end - 1]) {           \
+                SWAP((ARRAY)[index], (ARRAY)[pivot]);           \
+                pivot++;                                        \
+            }                                                   \
+        }                                                       \
+        SWAP((ARRAY)[end - 1], (ARRAY)[pivot]);                 \
+        if ((K) == pivot) {                                     \
+            break;                                              \
+        } else if (pivot > (K)) {                               \
+            end = pivot;                                        \
+        } else {                                                \
+            start = pivot;                                      \
+        }                                                       \
+    }
 
 #define SAMPLE_DATA(ARRAY, INDEX, STRIDE) (ARRAY)[(INDEX) * (STRIDE)]
 
-#define L1_DISTANCE_TRANSFORM_1D(DST, SRC, LEN, STRIDE)                                    \
-    do {                                                                                   \
-        (DST)[0] = (SRC)[0];                                                               \
-        for (int16_t I = 1; I < (LEN); ++I) {                                              \
-            SAMPLE_DATA(DST, I, STRIDE) =                                                  \
-                    MIN(SAMPLE_DATA(DST, I - 1, STRIDE) + 1, SAMPLE_DATA(SRC, I, STRIDE)); \
-        }                                                                                  \
-        for (int16_t I = (LEN) -2; I >= 0; --I) {                                          \
-            SAMPLE_DATA(DST, I, STRIDE) =                                                  \
-                    MIN(SAMPLE_DATA(DST, I + 1, STRIDE) + 1, SAMPLE_DATA(DST, I, STRIDE)); \
-        }                                                                                  \
+#define L1_DISTANCE_TRANSFORM_1D(DST, SRC, LEN, STRIDE)                                            \
+    do {                                                                                           \
+        (DST)[0] = (SRC)[0];                                                                       \
+        for (int16_t index = 1; index < (LEN); ++index) {                                          \
+            SAMPLE_DATA(DST, index, STRIDE) =                                                      \
+                    MIN(SAMPLE_DATA(DST, index - 1, STRIDE) + 1, SAMPLE_DATA(SRC, index, STRIDE)); \
+        }                                                                                          \
+        for (int16_t index = (LEN) -2; index >= 0; --index) {                                      \
+            SAMPLE_DATA(DST, index, STRIDE) =                                                      \
+                    MIN(SAMPLE_DATA(DST, index + 1, STRIDE) + 1, SAMPLE_DATA(DST, index, STRIDE)); \
+        }                                                                                          \
     } while (0)
 
 #define PARABOLA_INTERSECTION(X2, Y2, X1, Y1) \
@@ -104,14 +103,14 @@
         }                                                                                       \
     } while (0)
 
-#define BIT_REVERSE_PERMUTATION(ARRAY, LEN)  \
-    for (int I = 0, J = 0; I < (LEN); ++I) { \
-        if (J > I) {                         \
-            SWAP((ARRAY)[I], (ARRAY)[J]);    \
-        }                                    \
-        int mask = (LEN);                    \
-        while (J & (mask >>= 1)) {           \
-            J &= ~mask;                      \
-        }                                    \
-        J |= mask;                           \
+#define BIT_REVERSE_PERMUTATION(ARRAY, LEN)                   \
+    for (int index = 0, target = 0; index < (LEN); ++index) { \
+        if (target > index) {                                 \
+            SWAP((ARRAY)[index], (ARRAY)[target]);            \
+        }                                                     \
+        int mask = (LEN);                                     \
+        while (target & (mask >>= 1)) {                       \
+            target &= ~mask;                                  \
+        }                                                     \
+        target |= mask;                                       \
     }
