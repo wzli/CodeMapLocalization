@@ -1,8 +1,6 @@
 #include "test_utils.h"
 #include "generic_algorithms.h"
 
-#include "debug_prints.h"
-
 static int test_swap() {
     int8_t ai = 3;
     int8_t bi = 7;
@@ -26,10 +24,22 @@ static int test_quick_select() {
 }
 
 static int test_bit_reverse_permutation() {
-    uint8_t test_array[] = {0, 4, 2, 6, 1, 5, 3, 7};
-    BIT_REVERSE_PERMUTATION(test_array, 8);
+    uint8_t test_array[] = {0, 0, 4, 4, 2, 2, 6, 6, 1, 1, 5, 5, 3, 3, 7, 7};
+    BIT_REVERSE_PERMUTATION(test_array, 8, 2);
     for (uint8_t i = 0; i < 8; ++i) {
-        test_assert(i == test_array[i]);
+        test_assert(i == test_array[2 * i]);
+    }
+    return 0;
+}
+
+static int test_fast_fourier_transform() {
+    float complex test_array[16] = {};
+    test_array[0] = 1;
+    test_array[2] = 1;
+    FAST_FOURIER_TRANSFORM(float, 0, test_array, 8, 2);
+    FAST_FOURIER_TRANSFORM(float, 1, test_array, 8, 2);
+    for (uint8_t i = 0; i < 8; ++i) {
+        test_assert(cabsf(test_array[2 * i]) - (i < 2) < 0.001f);
     }
     return 0;
 }
@@ -38,5 +48,6 @@ int test_generic_algorithms() {
     test_run(test_swap);
     test_run(test_quick_select);
     test_run(test_bit_reverse_permutation);
+    test_run(test_fast_fourier_transform);
     return 0;
 }

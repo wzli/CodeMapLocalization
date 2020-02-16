@@ -103,14 +103,49 @@
         }                                                                                       \
     } while (0)
 
-#define BIT_REVERSE_PERMUTATION(ARRAY, LEN)                   \
-    for (int index = 0, target = 0; index < (LEN); ++index) { \
-        if (target > index) {                                 \
-            SWAP((ARRAY)[index], (ARRAY)[target]);            \
-        }                                                     \
-        int mask = (LEN);                                     \
-        while (target & (mask >>= 1)) {                       \
-            target &= ~mask;                                  \
-        }                                                     \
-        target |= mask;                                       \
+#define FAST_FOURIER_TRANSFORM_FLOAT(DATA, LEN, STRIDE) \
+    FAST_FOURIER_TRANSFORM(float, 0, DATA, LEN, STRIDE)
+#define FAST_FOURIER_TRANSFORM_DOUBLE(DATA, LEN, STRIDE) \
+    FAST_FOURIER_TRANSFORM(double, 0, DATA, LEN, STRIDE)
+#define INVERSE_FAST_FOURIER_TRANSFORM_FLOAT(DATA, LEN, STRIDE) \
+    FAST_FOURIER_TRANSFORM(float, 1, DATA, LEN, STRIDE)
+#define INVERSE_FAST_FOURIER_TRANSFORM_DOUBLE(DATA, LEN, STRIDE) \
+    FAST_FOURIER_TRANSFORM(double, 1, DATA, LEN, STRIDE)
+#define csqrt_float csqrtf
+#define csqrt_double csqrt
+#define BIT_REVERSE_PERMUTATION(ARRAY, LEN, STRIDE)                                      \
+    for (uint32_t index = 0, target = 0; index < (LEN); ++index) {                       \
+        if (target > index) {                                                            \
+            SWAP(SAMPLE_DATA(ARRAY, index, STRIDE), SAMPLE_DATA(ARRAY, target, STRIDE)); \
+        }                                                                                \
+        uint32_t mask = (LEN);                                                           \
+        while (target & (mask >>= 1)) {                                                  \
+            target &= ~mask;                                                             \
+        }                                                                                \
+        target |= mask;                                                                  \
     }
+#define FAST_FOURIER_TRANSFORM_BUTTERFLY_GROUP(STAGE, GROUP, TWIDDLE, DATA, LEN, STRIDE) \
+    for (uint32_t pair = (GROUP); pair < (LEN); pair += 2 * (STAGE)) {                   \
+        SAMPLE_DATA(DATA, pair + (STAGE), STRIDE) *= -(TWIDDLE);                         \
+        SAMPLE_DATA(DATA, pair + (STAGE), STRIDE) += SAMPLE_DATA(DATA, pair, STRIDE);    \
+        SAMPLE_DATA(DATA, pair, STRIDE) *= 2;                                            \
+        SAMPLE_DATA(DATA, pair, STRIDE) -= SAMPLE_DATA(DATA, pair + (STAGE), STRIDE);    \
+    }
+#define FAST_FOURIER_TRANSFORM(TYPE, INVERSE, DATA, LEN, STRIDE)                                  \
+    do {                                                                                          \
+        BIT_REVERSE_PERMUTATION(DATA, LEN, STRIDE);                                               \
+        FAST_FOURIER_TRANSFORM_BUTTERFLY_GROUP(1, 0, 1, DATA, LEN, STRIDE);                       \
+        TYPE complex rotation = (INVERSE > 0) ? I : -I;                                           \
+        for (uint32_t stage = 2; stage < (LEN); stage <<= 1, rotation = csqrt_##TYPE(rotation)) { \
+            TYPE complex twiddle_factor = 1;                                                      \
+            for (uint32_t group = 0; group < stage; ++group, twiddle_factor *= rotation) {        \
+                FAST_FOURIER_TRANSFORM_BUTTERFLY_GROUP(                                           \
+                        stage, group, twiddle_factor, DATA, LEN, STRIDE);                         \
+            }                                                                                     \
+        }                                                                                         \
+        if (INVERSE) {                                                                            \
+            for (uint32_t index = 0; index < (LEN); ++index) {                                    \
+                SAMPLE_DATA(DATA, index, STRIDE) /= (LEN);                                        \
+            }                                                                                     \
+        }                                                                                         \
+    } while (0)
