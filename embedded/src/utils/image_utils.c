@@ -237,6 +237,22 @@ void img_draw_regular_polygon(ImageMatrix mat, ImagePoint center, Vector2f cente
     };
 }
 
+#define FAST_FOURIER_TRANSFORM_FLOAT(DST, SRC, LEN, STRIDE) \
+    FAST_FOURIER_TRANSFORM(float, 0, DST, LEN, STRIDE)
+
+#define INVERSE_FAST_FOURIER_TRANSFORM_FLOAT(DST, SRC, LEN, STRIDE) \
+    FAST_FOURIER_TRANSFORM(float, 1, DST, LEN, STRIDE)
+
+void img_fast_fourier_transform(ImageMatrixComplex mat) {
+    assert(mat.data && IS_POWER_OF_TWO(mat.size.x) && IS_POWER_OF_TWO(mat.size.y));
+    IMG_SEPARABLE_2D_TRANSFORM(mat, mat, FAST_FOURIER_TRANSFORM_FLOAT, 0);
+}
+
+void img_inverse_fast_fourier_transform(ImageMatrixComplex mat) {
+    assert(mat.data && IS_POWER_OF_TWO(mat.size.x) && IS_POWER_OF_TWO(mat.size.y));
+    IMG_SEPARABLE_2D_TRANSFORM(mat, mat, INVERSE_FAST_FOURIER_TRANSFORM_FLOAT, 0);
+}
+
 void img_hough_line_transform(ImageMatrixInt32 dst, const ImageMatrix src) {
     IMG_FILL(dst, 0);
     float angle_resolution = M_PI / dst.size.y;

@@ -61,6 +61,8 @@ void img_draw_regular_polygon(ImageMatrix mat, ImagePoint center, Vector2f cente
         uint8_t order, uint8_t color, uint8_t width);
 
 // domain transforms
+void img_fast_fourier_transform(ImageMatrixComplex mat);
+void img_inverse_fast_fourier_transform(ImageMatrixComplex mat);
 void img_hough_line_transform(ImageMatrixInt32 dst, const ImageMatrix src);
 void img_l1_distance_transform(ImageMatrixInt32* dst, const ImageMatrix src);
 // below transforms require one row of line buffer, Eg dst size = (size.x)(size.y + 1)

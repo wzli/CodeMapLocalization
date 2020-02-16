@@ -19,6 +19,7 @@
 #define MIN(X, Y) ((X) < (Y) ? (X) : (Y))
 #define CLAMP(X, MIN, MAX) ((X) < (MIN) ? (MIN) : (X) > (MAX) ? (MAX) : (X))
 #define IS_SIGNED(Type) ((Type) -1 < 0x7F)
+#define IS_POWER_OF_TWO(X) !(X & (X - 1))
 
 typedef struct {
     float x;

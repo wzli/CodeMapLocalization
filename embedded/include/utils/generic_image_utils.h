@@ -16,6 +16,7 @@ typedef struct {
 IMG_MATRIX_TYPEDEF(ImageMatrix, uint8_t);
 IMG_MATRIX_TYPEDEF(ImageMatrixInt8, int8_t);
 IMG_MATRIX_TYPEDEF(ImageMatrixInt32, int32_t);
+IMG_MATRIX_TYPEDEF(ImageMatrixComplex, float complex);
 
 // type generic macro functions for image manipulation
 

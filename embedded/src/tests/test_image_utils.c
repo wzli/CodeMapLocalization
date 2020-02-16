@@ -222,6 +222,16 @@ static int test_image_min_filter() {
     return 0;
 }
 
+static int test_image_fast_fourier_transform() {
+    ImageMatrixComplex img = {(float complex[4 * 4]){}, {4, 4}};
+    IMG_FILL(img, 1);
+    img_fast_fourier_transform(img);
+    FOR_EACH_PIXEL(img) { test_assert(PIXEL(img, row, col) == (!row && !col) * 16); }
+    img_inverse_fast_fourier_transform(img);
+    FOR_EACH_PIXEL(img) { test_assert(PIXEL(img, row, col) == 1); }
+    return 0;
+}
+
 int test_image_utils() {
     test_img.data = malloc(IMG_SIZE(test_img));
     buf_img.data = malloc(2 * IMG_SIZE(buf_img));
@@ -247,6 +257,7 @@ int test_image_utils() {
     test_run(test_image_distance_transform);
     test_run(test_image_max_filter);
     test_run(test_image_min_filter);
+    test_run(test_image_fast_fourier_transform);
     free(test_img.data);
     free(buf_img.data);
     return 0;
