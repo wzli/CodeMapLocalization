@@ -65,7 +65,7 @@ void img_fast_fourier_transform(ImageMatrixComplex mat);
 void img_inverse_fast_fourier_transform(ImageMatrixComplex mat);
 void img_hough_line_transform(ImageMatrixInt32 dst, const ImageMatrix src);
 void img_l1_distance_transform(ImageMatrixInt32* dst, const ImageMatrix src);
-// below transforms require one row of line buffer, Eg dst size = (size.x)(size.y + 1)
+// square distance transform requires line buffer, Eg dst buf size = (src.size.x)(src.size.y + 1)
 void img_square_distance_transform(ImageMatrixInt32* dst, const ImageMatrix src);
 
 // format conversions
