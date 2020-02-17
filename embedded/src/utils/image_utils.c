@@ -1,5 +1,6 @@
 #include "image_utils.h"
 #include <assert.h>
+#include <stdio.h>
 
 void img_convolution_filter(ImageMatrix* dst, const ImageMatrix src, const ImageMatrixInt8 kernel) {
     IMG_CONVOLUTION(*dst, src, kernel, 1, 0, UINT8_MAX);
@@ -285,4 +286,11 @@ void img_convert_from_rgb888(ImageMatrix* dst, const ImageMatrix src) {
         dst->data[i] = (data_rgb888[i][0] + data_rgb888[i][1] + data_rgb888[i][2]) / 3;
     }
     dst->size = src.size;
+}
+
+void img_save_to_pgm(ImageMatrix image, const char* file_name) {
+    FILE* pgm_file = fopen(file_name, "wb");
+    fprintf(pgm_file, "P5\n%u %u\n%u\n", image.size.x, image.size.y, 255);
+    fwrite(image.data, sizeof(image.data[0]), IMG_SIZE(image), pgm_file);
+    fclose(pgm_file);
 }
