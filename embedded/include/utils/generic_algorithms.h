@@ -119,7 +119,7 @@
     for (int32_t pair = (GROUP); pair < (LEN); pair += 2 * (STAGE)) {                    \
         SAMPLE_DATA(DATA, pair + (STAGE), STRIDE) *= -(TWIDDLE);                         \
         SAMPLE_DATA(DATA, pair + (STAGE), STRIDE) += SAMPLE_DATA(DATA, pair, STRIDE);    \
-        SAMPLE_DATA(DATA, pair, STRIDE) *= 2;                                            \
+        SAMPLE_DATA(DATA, pair, STRIDE) += SAMPLE_DATA(DATA, pair, STRIDE);              \
         SAMPLE_DATA(DATA, pair, STRIDE) -= SAMPLE_DATA(DATA, pair + (STAGE), STRIDE);    \
     }
 
