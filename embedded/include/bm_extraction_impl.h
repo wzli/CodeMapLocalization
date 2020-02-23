@@ -98,6 +98,23 @@ void TEMPLATE(bm, WIDTH, _extract_axiscodes)(TEMPLATE(AxisCode, WIDTH, ) * row_c
     row_code->mask >>= offset;
 }
 
+TEMPLATE(AxisCode, WIDTH, )
+TEMPLATE(scale_axiscode, WIDTH, )(TEMPLATE(AxisCode, WIDTH, ) axiscode, float scale) {
+    assert(scale > 0);
+    scale = 1.0f / scale;
+    TEMPLATE(AxisCode, WIDTH, ) scaled_axiscode = {0, 0, axiscode.n_errors, axiscode.n_samples};
+    TEMPLATE(uint, WIDTH, _t) bit = 1;
+    for (float index = 0; index < (WIDTH); index += scale, bit <<= 1) {
+        if ((axiscode.bits >> (uint8_t) index) & 1) {
+            scaled_axiscode.bits |= bit;
+        }
+        if ((axiscode.mask >> (uint8_t) index) & 1) {
+            scaled_axiscode.mask |= bit;
+        }
+    }
+    return scaled_axiscode;
+}
+
 #undef WIDTH
 #undef TEMPLATE_CAT3
 #undef TEMPLATE

@@ -86,19 +86,19 @@ static int test_downsample_axiscode() {
 
     axiscode64.bits = 0xF0F0;
     axiscode64.mask = 0xFFFF;
-    AxisCode64 scaled_axiscode = scale_axiscode(axiscode64, 1.0f);
+    AxisCode64 scaled_axiscode = scale_axiscode64(axiscode64, 1.0f);
     test_assert(axiscode64.bits == scaled_axiscode.bits);
     test_assert(axiscode64.mask == scaled_axiscode.mask);
 
-    scaled_axiscode = scale_axiscode(axiscode64, 2.0f);
+    scaled_axiscode = scale_axiscode64(axiscode64, 2.0f);
     test_assert(scaled_axiscode.bits == 0xFF00FF00);
     test_assert(scaled_axiscode.mask == 0xFFFFFFFF);
 
-    scaled_axiscode = scale_axiscode(axiscode64, 100.0f);
+    scaled_axiscode = scale_axiscode64(axiscode64, 100.0f);
     test_assert(scaled_axiscode.bits == 0ull);
     test_assert(scaled_axiscode.mask == ~0ull);
 
-    scaled_axiscode = scale_axiscode(axiscode64, 0.5f);
+    scaled_axiscode = scale_axiscode64(axiscode64, 0.5f);
     test_assert(scaled_axiscode.bits == 0xCC);
     test_assert(scaled_axiscode.mask == 0xFF);
     return 0;

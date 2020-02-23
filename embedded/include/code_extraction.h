@@ -37,16 +37,15 @@ void bm64_from_axiscodes(
 
 void bm32_extract_axiscodes(AxisCode32* row_code, AxisCode32* col_code, BitMatrix32 matrix,
         BitMatrix32 mask, uint8_t min_samples);
-
 void bm64_extract_axiscodes(AxisCode64* row_code, AxisCode64* col_code, BitMatrix64 matrix,
         BitMatrix64 mask, uint8_t min_samples);
 
 AxisCode32 bm32_extract_column_code(uint32_t row_estimate, const BitMatrix32 matrix,
         const BitMatrix32 mask, uint8_t min_row_samples);
-
 AxisCode64 bm64_extract_column_code(uint64_t row_estimate, const BitMatrix64 matrix,
         const BitMatrix64 mask, uint8_t min_row_samples);
 
-AxisCode32 downsample_axiscode(AxisCode64 axiscode);
+AxisCode32 scale_axiscode32(AxisCode32 axiscode, float scale);
+AxisCode64 scale_axiscode64(AxisCode64 axiscode, float scale);
 
-AxisCode64 scale_axiscode(AxisCode64 axiscode, float scale);
+AxisCode32 downsample_axiscode(AxisCode64 axiscode);

@@ -135,8 +135,8 @@ static void main_loop(void* pvParameters) {
 
         for (float scale = 0.8f; scale < 1.2f; scale += 0.02f) {
             // scale and down sample axis codes
-            AxisCode64 scaled_row_code = scale_axiscode(row_code_64, scale);
-            AxisCode64 scaled_col_code = scale_axiscode(col_code_64, scale);
+            AxisCode64 scaled_row_code = scale_axiscode64(row_code_64, scale);
+            AxisCode64 scaled_col_code = scale_axiscode64(col_code_64, scale);
             AxisCode32 row_code_32 = downsample_axiscode(scaled_row_code);
             AxisCode32 col_code_32 = downsample_axiscode(scaled_col_code);
             // decode posiiton

@@ -64,8 +64,8 @@ static int test_full_chain_real_life() {
             // generate source image from known position
             AxisCode64 row_code_64 = {src_row_code, ~0ull, 0, 0};
             AxisCode64 col_code_64 = {src_col_code, ~0ull, 0, 0};
-            row_code_64 = scale_axiscode(row_code_64, 3);
-            col_code_64 = scale_axiscode(col_code_64, 3);
+            row_code_64 = scale_axiscode64(row_code_64, 3);
+            col_code_64 = scale_axiscode64(col_code_64, 3);
             bm64_from_axiscodes(bit_matrix_64, bit_mask_64, row_code_64, col_code_64);
             bm64_to_img(&raw_image, bit_matrix_64, bit_mask_64);
             // simulate real life pipe line starting here
@@ -112,8 +112,8 @@ static int test_full_chain_real_life() {
             float scale = 1.0f;
             {
                 // scale and down sample axis codes
-                AxisCode64 scaled_row_code = scale_axiscode(row_code_64, scale);
-                AxisCode64 scaled_col_code = scale_axiscode(col_code_64, scale);
+                AxisCode64 scaled_row_code = scale_axiscode64(row_code_64, scale);
+                AxisCode64 scaled_col_code = scale_axiscode64(col_code_64, scale);
                 AxisCode32 row_code_32 = downsample_axiscode(scaled_row_code);
                 AxisCode32 col_code_32 = downsample_axiscode(scaled_col_code);
                 // decode posiiton

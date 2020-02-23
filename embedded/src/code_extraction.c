@@ -90,19 +90,3 @@ AxisCode32 downsample_axiscode(AxisCode64 axiscode64) {
     }
     return axiscode32;
 };
-
-AxisCode64 scale_axiscode(AxisCode64 axiscode, float scale) {
-    assert(scale > 0);
-    scale = 1.0f / scale;
-    AxisCode64 scaled_axiscode = {0, 0, axiscode.n_errors, axiscode.n_samples};
-    uint64_t bit = 1;
-    for (float index = 0; index < 64; index += scale, bit <<= 1) {
-        if ((axiscode.bits >> (uint8_t) index) & 1) {
-            scaled_axiscode.bits |= bit;
-        }
-        if ((axiscode.mask >> (uint8_t) index) & 1) {
-            scaled_axiscode.mask |= bit;
-        }
-    }
-    return scaled_axiscode;
-}
