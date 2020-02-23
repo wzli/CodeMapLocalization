@@ -1,6 +1,6 @@
 [submodule "esp32_cam_app/components/esp32-camera"]
-	path = esp32_cam_app/components/esp32-camera
+	path = submodules/esp32-camera
 	url = https://github.com/wzli/esp32-camera.git
 [submodule "esp32_cam_app/components/esp-dsp"]
-	path = esp32_cam_app/components/esp-dsp
+	path = submodules/esp-dsp
 	url = https://github.com/espressif/esp-dsp.git
