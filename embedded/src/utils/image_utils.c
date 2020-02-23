@@ -239,10 +239,10 @@ void img_draw_regular_polygon(ImageMatrix mat, ImagePoint center, Vector2f cente
 }
 
 #define FAST_FOURIER_TRANSFORM_FLOAT(DST, SRC, LEN, STRIDE) \
-    FAST_FOURIER_TRANSFORM(float, 0, DST, LEN, STRIDE)
+    FAST_FOURIER_TRANSFORM(float, DST, LEN, STRIDE, false)
 
 #define INVERSE_FAST_FOURIER_TRANSFORM_FLOAT(DST, SRC, LEN, STRIDE) \
-    FAST_FOURIER_TRANSFORM(float, 1, DST, LEN, STRIDE)
+    FAST_FOURIER_TRANSFORM(float, DST, LEN, STRIDE, true)
 
 void img_fast_fourier_transform(ImageMatrixComplex mat) {
     assert(mat.data && IS_POWER_OF_TWO(mat.size.x) && IS_POWER_OF_TWO(mat.size.y));

@@ -1,5 +1,6 @@
 #pragma once
 #include <stdint.h>
+#include <stdbool.h>
 
 typedef uint32_t BitMatrix32[32];
 typedef uint64_t BitMatrix64[64];
@@ -14,17 +15,17 @@ static inline void bv32_clear_bit(uint32_t* vector, uint32_t k) {
     vector[k >> 5] &= ~(1 << (k & 0x1F));
 }
 
-static inline uint32_t bv32_get_bit(const uint32_t* vector, uint32_t k) {
+static inline bool bv32_get_bit(const uint32_t* vector, uint32_t k) {
     return (vector[k >> 5] >> (k & 0x1F)) & 1;
 }
 
 // bit matrix operations
 
-static inline uint8_t bm32_get_bit(const BitMatrix32 matrix, uint8_t row, uint8_t col) {
+static inline bool bm32_get_bit(const BitMatrix32 matrix, uint8_t row, uint8_t col) {
     return (matrix[row] >> col) & 1u;
 };
 
-static inline uint8_t bm64_get_bit(const BitMatrix64 matrix, uint8_t row, uint8_t col) {
+static inline bool bm64_get_bit(const BitMatrix64 matrix, uint8_t row, uint8_t col) {
     return (matrix[row] >> col) & 1u;
 };
 

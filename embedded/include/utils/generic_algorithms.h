@@ -1,5 +1,6 @@
 #pragma once
 #include <stdint.h>
+#include <stdbool.h>
 #include <complex.h>
 
 #define SWAP(X, Y)                                                      \
@@ -125,7 +126,7 @@
 #define csqrt_float csqrtf
 #define csqrt_double csqrt
 
-#define FAST_FOURIER_TRANSFORM(TYPE, INVERSE, DATA, LEN, STRIDE)                                 \
+#define FAST_FOURIER_TRANSFORM(TYPE, DATA, LEN, STRIDE, INVERSE)                                 \
     do {                                                                                         \
         BIT_REVERSE_PERMUTATION(DATA, LEN, STRIDE);                                              \
         FAST_FOURIER_TRANSFORM_BUTTERFLY_GROUP(DATA, LEN, STRIDE, 1, 0, 1);                      \

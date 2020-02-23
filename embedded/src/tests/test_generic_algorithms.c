@@ -36,8 +36,8 @@ static int test_fast_fourier_transform() {
     float complex test_array[16] = {};
     test_array[0] = 1;
     test_array[2] = 1;
-    FAST_FOURIER_TRANSFORM(float, 0, test_array, 8, 2);
-    FAST_FOURIER_TRANSFORM(float, 1, test_array, 8, 2);
+    FAST_FOURIER_TRANSFORM(float, test_array, 8, 2, false);
+    FAST_FOURIER_TRANSFORM(float, test_array, 8, 2, true);
     for (uint8_t i = 0; i < 8; ++i) {
         test_assert(cabsf(test_array[2 * i]) - (i < 2) < 0.001f);
     }
