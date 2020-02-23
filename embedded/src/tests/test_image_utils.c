@@ -6,13 +6,13 @@ static ImageMatrix test_img = {NULL, {5, 5}};
 static ImageMatrix buf_img = {NULL, {5, 5}};
 
 static int test_image_size() {
-    test_assert(IMG_SIZE(test_img) == 25);
+    test_assert(IMG_PIXEL_COUNT(test_img) == 25);
     return 0;
 }
 
 static int test_image_set_pixels() {
     int i = 0;
-    for (int i = 0; i < IMG_SIZE(test_img); ++i) {
+    for (int i = 0; i < IMG_PIXEL_COUNT(test_img); ++i) {
         test_img.data[i] = i;
     }
     FOR_EACH_PIXEL(test_img) { test_assert(PIXEL(test_img, row, col) == i++); };
@@ -78,7 +78,7 @@ static int test_image_crop() {
     IMG_SET_SIZE(buf_img, 2, 2);
     ImagePoint top_left = {3, 3};
     IMG_CROP(buf_img, test_img, top_left);
-    test_assert(IMG_SIZE(buf_img) == 4);
+    test_assert(IMG_PIXEL_COUNT(buf_img) == 4);
     FOR_EACH_PIXEL(buf_img) {
         test_assert(PIXEL(buf_img, row, col) == PIXEL(test_img, row + 3, col + 3));
     }
@@ -96,7 +96,7 @@ static int test_image_transpose() {
 
     buf_img.size.x = 4;
     IMG_TRANSPOSE(buf_img, buf_img);
-    test_assert(IMG_SIZE(buf_img) == 0);
+    test_assert(IMG_PIXEL_COUNT(buf_img) == 0);
     return 0;
 }
 
@@ -233,8 +233,8 @@ static int test_image_fast_fourier_transform() {
 }
 
 int test_image_utils() {
-    test_img.data = malloc(IMG_SIZE(test_img));
-    buf_img.data = malloc(2 * IMG_SIZE(buf_img));
+    test_img.data = malloc(IMG_PIXEL_COUNT(test_img));
+    buf_img.data = malloc(2 * IMG_PIXEL_COUNT(buf_img));
     test_run(test_image_size);
     test_run(test_image_set_pixels);
     test_run(test_image_copy);

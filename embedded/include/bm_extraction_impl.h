@@ -2,6 +2,8 @@
 #error "define WIDTH macro before including this header"
 #endif
 
+#include "code_extraction.h"
+
 #define TEMPLATE_CAT3(A, B, C) A##B##C
 #define TEMPLATE(A, B, C) TEMPLATE_CAT3(A, B, C)
 

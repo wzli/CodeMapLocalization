@@ -16,13 +16,13 @@ void img_min_filter(ImageMatrix* dst, const ImageMatrix src, uint16_t block_size
 
 void img_median_filter(ImageMatrix* dst, const ImageMatrix src, ImageMatrix window) {
     assert(window.data);
-    assert(IMG_SIZE(window) > 1);
+    assert(IMG_PIXEL_COUNT(window) > 1);
     IMG_VALID_PADDING(*dst, src, window);
-    int16_t middle_index = IMG_SIZE(window) / 2;
+    int16_t middle_index = IMG_PIXEL_COUNT(window) / 2;
     FOR_EACH_PIXEL(*dst) {
         ImagePoint top_left = {col, row};
         IMG_CROP(window, src, top_left);
-        QUICK_SELECT(window.data, IMG_SIZE(window), middle_index);
+        QUICK_SELECT(window.data, IMG_PIXEL_COUNT(window), middle_index);
         PIXEL(*dst, row, col) = window.data[middle_index];
     }
 }
@@ -281,7 +281,7 @@ void img_square_distance_transform(ImageMatrixInt32* dst, const ImageMatrix src)
 
 void img_convert_from_rgb888(ImageMatrix* dst, const ImageMatrix src) {
     const uint8_t(*data_rgb888)[3] = (uint8_t(*)[3]) src.data;
-    int32_t data_len = IMG_SIZE(src);
+    int32_t data_len = IMG_PIXEL_COUNT(src);
     for (int32_t i = 0; i < data_len; ++i) {
         dst->data[i] = (data_rgb888[i][0] + data_rgb888[i][1] + data_rgb888[i][2]) / 3;
     }
@@ -291,6 +291,6 @@ void img_convert_from_rgb888(ImageMatrix* dst, const ImageMatrix src) {
 void img_save_to_pgm(ImageMatrix image, const char* file_name) {
     FILE* pgm_file = fopen(file_name, "wb");
     fprintf(pgm_file, "P5\n%u %u\n%u\n", image.size.x, image.size.y, 255);
-    fwrite(image.data, sizeof(image.data[0]), IMG_SIZE(image), pgm_file);
+    fwrite(image.data, sizeof(image.data[0]), IMG_PIXEL_COUNT(image), pgm_file);
     fclose(pgm_file);
 }

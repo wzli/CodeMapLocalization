@@ -161,7 +161,7 @@ static void main_loop(void* pvParameters) {
             assert(claimed_buffers[i]);
             claimed_buffers[i]->width = images[i].size.x;
             claimed_buffers[i]->height = images[i].size.y;
-            claimed_buffers[i]->len = IMG_SIZE(images[i]);
+            claimed_buffers[i]->len = IMG_PIXEL_COUNT(images[i]);
             queue_fb_return(i);
         }
 
