@@ -24,7 +24,7 @@ static int test_full_chain_simulation() {
 
         // extract codes
         AxisCode32 row_code, col_code;
-        bm32_extract_axis_codes(&row_code, &col_code, bit_matrix, bit_mask, 3);
+        bm32_extract_axiscodes(&row_code, &col_code, bit_matrix, bit_mask, 3);
 
         // overwrite with simulate extracted code
         row_code.bits = mlsq_code_from_position(MLS_INDEX.sequence, 32, i);
@@ -64,9 +64,9 @@ static int test_full_chain_real_life() {
             // generate source image from known position
             AxisCode64 row_code_64 = {src_row_code, ~0ull, 0, 0};
             AxisCode64 col_code_64 = {src_col_code, ~0ull, 0, 0};
-            row_code_64 = scale_axis_code(row_code_64, 3);
-            col_code_64 = scale_axis_code(col_code_64, 3);
-            bm64_from_axis_codes(bit_matrix_64, bit_mask_64, row_code_64, col_code_64);
+            row_code_64 = scale_axiscode(row_code_64, 3);
+            col_code_64 = scale_axiscode(col_code_64, 3);
+            bm64_from_axiscodes(bit_matrix_64, bit_mask_64, row_code_64, col_code_64);
             bm64_to_img(&raw_image, bit_matrix_64, bit_mask_64);
             // simulate real life pipe line starting here
 
@@ -101,7 +101,7 @@ static int test_full_chain_real_life() {
             img_to_bm64(bit_matrix_64, bit_mask_64, buf_image, threshold0, threshold1);
 
             // extract row and column codes
-            bm64_extract_axis_codes(&row_code_64, &col_code_64, bit_matrix_64, bit_mask_64, 5);
+            bm64_extract_axiscodes(&row_code_64, &col_code_64, bit_matrix_64, bit_mask_64, 5);
 
             Location best_match_location = {};
             AxisCode32 best_match_row_code = {};
@@ -112,10 +112,10 @@ static int test_full_chain_real_life() {
             float scale = 1.0f;
             {
                 // scale and down sample axis codes
-                AxisCode64 scaled_row_code = scale_axis_code(row_code_64, scale);
-                AxisCode64 scaled_col_code = scale_axis_code(col_code_64, scale);
-                AxisCode32 row_code_32 = downsample_axis_code(scaled_row_code);
-                AxisCode32 col_code_32 = downsample_axis_code(scaled_col_code);
+                AxisCode64 scaled_row_code = scale_axiscode(row_code_64, scale);
+                AxisCode64 scaled_col_code = scale_axiscode(col_code_64, scale);
+                AxisCode32 row_code_32 = downsample_axiscode(scaled_row_code);
+                AxisCode32 col_code_32 = downsample_axiscode(scaled_col_code);
                 // decode posiiton
                 AxisPosition row_pos = decode_axis_position(row_code_32, MLS_INDEX.code_length);
                 AxisPosition col_pos = decode_axis_position(col_code_32, MLS_INDEX.code_length);

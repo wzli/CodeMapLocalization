@@ -204,9 +204,9 @@ class BitMatrixProcessor:
         # extract row and column code
         row_code = AxisCode32()
         col_code = AxisCode32()
-        libsim.bm32_extract_axis_codes(ctypes.byref(row_code),
-                                       ctypes.byref(col_code), bit_matrix,
-                                       bit_mask, 3)
+        libsim.bm32_extract_axiscodes(ctypes.byref(row_code),
+                                      ctypes.byref(col_code), bit_matrix,
+                                      bit_mask, 3)
         row_position = libsim.decode_axis_position(row_code,
                                                    MLS_INDEX.code_length)
         col_position = libsim.decode_axis_position(col_code,
@@ -232,16 +232,16 @@ class BitMatrixProcessor:
                            125, 130)
         actual_row_code = AxisCode32()
         actual_col_code = AxisCode32()
-        libsim.bm32_extract_axis_codes(ctypes.byref(actual_row_code),
-                                       ctypes.byref(actual_col_code),
-                                       actual_bit_matrix, actual_bit_mask, 3)
+        libsim.bm32_extract_axiscodes(ctypes.byref(actual_row_code),
+                                      ctypes.byref(actual_col_code),
+                                      actual_bit_matrix, actual_bit_mask, 3)
         ''' print
         print('')
-        libsim.print_axis_code(row_code)
-        libsim.print_axis_code(actual_row_code)
+        libsim.print_axiscode(row_code)
+        libsim.print_axiscode(actual_row_code)
         print(libsim.test_diff_bits(row_code.bits, actual_row_code.bits))
-        libsim.print_axis_code(col_code)
-        libsim.print_axis_code(actual_col_code)
+        libsim.print_axiscode(col_code)
+        libsim.print_axiscode(actual_col_code)
         print(libsim.test_diff_bits(col_code.bits, actual_col_code.bits))
         print('')
         libsim.print_axis_position(row_position)

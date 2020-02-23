@@ -24,10 +24,10 @@ void print_image_matrix(ImageMatrix src) {
     puts("");
 }
 
-void print_axis_code(AxisCode32 axis_code) {
-    uint8_t leading_zeros = count_trailing_zeros(reverse_bits(axis_code.mask, 32));
-    printf("samples %d errors %d\n", axis_code.n_samples, axis_code.n_errors);
-    print_bits(axis_code.bits, 32 - leading_zeros);
+void print_axiscode(AxisCode32 axiscode) {
+    uint8_t leading_zeros = count_trailing_zeros(reverse_bits(axiscode.mask, 32));
+    printf("samples %d errors %d\n", axiscode.n_samples, axiscode.n_errors);
+    print_bits(axiscode.bits, 32 - leading_zeros);
 }
 
 void print_axis_position(AxisPosition position) {

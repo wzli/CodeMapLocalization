@@ -35,7 +35,7 @@ void TEMPLATE(bm, WIDTH, _to_img)(ImageMatrix* dst, const TEMPLATE(BitMatrix, WI
     }
 }
 
-void TEMPLATE(bm, WIDTH, _from_axis_codes)(TEMPLATE(BitMatrix, WIDTH, ) dst,
+void TEMPLATE(bm, WIDTH, _from_axiscodes)(TEMPLATE(BitMatrix, WIDTH, ) dst,
         TEMPLATE(BitMatrix, WIDTH, ) mask, const TEMPLATE(AxisCode, WIDTH, ) row_code,
         const TEMPLATE(AxisCode, WIDTH, ) col_code) {
     for (uint8_t i = 0; i < (WIDTH); ++i) {
@@ -80,7 +80,7 @@ TEMPLATE(bm, WIDTH, _extract_column_code)
     return column_code;
 }
 
-void TEMPLATE(bm, WIDTH, _extract_axis_codes)(TEMPLATE(AxisCode, WIDTH, ) * row_code,
+void TEMPLATE(bm, WIDTH, _extract_axiscodes)(TEMPLATE(AxisCode, WIDTH, ) * row_code,
         TEMPLATE(AxisCode, WIDTH, ) * col_code, TEMPLATE(BitMatrix, WIDTH, ) matrix,
         TEMPLATE(BitMatrix, WIDTH, ) mask, uint8_t min_samples) {
     assert(row_code && col_code);

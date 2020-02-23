@@ -59,50 +59,50 @@ float img_estimate_scale(const ImageMatrix mat) {
     return bounds.size.y * bounds.size.x * max_val / (2 * sum + 0.00001f) - 1;
 }
 
-AxisCode32 downsample_axis_code(AxisCode64 axis_code_64) {
-    uint64_t edges = axis_code_64.bits ^ (axis_code_64.bits >> 1);
+AxisCode32 downsample_axiscode(AxisCode64 axiscode64) {
+    uint64_t edges = axiscode64.bits ^ (axiscode64.bits >> 1);
     uint8_t offset_index = 0;
     uint8_t lowest_bit_errors = UINT8_MAX;
     for (uint64_t repeating001s = 0x1249249249249249ull; repeating001s & 7; repeating001s <<= 1) {
-        uint8_t bit_errors = count_bits((edges ^ repeating001s) & axis_code_64.mask);
+        uint8_t bit_errors = count_bits((edges ^ repeating001s) & axiscode64.mask);
         if (bit_errors < lowest_bit_errors) {
             lowest_bit_errors = bit_errors;
             offset_index = count_trailing_zeros((uint32_t) repeating001s);
         }
     }
     if (offset_index < 2) {
-        axis_code_64.bits >>= offset_index + 1;
-        axis_code_64.mask >>= offset_index + 1;
+        axiscode64.bits >>= offset_index + 1;
+        axiscode64.mask >>= offset_index + 1;
     }
-    AxisCode32 axis_code_32 = {0, 0, axis_code_64.n_errors, axis_code_64.n_samples};
+    AxisCode32 axiscode32 = {0, 0, axiscode64.n_errors, axiscode64.n_samples};
     static const uint8_t count_bits_3[8] = {0, 1, 1, 2, 1, 2, 2, 3};
     uint32_t current_bit = 1;
-    while (axis_code_64.mask) {
-        if (count_bits_3[axis_code_64.mask & 7] >= 3) {
-            axis_code_32.mask |= current_bit;
-            if (2 * count_bits_3[axis_code_64.bits & 7] > 3) {
-                axis_code_32.bits |= current_bit;
+    while (axiscode64.mask) {
+        if (count_bits_3[axiscode64.mask & 7] >= 3) {
+            axiscode32.mask |= current_bit;
+            if (2 * count_bits_3[axiscode64.bits & 7] > 3) {
+                axiscode32.bits |= current_bit;
             }
         }
         current_bit <<= 1;
-        axis_code_64.bits >>= 3;
-        axis_code_64.mask >>= 3;
+        axiscode64.bits >>= 3;
+        axiscode64.mask >>= 3;
     }
-    return axis_code_32;
+    return axiscode32;
 };
 
-AxisCode64 scale_axis_code(AxisCode64 axis_code, float scale) {
+AxisCode64 scale_axiscode(AxisCode64 axiscode, float scale) {
     assert(scale > 0);
     scale = 1.0f / scale;
-    AxisCode64 scaled_axis_code = {0, 0, axis_code.n_errors, axis_code.n_samples};
+    AxisCode64 scaled_axiscode = {0, 0, axiscode.n_errors, axiscode.n_samples};
     uint64_t bit = 1;
     for (float index = 0; index < 64; index += scale, bit <<= 1) {
-        if ((axis_code.bits >> (uint8_t) index) & 1) {
-            scaled_axis_code.bits |= bit;
+        if ((axiscode.bits >> (uint8_t) index) & 1) {
+            scaled_axiscode.bits |= bit;
         }
-        if ((axis_code.mask >> (uint8_t) index) & 1) {
-            scaled_axis_code.mask |= bit;
+        if ((axiscode.mask >> (uint8_t) index) & 1) {
+            scaled_axiscode.mask |= bit;
         }
     }
-    return scaled_axis_code;
+    return scaled_axiscode;
 }

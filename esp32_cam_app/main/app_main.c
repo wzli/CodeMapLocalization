@@ -128,17 +128,17 @@ static void main_loop(void* pvParameters) {
 
         // extract row and column codes
         AxisCode64 row_code_64, col_code_64;
-        bm64_extract_axis_codes(&row_code_64, &col_code_64, binary_image_64, binary_mask_64, 5);
+        bm64_extract_axiscodes(&row_code_64, &col_code_64, binary_image_64, binary_mask_64, 5);
 
         Location best_match_location = {};
         AxisCode32 best_match_row_code, best_match_col_code;
 
         for (float scale = 0.8f; scale < 1.2f; scale += 0.02f) {
             // scale and down sample axis codes
-            AxisCode64 scaled_row_code = scale_axis_code(row_code_64, scale);
-            AxisCode64 scaled_col_code = scale_axis_code(col_code_64, scale);
-            AxisCode32 row_code_32 = downsample_axis_code(scaled_row_code);
-            AxisCode32 col_code_32 = downsample_axis_code(scaled_col_code);
+            AxisCode64 scaled_row_code = scale_axiscode(row_code_64, scale);
+            AxisCode64 scaled_col_code = scale_axiscode(col_code_64, scale);
+            AxisCode32 row_code_32 = downsample_axiscode(scaled_row_code);
+            AxisCode32 col_code_32 = downsample_axiscode(scaled_col_code);
             // decode posiiton
             AxisPosition row_pos = decode_axis_position(row_code_32, MLS_INDEX.code_length);
             AxisPosition col_pos = decode_axis_position(col_code_32, MLS_INDEX.code_length);
@@ -153,7 +153,7 @@ static void main_loop(void* pvParameters) {
         best_match_location.rotation = v2f_add_angle(best_match_location.rotation, rotation);
 
         // display results
-        bm32_from_axis_codes(
+        bm32_from_axiscodes(
                 binary_image_32, binary_mask_32, best_match_row_code, best_match_col_code);
         bm32_to_img(&images[3], binary_image_32, binary_mask_32);
 

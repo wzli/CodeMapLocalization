@@ -34,8 +34,8 @@ static int test_location_decode_blocks() {
             uint32_t src_col_code = mlsq_code_from_position(MLS_INDEX.sequence, 32, src_col_pos);
             AxisCode32 row_code = {src_row_code, ~0, 0, 0};
             AxisCode32 col_code = {src_col_code, ~0, 0, 0};
-            bm32_from_axis_codes(matrix, matrix_mask, row_code, col_code);
-            bm32_extract_axis_codes(&row_code, &col_code, matrix, matrix_mask, 3);
+            bm32_from_axiscodes(matrix, matrix_mask, row_code, col_code);
+            bm32_extract_axiscodes(&row_code, &col_code, matrix, matrix_mask, 3);
             AxisPosition row_pos = decode_axis_position(row_code, MLS_INDEX.code_length);
             AxisPosition col_pos = decode_axis_position(col_code, MLS_INDEX.code_length);
             test_assert(row_code.bits == src_row_code ||
@@ -61,8 +61,8 @@ static int test_location_decode_reversed_blocks() {
             src_col_code = reverse_bits(src_col_code, 32);
             AxisCode32 row_code = {src_row_code, ~0, 0, 0};
             AxisCode32 col_code = {src_col_code, ~0, 0, 0};
-            bm32_from_axis_codes(matrix, matrix_mask, row_code, col_code);
-            bm32_extract_axis_codes(&row_code, &col_code, matrix, matrix_mask, 3);
+            bm32_from_axiscodes(matrix, matrix_mask, row_code, col_code);
+            bm32_extract_axiscodes(&row_code, &col_code, matrix, matrix_mask, 3);
             AxisPosition row_pos = decode_axis_position(row_code, MLS_INDEX.code_length);
             AxisPosition col_pos = decode_axis_position(col_code, MLS_INDEX.code_length);
             test_assert(row_pos.inverted == col_pos.inverted);
@@ -88,7 +88,7 @@ static int test_location_decode_punctured_blocks() {
                 matrix[i] &= matrix_mask[i];
             }
             AxisCode32 row_code, col_code;
-            bm32_extract_axis_codes(&row_code, &col_code, matrix, matrix_mask, 3);
+            bm32_extract_axiscodes(&row_code, &col_code, matrix, matrix_mask, 3);
             AxisPosition row_pos = decode_axis_position(row_code, MLS_INDEX.code_length);
             AxisPosition col_pos = decode_axis_position(col_code, MLS_INDEX.code_length);
             test_assert(row_pos.inverted == col_pos.inverted);
@@ -114,7 +114,7 @@ static int test_location_decode_truncated_blocks() {
                 matrix[i] &= matrix_mask[i];
             }
             AxisCode32 row_code, col_code;
-            bm32_extract_axis_codes(&row_code, &col_code, matrix, matrix_mask, 3);
+            bm32_extract_axiscodes(&row_code, &col_code, matrix, matrix_mask, 3);
             AxisPosition row_pos = decode_axis_position(row_code, MLS_INDEX.code_length);
             AxisPosition col_pos = decode_axis_position(col_code, MLS_INDEX.code_length);
             test_assert(row_pos.inverted == col_pos.inverted);
