@@ -1,1 +1,1 @@
-../../embedded/src/utils/bitwise_utils.c
+../../core/src/bitwise_utils.c

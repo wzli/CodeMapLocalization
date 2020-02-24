@@ -1,1 +1,1 @@
-../../embedded/include/utils/bitwise_utils.h
+../../core/include/bitwise_utils.h

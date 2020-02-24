@@ -1,1 +1,1 @@
-../../embedded/src/mls_query.c
+../../core/src/mls_query.c
