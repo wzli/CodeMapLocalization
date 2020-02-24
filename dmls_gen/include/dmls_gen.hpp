@@ -19,7 +19,7 @@ private:
     std::vector<uint32_t> _word_visit_counts, _word_visit_ids;
     std::vector<bool> _l_sequence, _r_sequence;
     std::random_device _rd;
-    std::mt19937_64 _gen;
+    std::mt19937 _gen;
     uint32_t _visit_id = 0;
     uint8_t _word_length;
 };

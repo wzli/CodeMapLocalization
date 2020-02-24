@@ -38,7 +38,7 @@ void DmlsGen::generate_dmls(std::vector<bool>& sequence, uint8_t word_length, ui
     while (--iterations) {
         ++_visit_id;
         _visit_id += _visit_id == PALINDROME;
-        _gen.seed((static_cast<uint64_t>(_rd()) << 32) | (_rd() & 0xFFFFFFFF));
+        _gen.seed(_rd());
         uint32_t l_word = _gen() & mask_bits(_word_length);
         while (is_word_visited(l_word)) {
             l_word = _gen() & mask_bits(_word_length);
@@ -50,6 +50,7 @@ void DmlsGen::generate_dmls(std::vector<bool>& sequence, uint8_t word_length, ui
             _l_sequence.emplace_back(buf & 1);
         }
         set_word_visited(l_word);
+        _gen.seed(_rd());
         while (true) {
             uint32_t next_words[4] = {
                     l_word >> 1,
