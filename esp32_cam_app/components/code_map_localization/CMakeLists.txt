@@ -1,4 +1,5 @@
 set(srcs
+  src/phase_correlation.c
   src/code_extraction.c
   src/location_decode.c
   src/mls_index.c
@@ -15,6 +16,7 @@ set(srcs
   src/tests/test_mls_query.c
   src/tests/test_code_extraction.c
   src/tests/test_location_decode.c
+  src/tests/test_optical_flow.c
   src/tests/test_full_chain.c
 )
 
