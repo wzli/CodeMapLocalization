@@ -20,17 +20,17 @@ void img_phase_correlation(ImageMatrixInt32 frame, ImageMatrixInt32 next_frame, 
         complex_frame = (ImageMatrixComplex){(float complex*) frame.data, frame.size};
     } else {
         complex_frame = img_convert_int32_to_complex(frame);
-        img_fast_fourier_transform(complex_frame);
+        img_fast_fourier_transform(complex_frame, false);
     }
 
     ImageMatrixComplex next_complex_frame = img_convert_int32_to_complex(next_frame);
-    img_fast_fourier_transform(next_complex_frame);
+    img_fast_fourier_transform(next_complex_frame, false);
 
     FOR_EACH_PIXEL(frame) {
         PIXEL(complex_frame, row, col) *= conjf(PIXEL(next_complex_frame, row, col));
         PIXEL(complex_frame, row, col) /= cabsf(PIXEL(complex_frame, row, col));
     }
-    img_inverse_fast_fourier_transform(complex_frame);
+    img_fast_fourier_transform(complex_frame, true);
 
     FOR_EACH_PIXEL(frame) {
         PIXEL(frame, row, col) = crealf(PIXEL(complex_frame, row, col)) + 0.5f;

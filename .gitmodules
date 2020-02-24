@@ -4,3 +4,6 @@
 [submodule "esp32_cam_app/components/esp-dsp"]
 	path = submodules/esp-dsp
 	url = https://github.com/espressif/esp-dsp.git
+[submodule "submodules/micro_image_utils"]
+	path = submodules/micro_image_utils
+	url = https://github.com/wzli/micro_image_utils

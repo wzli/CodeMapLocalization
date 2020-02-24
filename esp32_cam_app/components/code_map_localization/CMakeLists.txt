@@ -1,17 +1,19 @@
 set(srcs
-  src/phase_correlation.c
   src/code_extraction.c
   src/location_decode.c
   src/mls_index.c
   src/mls_query.c
-  src/utils/bitwise_utils.c
-  src/utils/image_utils.c
+  src/bitwise_utils.c
+  src/micro_image_utils/image_utils.c
+#temp until hardware fft
+  src/phase_correlation.c
+  src/micro_image_utils/mfft.c
 
 #for tests
   src/debug_prints.c
-  src/tests/test_generic_algorithms.c
-  src/tests/test_math_utils.c
-  src/tests/test_image_utils.c
+  src/micro_image_utils/tests/test_generic_algorithms.c
+  src/micro_image_utils/tests/test_math_utils.c
+  src/micro_image_utils/tests/test_image_utils.c
   src/tests/test_bitwise_utils.c
   src/tests/test_mls_query.c
   src/tests/test_code_extraction.c
@@ -22,7 +24,8 @@ set(srcs
 
 set(includes
   include
-  include/utils
+  include/micro_image_utils
+  include/micro_image_utils/tests
 )
 
 idf_component_register(
