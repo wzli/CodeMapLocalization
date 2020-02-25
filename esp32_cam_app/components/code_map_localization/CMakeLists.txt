@@ -6,8 +6,8 @@ set(srcs
   src/bitwise_utils.c
   src/micro_image_utils/image_utils.c
 
-# temp until hardware fft
-  src/phase_correlation.c
+# customed to use esp32 optimized fft
+  phase_correlation.c
 
 # for tests
   src/debug_prints.c
@@ -35,6 +35,7 @@ set(includes
 idf_component_register(
   SRCS ${srcs}
   INCLUDE_DIRS ${includes}
+  PRIV_REQUIRES esp-dsp
 )
 
 target_compile_options(${COMPONENT_LIB} PRIVATE
