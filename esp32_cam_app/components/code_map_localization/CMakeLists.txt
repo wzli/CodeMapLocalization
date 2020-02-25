@@ -5,21 +5,25 @@ set(srcs
   src/mls_query.c
   src/bitwise_utils.c
   src/micro_image_utils/image_utils.c
-#temp until hardware fft
-  src/phase_correlation.c
-  src/micro_image_utils/mfft.c
 
-#for tests
+# temp until hardware fft
+  src/phase_correlation.c
+
+# for tests
   src/debug_prints.c
-  src/micro_image_utils/tests/test_generic_algorithms.c
-  src/micro_image_utils/tests/test_math_utils.c
-  src/micro_image_utils/tests/test_image_utils.c
+
+  src/micro_image_utils/mfft.c
+  src/micro_image_utils/distance_transform.c
+
   src/tests/test_bitwise_utils.c
   src/tests/test_mls_query.c
   src/tests/test_code_extraction.c
   src/tests/test_location_decode.c
   src/tests/test_optical_flow.c
   src/tests/test_full_chain.c
+  src/micro_image_utils/tests/test_generic_utils.c
+  src/micro_image_utils/tests/test_math_utils.c
+  src/micro_image_utils/tests/test_image_utils.c
 )
 
 set(includes
