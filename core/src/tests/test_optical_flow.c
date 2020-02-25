@@ -10,12 +10,23 @@ static int test_phase_correlation() {
     IMG_FILL(frame, 0);
     IMG_FILL(next_frame, 0);
 
-    PIXEL(frame, 1, 1) = 1;
-    PIXEL(next_frame, 0, 0) = 1;
+    PIXEL(frame, 3, 3) = 1;
+    PIXEL(next_frame, 2, 2) = 1;
 
     img_phase_correlation(frame, next_frame, false);
 
-    FOR_EACH_PIXEL(next_frame) { test_assert(PIXEL(frame, row, col) == (row == 1 && col == 1)); }
+#if 0
+    FOR_EACH_PIXEL(frame) {
+        if (!col) { puts(""); }
+        printf("%3d ", (int16_t)(PIXEL(frame, row, col) & 0xFFFF));
+    }
+#endif
+    int32_t max_val = -1;
+    int16_t max_x = -1;
+    int16_t max_y = -1;
+    IMG_PIXEL_LATCH_INDEX(max_val, max_y, max_x, >, frame);
+    test_assert(max_x == 1);
+    test_assert(max_y == 1);
     return 0;
 }
 

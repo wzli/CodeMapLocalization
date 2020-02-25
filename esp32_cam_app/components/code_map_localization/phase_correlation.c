@@ -53,13 +53,11 @@ void img_phase_correlation(ImageMatrixInt32 frame, ImageMatrixInt32 next_frame, 
     // Element wise multiply and normalize
     int16_t* a = (int16_t*) frame.data;
     int16_t* b = (int16_t*) next_frame.data;
-    FOR_EACH_PIXEL(frame) {
+    for (int32_t i = 0; i < IMG_PIXEL_COUNT(frame); ++i, a += 2, b += 2) {
         Vector2f c = {(a[0] * b[0]) + (a[1] * b[1]), (b[0] * a[1]) - (a[0] * b[1])};
         float norm = v2f_norm(c);
         a[0] = 0x7FFF * (c.x / norm);
         a[1] = 0x7FFF * (c.y / norm);
-        a += 2;
-        b += 2;
     }
     // Inverse FFT
     esp_error |= dsp_fft_2d(frame, true);
