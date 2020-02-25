@@ -1,7 +1,8 @@
-#include "esp_timer.h"
-#include "esp_camera.h"
 #include "sdkconfig.h"
+#include "esp_camera.h"
+#include "esp_dsp.h"
 #include "esp_log.h"
+#include "esp_timer.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/queue.h"
@@ -80,6 +81,13 @@ static void queue_fb_return(uint8_t queue_index) {
 
 /* run */
 static void main_loop(void* pvParameters) {
+    // initalize FFT tables
+    if (dsps_fft2r_init_sc16(NULL, CONFIG_DSP_MAX_FFT_SIZE) != ESP_OK) {
+        ESP_LOGE(TAG, "Not able to initialize FFT.");
+        assert(0);
+    }
+    // run unit tests
+    assert(!run_all_tests());
     // initialize queues
     for (int i = 0; i <= N_DOUBLE_BUFFERS; ++i) {
         for (int j = 0; j < 2; ++j) {
@@ -182,7 +190,6 @@ static void main_loop(void* pvParameters) {
 }
 
 void app_main() {
-    assert(!run_all_tests());
     app_wifi_main();
     app_camera_main();
     app_httpd_main();

@@ -1,29 +1,18 @@
 #include "image_utils.h"
 #include "assert.h"
 #include "esp_dsp.h"
-#include "esp_log.h"
-
-typedef union {
-    int16_t half[2];
-    int32_t full;
-} Word;
-
-#define RE(X) ((Word)(X)).half[0]
-#define IM(X) ((Word)(X)).half[1]
-
-static const char* TAG = "phase_correlation";
 
 static esp_err_t dsp_fft(int16_t* data, int len, bool inverse) {
+    const int16_t* const end = data + 2 * len;
     if (inverse) {
-        for (int i = 0; i < len; ++i) {
-            data[2 * i + 1] *= -1;
+        for (int16_t* cur = data + 1; cur < end; cur += 2) {
+            *cur = -*cur;
         }
     }
     esp_err_t esp_error = dsps_fft2r_sc16(data, len);
     if (inverse) {
-        for (int i = 0; i < len; ++i) {
-            data[2 * i] /= len;
-            data[2 * i + 1] /= -len;
+        for (int16_t* cur = data + 1; cur < end; cur += 2) {
+            *cur = -*cur;
         }
     }
     esp_error |= dsps_bit_rev_sc16_ansi(data, len);
@@ -45,42 +34,36 @@ static esp_err_t dsp_fft_2d(ImageMatrixInt32 frame, bool inverse) {
     return esp_error;
 }
 
-static int32_t complex_conjugate(int32_t x) {
-    IM(x) = -IM(x);
-    return x;
-}
-
-static int32_t complex_multiply(int32_t a, int32_t b) {
-    return (Word){{(RE(a) * RE(b)) - (IM(a) * IM(b)), (RE(a) * IM(b)) + (RE(b) * IM(a))}}.full;
-}
-
-static float complex_norm(int32_t x) {
-    return sqrtf(SQR(RE(x)) + SQR(IM(x)));
-}
-
 void img_phase_correlation(ImageMatrixInt32 frame, ImageMatrixInt32 next_frame, bool reuse_frame) {
-    assert(next_frame.size.x >= 0 && next_frame.size.y >= 0);
-    assert(frame.size.x == next_frame.size.x && frame.size.y == next_frame.size.y);
-
-    esp_err_t ret = dsps_fft2r_init_sc16(NULL, CONFIG_DSP_MAX_FFT_SIZE);
-    if (ret != ESP_OK) {
-        ESP_LOGE(TAG, "Not possible to initialize FFT. Error = %i", ret);
-        return;
-    }
+    assert(frame.data && next_frame.data);
+    assert(frame.size.x >= 0 && frame.size.y >= 0);
+    assert(frame.size.x == next_frame.size.x);
+    assert(frame.size.y == next_frame.size.y);
+    esp_err_t esp_error = ESP_OK;
+    // FFT frame
     if (!reuse_frame) {
-        dsp_fft_2d(frame, false);
+        FOR_EACH_PIXEL(frame) { PIXEL(frame, row, col) = (PIXEL(frame, row, col) - 128) << 8; }
+        esp_error |= dsp_fft_2d(frame, false);
     }
-    dsp_fft_2d(next_frame, false);
-
+    // FFT next frame
     FOR_EACH_PIXEL(frame) {
-        int32_t conj = complex_conjugate(PIXEL(next_frame, row, col));
-        PIXEL(frame, row, col) = complex_multiply(PIXEL(frame, row, col), conj);
-        float norm = complex_norm(PIXEL(frame, row, col));
-        RE(PIXEL(frame, row, col)) /= norm;
-        IM(PIXEL(frame, row, col)) /= norm;
+        PIXEL(next_frame, row, col) = (PIXEL(next_frame, row, col) - 128) << 8;
     }
-
-    dsp_fft_2d(next_frame, true);
-
-    FOR_EACH_PIXEL(frame) { IM(PIXEL(frame, row, col)) = 0; }
+    esp_error |= dsp_fft_2d(next_frame, false);
+    // Element wise multiply and normalize
+    int16_t* a = (int16_t*) frame.data;
+    int16_t* b = (int16_t*) next_frame.data;
+    FOR_EACH_PIXEL(frame) {
+        Vector2f c = {(a[0] * b[0]) + (a[1] * b[1]), (b[0] * a[1]) - (a[0] * b[1])};
+        float norm = v2f_norm(c);
+        a[0] = 0x7FFF * (c.x / norm);
+        a[1] = 0x7FFF * (c.y / norm);
+        a += 2;
+        b += 2;
+    }
+    // Inverse FFT
+    esp_error |= dsp_fft_2d(frame, true);
+    // Keep only real component
+    FOR_EACH_PIXEL(frame) { PIXEL(frame, row, col) = (int16_t)(PIXEL(frame, row, col) & 0xFFFF); }
+    assert(esp_error == ESP_OK);
 }
