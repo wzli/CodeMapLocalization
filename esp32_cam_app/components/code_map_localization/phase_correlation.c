@@ -1,6 +1,6 @@
 #include "image_utils.h"
-#include "assert.h"
 #include "esp_dsp.h"
+#include <assert.h>
 
 static esp_err_t dsp_fft(int16_t* data, int len, bool inverse) {
     const int16_t* const end = data + 2 * len;
@@ -55,9 +55,9 @@ void img_phase_correlation(ImageMatrixInt32 frame, ImageMatrixInt32 next_frame, 
     int16_t* b = (int16_t*) next_frame.data;
     for (int32_t i = 0; i < IMG_PIXEL_COUNT(frame); ++i, a += 2, b += 2) {
         Vector2f c = {(a[0] * b[0]) + (a[1] * b[1]), (b[0] * a[1]) - (a[0] * b[1])};
-        float norm = v2f_norm(c);
-        a[0] = 0x7FFF * (c.x / norm);
-        a[1] = 0x7FFF * (c.y / norm);
+        c = v2f_normalize(c);
+        a[0] = 0x7FFF * c.x;
+        a[1] = 0x7FFF * c.y;
     }
     // Inverse FFT
     esp_error |= dsp_fft_2d(frame, true);
