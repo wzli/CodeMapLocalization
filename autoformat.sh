@@ -3,4 +3,4 @@ find . -type f -name '*.h' -o -iname '*.c' -o -iname '*.cpp' -o -iname '*.hpp' \
     | grep -v -e build/ -e esp32-camera/ -e esp-dsp/ \
     | xargs clang-format --verbose -style=file -i -fallback-style=none
 
-yapf --verbose -ri .
+yapf --verbose -ri --exclude 'submodules/**/*.py' .
