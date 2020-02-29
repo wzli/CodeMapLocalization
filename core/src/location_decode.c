@@ -17,45 +17,45 @@ uint8_t next_valid_code_segment(AxisCode32* axiscode, uint8_t code_length) {
     return valid_segment_length;
 };
 
-AxisPosition decode_axis_position(AxisCode32 axiscode, uint8_t code_length) {
+AxisPosition decode_axis_position(AxisCode32 axiscode) {
     AxisPosition best_position = {};
-    const uint32_t code_mask = mask_bits(code_length);
-    for (uint8_t valid_segment_length = next_valid_code_segment(&axiscode, code_length);
+    const uint32_t code_mask = mask_bits(MLS_INDEX.code_length);
+    for (uint8_t valid_segment_length = next_valid_code_segment(&axiscode, MLS_INDEX.code_length);
             valid_segment_length > 0;
-            valid_segment_length = next_valid_code_segment(&axiscode, code_length)) {
+            valid_segment_length = next_valid_code_segment(&axiscode, MLS_INDEX.code_length)) {
         uint32_t code = axiscode.bits & code_mask;
         AxisPosition position = {};
         position.center = mlsq_position_from_code(MLS_INDEX, code);
         if (position.center == MLSQ_NOT_FOUND) {
-            code = invert_bits(code, code_length);
+            code = invert_bits(code, MLS_INDEX.code_length);
             position.inverted = 1;
             position.center = mlsq_position_from_code(MLS_INDEX, code);
         }
         if (position.center == MLSQ_NOT_FOUND) {
-            code = reverse_bits(code, code_length);
+            code = reverse_bits(code, MLS_INDEX.code_length);
             position.reversed = 1;
             position.center = mlsq_position_from_code(MLS_INDEX, code);
         }
         if (position.center == MLSQ_NOT_FOUND) {
-            code = invert_bits(code, code_length);
+            code = invert_bits(code, MLS_INDEX.code_length);
             position.inverted = 0;
             position.center = mlsq_position_from_code(MLS_INDEX, code);
         }
         position.span = position.center != MLSQ_NOT_FOUND;
-        if (position.span && valid_segment_length > code_length) {
+        if (position.span && valid_segment_length > MLS_INDEX.code_length) {
             uint32_t extended_code = position.inverted
                                              ? invert_bits(axiscode.bits, valid_segment_length)
                                              : axiscode.bits & mask_bits(valid_segment_length);
             uint32_t expected_code =
                     position.reversed
-                            ? reverse_bits(
-                                      mlsq_code_from_position_indexed(valid_segment_length,
-                                              position.center + code_length - valid_segment_length),
+                            ? reverse_bits(mlsq_code_from_position_indexed(valid_segment_length,
+                                                   position.center + MLS_INDEX.code_length -
+                                                           valid_segment_length),
                                       valid_segment_length)
                             : mlsq_code_from_position_indexed(
                                       valid_segment_length, position.center);
             uint8_t first_diff = count_trailing_zeros(extended_code ^ expected_code);
-            position.span += MIN(first_diff, valid_segment_length) - code_length;
+            position.span += MIN(first_diff, valid_segment_length) - MLS_INDEX.code_length;
         }
         if (position.span > best_position.span) {
             best_position = position;
@@ -104,8 +104,8 @@ void scale_search_location(ScaleMatch* match, const ScaleQuery* query) {
         AxisCode32 row_code_32 = downsample_axiscode(scaled_row_code);
         AxisCode32 col_code_32 = downsample_axiscode(scaled_col_code);
         // decode posiiton
-        AxisPosition row_pos = decode_axis_position(row_code_32, MLS_INDEX.code_length);
-        AxisPosition col_pos = decode_axis_position(col_code_32, MLS_INDEX.code_length);
+        AxisPosition row_pos = decode_axis_position(row_code_32);
+        AxisPosition col_pos = decode_axis_position(col_code_32);
         Location loc = deduce_location(row_pos, col_pos);
         if (loc.match_size >= match->location.match_size) {
             *match = (ScaleMatch){loc, row_code_32, col_code_32, scale};

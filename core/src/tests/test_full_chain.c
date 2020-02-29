@@ -32,8 +32,8 @@ static int test_full_chain_simulation() {
         col_code = row_code;
 
         // decode positions
-        AxisPosition row_pos = decode_axis_position(row_code, MLS_INDEX.code_length);
-        AxisPosition col_pos = decode_axis_position(col_code, MLS_INDEX.code_length);
+        AxisPosition row_pos = decode_axis_position(row_code);
+        AxisPosition col_pos = decode_axis_position(col_code);
 
         // deduce location
         Location loc = deduce_location(row_pos, col_pos);

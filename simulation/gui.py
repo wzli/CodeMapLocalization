@@ -207,10 +207,8 @@ class BitMatrixProcessor:
         libsim.bm32_extract_axiscodes(ctypes.byref(row_code),
                                       ctypes.byref(col_code), bit_matrix,
                                       bit_mask, 3)
-        row_position = libsim.decode_axis_position(row_code,
-                                                   MLS_INDEX.code_length)
-        col_position = libsim.decode_axis_position(col_code,
-                                                   MLS_INDEX.code_length)
+        row_position = libsim.decode_axis_position(row_code)
+        col_position = libsim.decode_axis_position(col_code)
         location = libsim.deduce_location(row_position, col_position)
         location.rotation = libsim.test_add_angle(location.rotation,
                                                   image.unrotation)
