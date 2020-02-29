@@ -33,7 +33,7 @@ static camera_fb_t double_buffers[][2] = {
 };
 
 #define N_DOUBLE_BUFFERS (sizeof(double_buffers) / sizeof(double_buffers[0]))
-static camera_fb_t* claimed_buffers[N_DOUBLE_BUFFERS + 1] = {};
+static camera_fb_t* claimed_buffers[N_DOUBLE_BUFFERS + 1];
 
 static LocalizationContext loc_ctx;
 
@@ -106,14 +106,21 @@ static void main_loop(void* pvParameters) {
         loc_ctx.unrotated_image = images[1];
         loc_ctx.sharpened_image = images[1];
         localization_loop_run(&loc_ctx);
-        images[1] = loc_ctx.sharpened_image;
 
-        // save 64bit image to [2]
-        // bm64_to_img(&images[2], binary_image_64, binary_mask_64);
+        // display thresholded bm64
+        bm64_to_img(&images[1], loc_ctx.binary_image, loc_ctx.binary_mask);
 
-        // display results
-        // bm32_from_axiscodes(binary_image_32, binary_mask_32, loc_ctx.scale_match.row_code,
-        // loc_ctx.scale_match.col_code); bm32_to_img(&images[3], binary_image_32, binary_mask_32);
+        // display extracted bm64
+        bm64_from_axiscodes(loc_ctx.binary_image, loc_ctx.binary_mask, loc_ctx.scale_query.row_code,
+                loc_ctx.scale_query.col_code);
+        bm64_to_img(&images[2], loc_ctx.binary_image, loc_ctx.binary_mask);
+
+        // display scale matched bm64
+        BM_COPY(loc_ctx.scale_query.row_code, loc_ctx.scale_match.row_code);
+        BM_COPY(loc_ctx.scale_query.col_code, loc_ctx.scale_match.col_code);
+        bm64_from_axiscodes(loc_ctx.binary_image, loc_ctx.binary_mask, loc_ctx.scale_query.row_code,
+                loc_ctx.scale_query.col_code);
+        bm64_to_img(&images[3], loc_ctx.binary_image, loc_ctx.binary_mask);
 
         for (uint8_t i = 0; i <= N_DOUBLE_BUFFERS; ++i) {
             assert(claimed_buffers[i]);

@@ -16,6 +16,11 @@ typedef struct {
     uint16_t n_samples;
 } AxisCode64;
 
+#define BM_COPY(DST, SRC)                                                               \
+    ((DST).bits = (SRC).bits, (DST).mask = (SRC).mask, (DST).n_errors = (SRC).n_errors, \
+            (DST).n_samples = (SRC).n_samples)
+
+// Image filtering
 void img_hyper_sharpen(ImageMatrix* dst, const ImageMatrix src);
 
 Vector2f img_estimate_rotation(const ImageMatrix mat);
@@ -27,6 +32,7 @@ void img_to_bm32(BitMatrix32 dst, BitMatrix32 mask, const ImageMatrix src, uint8
 void img_to_bm64(BitMatrix64 dst, BitMatrix64 mask, const ImageMatrix src, uint8_t low_thresh,
         uint8_t high_thresh);
 
+// bit matrix code extraction
 void bm32_to_img(ImageMatrix* dst, const BitMatrix32 src, const BitMatrix32 mask);
 void bm64_to_img(ImageMatrix* dst, const BitMatrix64 src, const BitMatrix64 mask);
 
