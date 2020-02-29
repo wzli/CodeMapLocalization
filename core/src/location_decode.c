@@ -93,3 +93,22 @@ Location deduce_location(AxisPosition row_position, AxisPosition col_position) {
     }
     return location;
 }
+
+void scale_search_location(ScaleMatch* match, const ScaleQuery* query) {
+    assert(match && query);
+    assert(query->lower_bound > 0 && query->upper_bound > 0 && query->step_size > 0);
+    for (float scale = query->lower_bound; scale <= query->upper_bound; scale += query->step_size) {
+        // scale and down sample axis codes
+        AxisCode64 scaled_row_code = scale_axiscode64(query->row_code, scale);
+        AxisCode64 scaled_col_code = scale_axiscode64(query->col_code, scale);
+        AxisCode32 row_code_32 = downsample_axiscode(scaled_row_code);
+        AxisCode32 col_code_32 = downsample_axiscode(scaled_col_code);
+        // decode posiiton
+        AxisPosition row_pos = decode_axis_position(row_code_32, MLS_INDEX.code_length);
+        AxisPosition col_pos = decode_axis_position(col_code_32, MLS_INDEX.code_length);
+        Location loc = deduce_location(row_pos, col_pos);
+        if (loc.match_size >= match->location.match_size) {
+            *match = (ScaleMatch){loc, row_code_32, col_code_32, scale};
+        }
+    }
+}

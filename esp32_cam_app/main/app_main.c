@@ -135,34 +135,16 @@ static void main_loop(void* pvParameters) {
         bm64_to_img(&images[2], binary_image_64, binary_mask_64);
 
         // extract row and column codes
-        AxisCode64 row_code_64, col_code_64;
-        bm64_extract_axiscodes(&row_code_64, &col_code_64, binary_image_64, binary_mask_64, 5);
+        ScaleQuery query = {{}, {}, 0.8f, 1.2f, 0.02f};
+        bm64_extract_axiscodes(
+                &query.row_code, &query.col_code, binary_image_64, binary_mask_64, 5);
+        ScaleMatch match = {};
+        scale_search_location(&match, &query);
 
-        Location best_match_location = {};
-        AxisCode32 best_match_row_code, best_match_col_code;
-
-        for (float scale = 0.8f; scale < 1.2f; scale += 0.02f) {
-            // scale and down sample axis codes
-            AxisCode64 scaled_row_code = scale_axiscode64(row_code_64, scale);
-            AxisCode64 scaled_col_code = scale_axiscode64(col_code_64, scale);
-            AxisCode32 row_code_32 = downsample_axiscode(scaled_row_code);
-            AxisCode32 col_code_32 = downsample_axiscode(scaled_col_code);
-            // decode posiiton
-            AxisPosition row_pos = decode_axis_position(row_code_32, MLS_INDEX.code_length);
-            AxisPosition col_pos = decode_axis_position(col_code_32, MLS_INDEX.code_length);
-            Location loc = deduce_location(row_pos, col_pos);
-            if (loc.match_size >= best_match_location.match_size) {
-                best_match_location = loc;
-                best_match_row_code = row_code_32;
-                best_match_col_code = col_code_32;
-            }
-        }
-
-        best_match_location.rotation = v2f_add_angle(best_match_location.rotation, rotation);
+        match.location.rotation = v2f_add_angle(match.location.rotation, rotation);
 
         // display results
-        bm32_from_axiscodes(
-                binary_image_32, binary_mask_32, best_match_row_code, best_match_col_code);
+        bm32_from_axiscodes(binary_image_32, binary_mask_32, match.row_code, match.col_code);
         bm32_to_img(&images[3], binary_image_32, binary_mask_32);
 
         for (uint8_t i = 0; i <= N_DOUBLE_BUFFERS; ++i) {
@@ -175,15 +157,13 @@ static void main_loop(void* pvParameters) {
 
         // end loop
         int64_t end_time = esp_timer_get_time();
-        if (best_match_location.match_size > 16) {
+        if (match.location.match_size > 16) {
             ESP_LOGI(TAG, "fr %u t %ums thresh %u (x %d y %d r %f m %d) row %d/%d col %d/%d \n",
                     frame_count, (uint32_t)((end_time - start_time) / 1000),
-                    (threshold0 + threshold1) / 2, best_match_location.x, best_match_location.y,
-                    180 * atan2(best_match_location.rotation.y, best_match_location.rotation.x) /
-                            M_PI,
-                    best_match_location.match_size, best_match_row_code.n_errors,
-                    best_match_row_code.n_samples, best_match_col_code.n_errors,
-                    best_match_col_code.n_samples);
+                    (threshold0 + threshold1) / 2, match.location.x, match.location.y,
+                    180 * atan2(match.location.rotation.y, match.location.rotation.x) / M_PI,
+                    match.location.match_size, match.row_code.n_errors, match.row_code.n_samples,
+                    match.col_code.n_errors, match.col_code.n_samples);
         }
         start_time = end_time;
     }

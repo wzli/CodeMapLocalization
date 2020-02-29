@@ -4,17 +4,11 @@
 
 static esp_err_t dsp_fft(int16_t* data, int len, bool inverse) {
     const int16_t* const end = data + 2 * len;
-    if (inverse) {
-        for (int16_t* cur = data + 1; cur < end; cur += 2) {
-            *cur = -*cur;
-        }
-    }
+    for (int16_t* cur = data + 1; inverse && cur < end; *cur = -*cur, cur += 2)
+        ;
     esp_err_t esp_error = dsps_fft2r_sc16(data, len);
-    if (inverse) {
-        for (int16_t* cur = data + 1; cur < end; cur += 2) {
-            *cur = -*cur;
-        }
-    }
+    for (int16_t* cur = data + 1; inverse && cur < end; *cur = -*cur, cur += 2)
+        ;
     esp_error |= dsps_bit_rev_sc16_ansi(data, len);
     return esp_error;
 }

@@ -62,11 +62,12 @@ static int test_full_chain_real_life() {
             uint32_t src_row_code = mlsq_code_from_position(MLS_INDEX.sequence, 32, src_row_pos);
             uint32_t src_col_code = mlsq_code_from_position(MLS_INDEX.sequence, 32, src_col_pos);
             // generate source image from known position
-            AxisCode64 row_code_64 = {src_row_code, ~0ull, 0, 0};
-            AxisCode64 col_code_64 = {src_col_code, ~0ull, 0, 0};
-            row_code_64 = scale_axiscode64(row_code_64, 3);
-            col_code_64 = scale_axiscode64(col_code_64, 3);
-            bm64_from_axiscodes(bit_matrix_64, bit_mask_64, row_code_64, col_code_64);
+            // disable scale search, since it causes some false positives which fail the test
+            ScaleQuery query = {
+                    {src_row_code, ~0ull, 0, 0}, {src_col_code, ~0ull, 0, 0}, 1.0f, 1.0f, 1.0f};
+            query.row_code = scale_axiscode64(query.row_code, 3);
+            query.col_code = scale_axiscode64(query.col_code, 3);
+            bm64_from_axiscodes(bit_matrix_64, bit_mask_64, query.row_code, query.col_code);
             bm64_to_img(&raw_image, bit_matrix_64, bit_mask_64);
             // simulate real life pipe line starting here
 
@@ -101,46 +102,23 @@ static int test_full_chain_real_life() {
             img_to_bm64(bit_matrix_64, bit_mask_64, buf_image, threshold0, threshold1);
 
             // extract row and column codes
-            bm64_extract_axiscodes(&row_code_64, &col_code_64, bit_matrix_64, bit_mask_64, 5);
+            bm64_extract_axiscodes(&query.row_code, &query.col_code, bit_matrix_64, bit_mask_64, 5);
 
-            Location best_match_location = {};
-            AxisCode32 best_match_row_code = {};
-            AxisCode32 best_match_col_code = {};
+            ScaleMatch match = {};
+            scale_search_location(&match, &query);
 
-            // disable scale search, since it causes some false positives which fail the test
-            // for (float scale = 0.5f; scale < 1.5f; scale += 0.03f)
-            float scale = 1.0f;
-            {
-                // scale and down sample axis codes
-                AxisCode64 scaled_row_code = scale_axiscode64(row_code_64, scale);
-                AxisCode64 scaled_col_code = scale_axiscode64(col_code_64, scale);
-                AxisCode32 row_code_32 = downsample_axiscode(scaled_row_code);
-                AxisCode32 col_code_32 = downsample_axiscode(scaled_col_code);
-                // decode posiiton
-                AxisPosition row_pos = decode_axis_position(row_code_32, MLS_INDEX.code_length);
-                AxisPosition col_pos = decode_axis_position(col_code_32, MLS_INDEX.code_length);
-                Location loc = deduce_location(row_pos, col_pos);
-                if (loc.match_size > best_match_location.match_size) {
-                    best_match_location = loc;
-                    best_match_row_code = row_code_32;
-                    best_match_col_code = col_code_32;
-                }
-            }
-
-            uint32_t compare_row_code =
-                    (best_match_row_code.bits ^ src_row_code) & best_match_row_code.mask;
+            uint32_t compare_row_code = (match.row_code.bits ^ src_row_code) & match.row_code.mask;
             uint32_t compare_row_code1 =
-                    (best_match_row_code.bits ^ src_row_code >> 1) & best_match_row_code.mask;
+                    (match.row_code.bits ^ src_row_code >> 1) & match.row_code.mask;
 
-            uint32_t compare_col_code =
-                    (best_match_col_code.bits ^ src_col_code) & best_match_col_code.mask;
+            uint32_t compare_col_code = (match.col_code.bits ^ src_col_code) & match.col_code.mask;
             uint32_t compare_col_code1 =
-                    (best_match_col_code.bits ^ src_col_code >> 1) & best_match_col_code.mask;
+                    (match.col_code.bits ^ src_col_code >> 1) & match.col_code.mask;
 
-            test_assert(compare_row_code == 0 || compare_row_code == best_match_row_code.mask ||
-                        compare_row_code1 == 0 || compare_row_code1 == best_match_row_code.mask);
-            test_assert(compare_col_code == 0 || compare_col_code == best_match_col_code.mask ||
-                        compare_col_code1 == 0 || compare_col_code1 == best_match_col_code.mask);
+            test_assert(compare_row_code == 0 || compare_row_code == match.row_code.mask ||
+                        compare_row_code1 == 0 || compare_row_code1 == match.row_code.mask);
+            test_assert(compare_col_code == 0 || compare_col_code == match.col_code.mask ||
+                        compare_col_code1 == 0 || compare_col_code1 == match.col_code.mask);
         }
     free(raw_image.data);
     free(buf_image.data);
