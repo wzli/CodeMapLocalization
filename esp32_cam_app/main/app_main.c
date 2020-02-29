@@ -8,8 +8,7 @@
 #include "freertos/queue.h"
 
 #include "tests.h"
-#include "location_decode.h"
-#include "mls_query.h"
+#include "localization_loop.h"
 
 /* externals */
 void app_camera_main();
@@ -36,11 +35,7 @@ static camera_fb_t double_buffers[][2] = {
 #define N_DOUBLE_BUFFERS (sizeof(double_buffers) / sizeof(double_buffers[0]))
 static camera_fb_t* claimed_buffers[N_DOUBLE_BUFFERS + 1] = {};
 
-static uint32_t histogram[256];
-static BitMatrix64 binary_image_64;
-static BitMatrix64 binary_mask_64;
-static BitMatrix32 binary_image_32;
-static BitMatrix32 binary_mask_32;
+static LocalizationContext loc_ctx;
 
 /* helper functions */
 
@@ -88,6 +83,10 @@ static void main_loop(void* pvParameters) {
     }
     // run unit tests
     assert(!run_all_tests());
+    // configure scale search params
+    loc_ctx.scale_query.lower_bound = 0.8f;
+    loc_ctx.scale_query.upper_bound = 1.2f;
+    loc_ctx.scale_query.step_size = 0.02f;
     // initialize queues
     for (int i = 0; i <= N_DOUBLE_BUFFERS; ++i) {
         for (int j = 0; j < 2; ++j) {
@@ -103,49 +102,18 @@ static void main_loop(void* pvParameters) {
         for (uint8_t i = 0; i <= N_DOUBLE_BUFFERS; ++i) {
             images[i] = queue_fb_get(i);
         }
+        loc_ctx.original_image = images[0];
+        loc_ctx.unrotated_image = images[1];
+        loc_ctx.sharpened_image = images[1];
+        localization_loop_run(&loc_ctx);
+        images[1] = loc_ctx.sharpened_image;
 
-        // find threshold of original image
-        img_histogram(histogram, images[0]);
-        uint8_t threshold0 = img_compute_otsu_threshold(histogram);
-
-        // find rotation of original image
-        Vector2f rotation = img_estimate_rotation(images[0]);
-        if (!v2f_is_zero(rotation)) {
-            // unrotate
-            rotation.y *= -1;
-            IMG_SET_SIZE(images[1], 64, 64);
-            img_rotate(images[1], images[0], rotation, threshold0, img_bilinear_interpolation);
-        }
-        // sharpen
-        img_hyper_sharpen(&images[1], images[1]);
-        Vector2f vertex = v2f_rotate(
-                rotation, (Vector2f){2 + images[1].size.x / 2, 2 + images[1].size.y / 2});
-        img_draw_regular_polygon(images[1],
-                (ImagePoint){images[1].size.x / 2, images[1].size.y / 2}, vertex, 4, threshold0, 5);
-
-        // find threshold of filtered image
-        img_histogram(histogram, images[1]);
-        histogram[threshold0] = 0;
-        uint8_t threshold1 = img_compute_otsu_threshold(histogram);
-        if (threshold1 < threshold0) {
-            SWAP(threshold1, threshold0);
-        }
-        // binarize to bit matrix
-        img_to_bm64(binary_image_64, binary_mask_64, images[1], threshold0, threshold1);
-        bm64_to_img(&images[2], binary_image_64, binary_mask_64);
-
-        // extract row and column codes
-        ScaleQuery query = {{}, {}, 0.8f, 1.2f, 0.02f};
-        bm64_extract_axiscodes(
-                &query.row_code, &query.col_code, binary_image_64, binary_mask_64, 5);
-        ScaleMatch match = {};
-        scale_search_location(&match, &query);
-
-        match.location.rotation = v2f_add_angle(match.location.rotation, rotation);
+        // save 64bit image to [2]
+        // bm64_to_img(&images[2], binary_image_64, binary_mask_64);
 
         // display results
-        bm32_from_axiscodes(binary_image_32, binary_mask_32, match.row_code, match.col_code);
-        bm32_to_img(&images[3], binary_image_32, binary_mask_32);
+        // bm32_from_axiscodes(binary_image_32, binary_mask_32, loc_ctx.scale_match.row_code,
+        // loc_ctx.scale_match.col_code); bm32_to_img(&images[3], binary_image_32, binary_mask_32);
 
         for (uint8_t i = 0; i <= N_DOUBLE_BUFFERS; ++i) {
             assert(claimed_buffers[i]);
@@ -157,13 +125,18 @@ static void main_loop(void* pvParameters) {
 
         // end loop
         int64_t end_time = esp_timer_get_time();
-        if (match.location.match_size > 16) {
+        if (loc_ctx.scale_match.location.match_size > 16) {
             ESP_LOGI(TAG, "fr %u t %ums thresh %u (x %d y %d r %f m %d) row %d/%d col %d/%d \n",
                     frame_count, (uint32_t)((end_time - start_time) / 1000),
-                    (threshold0 + threshold1) / 2, match.location.x, match.location.y,
-                    180 * atan2(match.location.rotation.y, match.location.rotation.x) / M_PI,
-                    match.location.match_size, match.row_code.n_errors, match.row_code.n_samples,
-                    match.col_code.n_errors, match.col_code.n_samples);
+                    (loc_ctx.threshold[0] + loc_ctx.threshold[1]) / 2,
+                    loc_ctx.scale_match.location.x, loc_ctx.scale_match.location.y,
+                    180 *
+                            atan2(loc_ctx.scale_match.location.rotation.y,
+                                    loc_ctx.scale_match.location.rotation.x) /
+                            M_PI,
+                    loc_ctx.scale_match.location.match_size, loc_ctx.scale_match.row_code.n_errors,
+                    loc_ctx.scale_match.row_code.n_samples, loc_ctx.scale_match.col_code.n_errors,
+                    loc_ctx.scale_match.col_code.n_samples);
         }
         start_time = end_time;
     }
