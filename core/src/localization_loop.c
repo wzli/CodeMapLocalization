@@ -9,8 +9,9 @@ void localization_loop_run(LocalizationContext* ctx) {
     ctx->rotation_estimate = img_estimate_rotation(ctx->original_image);
     if (!v2f_is_zero(ctx->rotation_estimate)) {
         // unrotate
-        ctx->rotation_estimate.y *= -1;
-        ctx->unrotated_image.size = ctx->original_image.size;
+        ctx->rotation_estimate.y *= -ctx->rotation_scale;
+        ctx->rotation_estimate.x *= ctx->rotation_scale;
+        IMG_SET_SIZE(ctx->unrotated_image, 64, 64);
         img_rotate(ctx->unrotated_image, ctx->original_image, ctx->rotation_estimate,
                 ctx->threshold[0], img_bilinear_interpolation);
     }

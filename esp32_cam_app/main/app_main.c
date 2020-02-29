@@ -83,7 +83,8 @@ static void main_loop(void* pvParameters) {
     }
     // run unit tests
     assert(!run_all_tests());
-    // configure scale search params
+    // configure location context params
+    loc_ctx.rotation_scale = 1.0f;
     loc_ctx.scale_query.lower_bound = 0.8f;
     loc_ctx.scale_query.upper_bound = 1.2f;
     loc_ctx.scale_query.step_size = 0.02f;

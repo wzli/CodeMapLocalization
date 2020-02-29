@@ -53,6 +53,7 @@ static int test_localization_loop_run() {
     ctx->original_image = (ImageMatrix){malloc(64 * 64), {64, 64}};
     ctx->unrotated_image = (ImageMatrix){malloc(64 * 64), {64, 64}};
     ctx->sharpened_image = ctx->unrotated_image;
+    ctx->rotation_scale = 1.0f;
     for (uint32_t src_row_pos = 1000; src_row_pos < 1000 + TEST_VECTOR_SIZE; ++src_row_pos)
         for (uint32_t src_col_pos = 1100; src_col_pos < 1100 + TEST_VECTOR_SIZE; ++src_col_pos) {
             uint32_t src_row_code = mlsq_code_from_position(MLS_INDEX.sequence, 32, src_row_pos);
