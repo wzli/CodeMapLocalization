@@ -16,12 +16,19 @@ void localization_loop_run(LocalizationContext* ctx) {
                 ctx->threshold[0], img_bilinear_interpolation);
     }
 
-    // crop the center 32x32 box of the unrotated image for phase correlation
+    // crop the center 44x44 box of the unrotated image for phase correlation
     FOR_EACH_PIXEL(ctx->unrotated_image) {
+        int8_t dx = (2 * col) - 63;
+        int8_t dy = (2 * row) - 63;
+        int16_t r2 = SQR(dx) + SQR(dy);
+        if (r2 > SQR(44)) {
+            PIXEL(ctx->correlation_image, row, col) = 0;
+            continue;
+        }
+        float norm_r2 = (float) r2 / SQR(44);
+        float window = (SQR(norm_r2) * (2 * norm_r2 - 3) + 1);
         PIXEL(ctx->correlation_image, row, col) =
-                (row < 16 || row >= 48 || col < 16 || col >= 48)
-                        ? 0
-                        : (PIXEL(ctx->unrotated_image, row, col) - 128) * 256;
+                (PIXEL(ctx->unrotated_image, row, col) - 128) * 256 * window;
     }
 
     SWAP(ctx->correlation_image.data, ctx->correlation_buffer.data);
