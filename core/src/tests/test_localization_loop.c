@@ -13,8 +13,8 @@ static int test_phase_correlation() {
     IMG_FILL(frame, 0);
     IMG_FILL(next_frame, 0);
 
-    PIXEL(frame, 3, 3) = 1;
-    PIXEL(next_frame, 2, 2) = 1;
+    PIXEL(frame, 3, 3) = 255;
+    PIXEL(next_frame, 2, 2) = 255;
 
     img_phase_correlation(frame, next_frame, false);
 
@@ -81,6 +81,8 @@ static int test_localization_loop_run() {
     ctx->original_image = (ImageMatrix){malloc(64 * 64), {64, 64}};
     ctx->unrotated_image = (ImageMatrix){malloc(64 * 64), {64, 64}};
     ctx->sharpened_image = ctx->unrotated_image;
+    ctx->correlation_image = (ImageMatrixInt32){malloc(64 * 64 * sizeof(int32_t) * 2), {64, 64}};
+    ctx->correlation_buffer = (ImageMatrixInt32){malloc(64 * 64 * sizeof(int32_t) * 2), {64, 64}};
     ctx->rotation_scale = 1.0f;
     for (uint32_t src_row_pos = 1000; src_row_pos < 1000 + TEST_VECTOR_SIZE; ++src_row_pos)
         for (uint32_t src_col_pos = 1100; src_col_pos < 1100 + TEST_VECTOR_SIZE; ++src_col_pos) {
@@ -118,6 +120,8 @@ static int test_localization_loop_run() {
         }
     free(ctx->original_image.data);
     free(ctx->unrotated_image.data);
+    free(ctx->correlation_image.data);
+    free(ctx->correlation_buffer.data);
     free(ctx);
     return 0;
 }

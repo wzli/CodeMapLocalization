@@ -36,13 +36,9 @@ void img_phase_correlation(ImageMatrixInt32 frame, ImageMatrixInt32 next_frame, 
     esp_err_t esp_error = ESP_OK;
     // FFT frame
     if (!reuse_frame) {
-        FOR_EACH_PIXEL(frame) { PIXEL(frame, row, col) = (PIXEL(frame, row, col) - 128) << 8; }
         esp_error |= dsp_fft_2d(frame, false);
     }
     // FFT next frame
-    FOR_EACH_PIXEL(frame) {
-        PIXEL(next_frame, row, col) = (PIXEL(next_frame, row, col) - 128) << 8;
-    }
     esp_error |= dsp_fft_2d(next_frame, false);
     // Element wise multiply and normalize
     int16_t* a = (int16_t*) frame.data;
@@ -55,7 +51,10 @@ void img_phase_correlation(ImageMatrixInt32 frame, ImageMatrixInt32 next_frame, 
     }
     // Inverse FFT
     esp_error |= dsp_fft_2d(frame, true);
-    // Keep only real component
-    FOR_EACH_PIXEL(frame) { PIXEL(frame, row, col) = (int16_t)(PIXEL(frame, row, col) & 0xFFFF); }
+    // Only keep magnitude
+    a = (int16_t*) frame.data;
+    for (int32_t i = 0; i < IMG_PIXEL_COUNT(frame); ++i, a += 2) {
+        frame.data[i] = (SQR(a[0]) + SQR(a[1])) / 128;
+    }
     assert(esp_error == ESP_OK);
 }

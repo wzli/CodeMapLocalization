@@ -5,6 +5,8 @@ typedef struct {
     ImageMatrix original_image;
     ImageMatrix unrotated_image;
     ImageMatrix sharpened_image;
+    ImageMatrixInt32 correlation_image;
+    ImageMatrixInt32 correlation_buffer;
     BitMatrix64 binary_image;
     BitMatrix64 binary_mask;
     ScaleQuery scale_query;

@@ -15,6 +15,18 @@ void localization_loop_run(LocalizationContext* ctx) {
         img_rotate(ctx->unrotated_image, ctx->original_image, ctx->rotation_estimate,
                 ctx->threshold[0], img_bilinear_interpolation);
     }
+
+    // crop the center 32x32 box of the unrotated image for phase correlation
+    FOR_EACH_PIXEL(ctx->unrotated_image) {
+        PIXEL(ctx->correlation_image, row, col) =
+                (row < 16 || row >= 48 || col < 16 || col >= 48)
+                        ? 0
+                        : (PIXEL(ctx->unrotated_image, row, col) - 128) * 256;
+    }
+
+    SWAP(ctx->correlation_image.data, ctx->correlation_buffer.data);
+    img_phase_correlation(ctx->correlation_image, ctx->correlation_buffer, true);
+
     // sharpen unrotated image and remove edge effects
     img_hyper_sharpen(&(ctx->sharpened_image), ctx->unrotated_image);
     ImagePoint image_center = {ctx->sharpened_image.size.x / 2, ctx->sharpened_image.size.y / 2};

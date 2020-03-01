@@ -35,6 +35,7 @@ static camera_fb_t double_buffers[][2] = {
 #define N_DOUBLE_BUFFERS (sizeof(double_buffers) / sizeof(double_buffers[0]))
 static camera_fb_t* claimed_buffers[N_DOUBLE_BUFFERS + 1];
 
+static int32_t correlation_buffers[2][64 * 64];
 static LocalizationContext loc_ctx;
 
 /* helper functions */
@@ -88,6 +89,8 @@ static void main_loop(void* pvParameters) {
     loc_ctx.scale_query.lower_bound = 0.8f;
     loc_ctx.scale_query.upper_bound = 1.2f;
     loc_ctx.scale_query.step_size = 0.02f;
+    loc_ctx.correlation_image = (ImageMatrixInt32){correlation_buffers[0], {64, 64}};
+    loc_ctx.correlation_buffer = (ImageMatrixInt32){correlation_buffers[1], {64, 64}};
     // initialize queues
     for (int i = 0; i <= N_DOUBLE_BUFFERS; ++i) {
         for (int j = 0; j < 2; ++j) {
@@ -105,9 +108,17 @@ static void main_loop(void* pvParameters) {
         }
         loc_ctx.original_image = images[0];
         loc_ctx.unrotated_image = images[1];
-        loc_ctx.sharpened_image = images[1];
+        loc_ctx.sharpened_image = images[2];
         localization_loop_run(&loc_ctx);
 
+        IMG_NORMALIZE(images[2], loc_ctx.correlation_image);
+        for (int16_t row = 0; row < 32; ++row) {
+            for (int16_t col = 0; col < 32; ++col) {
+                SWAP(PIXEL(images[2], row, col), PIXEL(images[2], row + 32, col + 32));
+                SWAP(PIXEL(images[2], row + 32, col), PIXEL(images[2], row, col + 32));
+            }
+        }
+#if 0
         // display thresholded bm64
         bm64_to_img(&images[1], loc_ctx.binary_image, loc_ctx.binary_mask);
 
@@ -122,6 +133,7 @@ static void main_loop(void* pvParameters) {
         bm64_from_axiscodes(loc_ctx.binary_image, loc_ctx.binary_mask, loc_ctx.scale_query.row_code,
                 loc_ctx.scale_query.col_code);
         bm64_to_img(&images[3], loc_ctx.binary_image, loc_ctx.binary_mask);
+#endif
 
         for (uint8_t i = 0; i <= N_DOUBLE_BUFFERS; ++i) {
             assert(claimed_buffers[i]);

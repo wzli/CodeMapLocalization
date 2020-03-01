@@ -32,7 +32,5 @@ void img_phase_correlation(ImageMatrixInt32 frame, ImageMatrixInt32 next_frame, 
     }
     img_fast_fourier_transform(complex_frame, true);
 
-    FOR_EACH_PIXEL(frame) {
-        PIXEL(frame, row, col) = crealf(PIXEL(complex_frame, row, col)) + 0.5f;
-    }
+    FOR_EACH_PIXEL(frame) { PIXEL(frame, row, col) = cabsf(PIXEL(complex_frame, row, col)) + 0.5f; }
 }
