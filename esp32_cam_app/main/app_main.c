@@ -140,8 +140,8 @@ static void main_loop(void* pvParameters) {
         bm64_to_img(&images[2], loc_ctx.binary_image, loc_ctx.binary_mask);
 
         // display scale matched bm64
-        BM_COPY(loc_ctx.scale_query.row_code, loc_ctx.scale_match.row_code);
-        BM_COPY(loc_ctx.scale_query.col_code, loc_ctx.scale_match.col_code);
+        AXISCODE_COPY(loc_ctx.scale_query.row_code, loc_ctx.scale_match.row_code);
+        AXISCODE_COPY(loc_ctx.scale_query.col_code, loc_ctx.scale_match.col_code);
         bm64_from_axiscodes(loc_ctx.binary_image, loc_ctx.binary_mask, loc_ctx.scale_query.row_code,
                 loc_ctx.scale_query.col_code);
         bm64_to_img(&images[3], loc_ctx.binary_image, loc_ctx.binary_mask);

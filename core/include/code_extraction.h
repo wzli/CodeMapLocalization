@@ -16,7 +16,7 @@ typedef struct {
     uint16_t n_samples;
 } AxisCode64;
 
-#define BM_COPY(DST, SRC)                                                               \
+#define AXISCODE_COPY(DST, SRC)                                                         \
     ((DST).bits = (SRC).bits, (DST).mask = (SRC).mask, (DST).n_errors = (SRC).n_errors, \
             (DST).n_samples = (SRC).n_samples)
 
