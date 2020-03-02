@@ -1,20 +1,25 @@
 #include "localization_loop.h"
 #include "optical_flow.h"
+#include <assert.h>
 
-void localization_loop_run(LocalizationContext* ctx) {
+void localization_loop_run(LocalizationContext* ctx, const ImageMatrix image) {
+    assert(ctx);
+    assert(image.data);
+    assert(ctx->unrotated_image.data);
+    assert(ctx->sharpened_image.data);
     // find threshold of original image
-    img_histogram(ctx->histogram, ctx->original_image);
+    img_histogram(ctx->histogram, image);
     ctx->threshold[0] = img_compute_otsu_threshold(ctx->histogram);
 
     // estimate rotation of original image
-    ctx->rotation_estimate = img_estimate_rotation(ctx->original_image);
+    ctx->rotation_estimate = img_estimate_rotation(image);
     if (!v2f_is_zero(ctx->rotation_estimate)) {
         // unrotate
         ctx->rotation_estimate.y *= -ctx->rotation_scale;
         ctx->rotation_estimate.x *= ctx->rotation_scale;
         IMG_SET_SIZE(ctx->unrotated_image, 64, 64);
-        img_rotate(ctx->unrotated_image, ctx->original_image, ctx->rotation_estimate,
-                ctx->threshold[0], img_bilinear_interpolation);
+        img_rotate(ctx->unrotated_image, image, ctx->rotation_estimate, ctx->threshold[0],
+                img_bilinear_interpolation);
     }
 
     // run optical flow

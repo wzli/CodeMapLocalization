@@ -89,8 +89,8 @@ static void main_loop(void* pvParameters) {
     loc_ctx.scale_query.lower_bound = 0.8f;
     loc_ctx.scale_query.upper_bound = 1.2f;
     loc_ctx.scale_query.step_size = 0.02f;
-    loc_ctx.flow_ctx.correlation_image = (ImageMatrixComplex){correlation_buffers[0], {64, 64}};
-    loc_ctx.flow_ctx.correlation_buffer = (ImageMatrixComplex){correlation_buffers[1], {64, 64}};
+    loc_ctx.flow_ctx.correlation_image.data = correlation_buffers[0];
+    loc_ctx.flow_ctx.correlation_buffer.data = correlation_buffers[1];
     // initialize queues
     for (int i = 0; i <= N_DOUBLE_BUFFERS; ++i) {
         for (int j = 0; j < 2; ++j) {
@@ -105,11 +105,10 @@ static void main_loop(void* pvParameters) {
         for (uint8_t i = 0; i <= N_DOUBLE_BUFFERS; ++i) {
             images[i] = queue_fb_get(i);
         }
-        loc_ctx.original_image = images[0];
         loc_ctx.unrotated_image = images[1];
         loc_ctx.sharpened_image = images[2];
         int64_t start_time = esp_timer_get_time();
-        localization_loop_run(&loc_ctx);
+        localization_loop_run(&loc_ctx, images[0]);
         int64_t end_time = esp_timer_get_time();
 
         images[2].size = loc_ctx.flow_ctx.correlation_image.size;

@@ -50,13 +50,11 @@ static int test_full_chain_simulation() {
 
 static int test_localization_loop_run() {
     LocalizationContext* ctx = malloc(sizeof(LocalizationContext));
-    ctx->original_image = (ImageMatrix){calloc(64 * 64, 1), {64, 64}};
+    ImageMatrix image = {calloc(64 * 64, 1), {64, 64}};
     ctx->unrotated_image = (ImageMatrix){calloc(64 * 64, 1), {64, 64}};
     ctx->sharpened_image = ctx->unrotated_image;
-    ctx->flow_ctx.correlation_image =
-            (ImageMatrixComplex){calloc(64 * 64, sizeof(float complex)), {64, 64}};
-    ctx->flow_ctx.correlation_buffer =
-            (ImageMatrixComplex){calloc(64 * 64, sizeof(float complex)), {64, 64}};
+    ctx->flow_ctx.correlation_image.data = calloc(64 * 64, sizeof(float complex));
+    ctx->flow_ctx.correlation_buffer.data = calloc(64 * 64, sizeof(float complex));
     ctx->rotation_scale = 1.0f;
     for (uint32_t src_row_pos = 1000; src_row_pos < 1000 + TEST_VECTOR_SIZE; ++src_row_pos)
         for (uint32_t src_col_pos = 1100; src_col_pos < 1100 + TEST_VECTOR_SIZE; ++src_col_pos) {
@@ -70,10 +68,10 @@ static int test_localization_loop_run() {
             ctx->scale_query.col_code = scale_axiscode64(ctx->scale_query.col_code, 3);
             bm64_from_axiscodes(ctx->binary_image, ctx->binary_mask, ctx->scale_query.row_code,
                     ctx->scale_query.col_code);
-            bm64_to_img(&ctx->original_image, ctx->binary_image, ctx->binary_mask);
+            bm64_to_img(&image, ctx->binary_image, ctx->binary_mask);
 
             // simulate real life pipe line
-            localization_loop_run(ctx);
+            localization_loop_run(ctx, image);
 
             uint32_t compare_row_code = (ctx->scale_match.row_code.bits ^ src_row_code) &
                                         ctx->scale_match.row_code.mask;
@@ -92,7 +90,7 @@ static int test_localization_loop_run() {
                     compare_col_code == 0 || compare_col_code == ctx->scale_match.col_code.mask ||
                     compare_col_code1 == 0 || compare_col_code1 == ctx->scale_match.col_code.mask);
         }
-    free(ctx->original_image.data);
+    free(image.data);
     free(ctx->unrotated_image.data);
     free(ctx->flow_ctx.correlation_image.data);
     free(ctx->flow_ctx.correlation_buffer.data);

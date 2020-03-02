@@ -69,8 +69,10 @@ static const float window_lookup[64] = {
         0.0f,
 };
 
-void optical_flow_run(OpticalFlowContext* ctx, ImageMatrix frame) {
+void optical_flow_run(OpticalFlowContext* ctx, const ImageMatrix frame) {
     assert(frame.size.x == 64 && frame.size.y == 64);
+    IMG_SET_SIZE(ctx->correlation_image, 64, 64);
+    IMG_SET_SIZE(ctx->correlation_buffer, 64, 64);
     // apply hann window to remove edge effects, assuming real imput
     FOR_EACH_PIXEL(frame) {
         PIXEL(ctx->correlation_image, row, col) =

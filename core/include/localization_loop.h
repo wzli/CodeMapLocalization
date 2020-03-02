@@ -3,7 +3,6 @@
 #include "optical_flow.h"
 
 typedef struct {
-    ImageMatrix original_image;
     ImageMatrix unrotated_image;
     ImageMatrix sharpened_image;
     BitMatrix64 binary_image;
@@ -17,4 +16,4 @@ typedef struct {
     OpticalFlowContext flow_ctx;
 } LocalizationContext;
 
-void localization_loop_run(LocalizationContext* ctx);
+void localization_loop_run(LocalizationContext* ctx, const ImageMatrix image);
