@@ -89,8 +89,8 @@ static void main_loop(void* pvParameters) {
     loc_ctx.scale_query.lower_bound = 0.8f;
     loc_ctx.scale_query.upper_bound = 1.2f;
     loc_ctx.scale_query.step_size = 0.02f;
-    loc_ctx.correlation_image = (ImageMatrixComplex){correlation_buffers[0], {64, 64}};
-    loc_ctx.correlation_buffer = (ImageMatrixComplex){correlation_buffers[1], {64, 64}};
+    loc_ctx.flow_ctx.correlation_image = (ImageMatrixComplex){correlation_buffers[0], {64, 64}};
+    loc_ctx.flow_ctx.correlation_buffer = (ImageMatrixComplex){correlation_buffers[1], {64, 64}};
     // initialize queues
     for (int i = 0; i <= N_DOUBLE_BUFFERS; ++i) {
         for (int j = 0; j < 2; ++j) {
@@ -99,7 +99,6 @@ static void main_loop(void* pvParameters) {
         }
         assert(!uxQueueSpacesAvailable(frame_queues[i]));
     }
-    int64_t start_time = esp_timer_get_time();
     // main loop
     for (uint32_t frame_count = 0;; ++frame_count) {
         ImageMatrix images[N_DOUBLE_BUFFERS + 1];
@@ -109,19 +108,21 @@ static void main_loop(void* pvParameters) {
         loc_ctx.original_image = images[0];
         loc_ctx.unrotated_image = images[1];
         loc_ctx.sharpened_image = images[2];
+        int64_t start_time = esp_timer_get_time();
         localization_loop_run(&loc_ctx);
+        int64_t end_time = esp_timer_get_time();
 
-        images[2].size = loc_ctx.correlation_image.size;
+        images[2].size = loc_ctx.flow_ctx.correlation_image.size;
         float max_magnitude = 0;
-        FOR_EACH_PIXEL(loc_ctx.correlation_image) {
-            float magnitude = cabsf(PIXEL(loc_ctx.correlation_image, row, col));
+        FOR_EACH_PIXEL(loc_ctx.flow_ctx.correlation_image) {
+            float magnitude = cabsf(PIXEL(loc_ctx.flow_ctx.correlation_image, row, col));
             max_magnitude = MAX(max_magnitude, magnitude);
-            PIXEL(loc_ctx.correlation_image, row, col) = magnitude;
+            PIXEL(loc_ctx.flow_ctx.correlation_image, row, col) = magnitude;
         }
         float norm_scale = 1.0f / max_magnitude;
-        FOR_EACH_PIXEL(loc_ctx.correlation_image) {
+        FOR_EACH_PIXEL(loc_ctx.flow_ctx.correlation_image) {
             PIXEL(images[2], row, col) =
-                    255 * norm_scale * PIXEL(loc_ctx.correlation_image, row, col);
+                    255 * norm_scale * PIXEL(loc_ctx.flow_ctx.correlation_image, row, col);
         }
 
         for (int16_t row = 0; row < 32; ++row) {
@@ -156,10 +157,9 @@ static void main_loop(void* pvParameters) {
         }
 
         // end loop
-        int64_t end_time = esp_timer_get_time();
         if (loc_ctx.scale_match.location.match_size > 16) {
-            ESP_LOGI(TAG, "fr %u t %ums thresh %u (x %d y %d r %f m %d) row %d/%d col %d/%d \n",
-                    frame_count, (uint32_t)((end_time - start_time) / 1000),
+            ESP_LOGI(TAG, "fr %u t %lluus thresh %u (x %d y %d r %f m %d) row %d/%d col %d/%d \n",
+                    frame_count, end_time - start_time,
                     (loc_ctx.threshold[0] + loc_ctx.threshold[1]) / 2,
                     loc_ctx.scale_match.location.x, loc_ctx.scale_match.location.y,
                     180 *

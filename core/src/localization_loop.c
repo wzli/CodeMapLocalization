@@ -17,22 +17,8 @@ void localization_loop_run(LocalizationContext* ctx) {
                 ctx->threshold[0], img_bilinear_interpolation);
     }
 
-    // crop the center 44x44 box of the unrotated image for phase correlation
-    FOR_EACH_PIXEL(ctx->unrotated_image) {
-        int8_t dx = (2 * col) - 63;
-        int8_t dy = (2 * row) - 63;
-        int16_t r2 = SQR(dx) + SQR(dy);
-        if (r2 > SQR(44)) {
-            PIXEL(ctx->correlation_image, row, col) = 0;
-            continue;
-        }
-        float norm_r2 = (float) r2 / SQR(44);
-        float window = (SQR(norm_r2) * (2 * norm_r2 - 3) + 1);
-        PIXEL(ctx->correlation_image, row, col) = PIXEL(ctx->unrotated_image, row, col) * window;
-    }
-
-    SWAP(ctx->correlation_image.data, ctx->correlation_buffer.data);
-    img_phase_correlation(ctx->correlation_image, ctx->correlation_buffer, true);
+    // run optical flow
+    optical_flow_run(&(ctx->flow_ctx), ctx->unrotated_image);
 
     // sharpen unrotated image and remove edge effects
     img_hyper_sharpen(&(ctx->sharpened_image), ctx->unrotated_image);

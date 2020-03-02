@@ -50,13 +50,13 @@ static int test_full_chain_simulation() {
 
 static int test_localization_loop_run() {
     LocalizationContext* ctx = malloc(sizeof(LocalizationContext));
-    ctx->original_image = (ImageMatrix){malloc(64 * 64), {64, 64}};
-    ctx->unrotated_image = (ImageMatrix){malloc(64 * 64), {64, 64}};
+    ctx->original_image = (ImageMatrix){calloc(64 * 64, 1), {64, 64}};
+    ctx->unrotated_image = (ImageMatrix){calloc(64 * 64, 1), {64, 64}};
     ctx->sharpened_image = ctx->unrotated_image;
-    ctx->correlation_image =
-            (ImageMatrixComplex){malloc(64 * 64 * sizeof(float complex)), {64, 64}};
-    ctx->correlation_buffer =
-            (ImageMatrixComplex){malloc(64 * 64 * sizeof(float complex)), {64, 64}};
+    ctx->flow_ctx.correlation_image =
+            (ImageMatrixComplex){calloc(64 * 64, sizeof(float complex)), {64, 64}};
+    ctx->flow_ctx.correlation_buffer =
+            (ImageMatrixComplex){calloc(64 * 64, sizeof(float complex)), {64, 64}};
     ctx->rotation_scale = 1.0f;
     for (uint32_t src_row_pos = 1000; src_row_pos < 1000 + TEST_VECTOR_SIZE; ++src_row_pos)
         for (uint32_t src_col_pos = 1100; src_col_pos < 1100 + TEST_VECTOR_SIZE; ++src_col_pos) {
@@ -94,8 +94,8 @@ static int test_localization_loop_run() {
         }
     free(ctx->original_image.data);
     free(ctx->unrotated_image.data);
-    free(ctx->correlation_image.data);
-    free(ctx->correlation_buffer.data);
+    free(ctx->flow_ctx.correlation_image.data);
+    free(ctx->flow_ctx.correlation_buffer.data);
     free(ctx);
     return 0;
 }
