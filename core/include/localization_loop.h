@@ -18,6 +18,3 @@ typedef struct {
 } LocalizationContext;
 
 void localization_loop_run(LocalizationContext* ctx);
-
-void img_phase_correlation(
-        ImageMatrixComplex frame, ImageMatrixComplex next_frame, bool reuse_frame);

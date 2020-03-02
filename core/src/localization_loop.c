@@ -1,4 +1,5 @@
 #include "localization_loop.h"
+#include "optical_flow.h"
 
 void localization_loop_run(LocalizationContext* ctx) {
     // find threshold of original image

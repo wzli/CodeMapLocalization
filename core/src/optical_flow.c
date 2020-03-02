@@ -1,4 +1,4 @@
-#include "image_utils.h"
+#include "optical_flow.h"
 #include <assert.h>
 
 void img_phase_correlation(
@@ -13,5 +13,5 @@ void img_phase_correlation(
         PIXEL(frame, row, col) *= conjf(PIXEL(next_frame, row, col));
         PIXEL(frame, row, col) /= cabsf(PIXEL(frame, row, col));
     }
-    img_fast_fourier_transform(frame, true);
+    img_fast_fourier_transform(frame, false);
 }
