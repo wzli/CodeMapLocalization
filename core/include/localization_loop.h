@@ -5,8 +5,8 @@ typedef struct {
     ImageMatrix original_image;
     ImageMatrix unrotated_image;
     ImageMatrix sharpened_image;
-    ImageMatrixInt32 correlation_image;
-    ImageMatrixInt32 correlation_buffer;
+    ImageMatrixComplex correlation_image;
+    ImageMatrixComplex correlation_buffer;
     BitMatrix64 binary_image;
     BitMatrix64 binary_mask;
     ScaleQuery scale_query;
@@ -19,4 +19,5 @@ typedef struct {
 
 void localization_loop_run(LocalizationContext* ctx);
 
-void img_phase_correlation(ImageMatrixInt32 frame, ImageMatrixInt32 next_frame, bool reuse_frame);
+void img_phase_correlation(
+        ImageMatrixComplex frame, ImageMatrixComplex next_frame, bool reuse_frame);

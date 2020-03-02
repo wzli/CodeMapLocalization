@@ -27,8 +27,7 @@ void localization_loop_run(LocalizationContext* ctx) {
         }
         float norm_r2 = (float) r2 / SQR(44);
         float window = (SQR(norm_r2) * (2 * norm_r2 - 3) + 1);
-        PIXEL(ctx->correlation_image, row, col) =
-                (PIXEL(ctx->unrotated_image, row, col) - 128) * 256 * window;
+        PIXEL(ctx->correlation_image, row, col) = PIXEL(ctx->unrotated_image, row, col) * window;
     }
 
     SWAP(ctx->correlation_image.data, ctx->correlation_buffer.data);
