@@ -10,8 +10,10 @@ void img_phase_correlation(
     }
     img_fast_fourier_transform(next_frame, false);
     FOR_EACH_PIXEL(frame) {
-        PIXEL(frame, row, col) *= conjf(PIXEL(next_frame, row, col));
-        PIXEL(frame, row, col) /= cabsf(PIXEL(frame, row, col));
+        Vector2f* a = (Vector2f*) &PIXEL(frame, row, col);
+        Vector2f* b = (Vector2f*) &PIXEL(next_frame, row, col);
+        Vector2f c = {v2f_dot(*b, *a), v2f_cross(*b, *a)};
+        *a = v2f_normalize(c);
     }
     img_fast_fourier_transform(frame, false);
 }
