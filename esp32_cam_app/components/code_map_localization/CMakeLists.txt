@@ -3,17 +3,18 @@ set(srcs
   src/code_extraction.c
   src/localization_loop.c
   src/location_decode.c
+  src/phase_correlation.c
   src/mls_index.c
   src/mls_query.c
   src/micro_image_utils/image_utils.c
 
 # customized to use esp32 optimized fft
-  phase_correlation.c
+  #src/micro_image_utils/mfft.c
+  fft.c
 
 # for tests only
   src/debug_prints.c
   src/micro_image_utils/distance_transform.c
-  src/micro_image_utils/mfft.c
   src/tests/test_bitwise_utils.c
   src/tests/test_code_extraction.c
   src/tests/test_location_decode.c
