@@ -111,14 +111,26 @@ static void main_loop(void* pvParameters) {
         loc_ctx.sharpened_image = images[2];
         localization_loop_run(&loc_ctx);
 
-#if 0
-        IMG_NORMALIZE(images[2], loc_ctx.correlation_image);
+        images[2].size = loc_ctx.correlation_image.size;
+        float max_magnitude = 0;
+        FOR_EACH_PIXEL(loc_ctx.correlation_image) {
+            float magnitude = cabsf(PIXEL(loc_ctx.correlation_image, row, col));
+            max_magnitude = MAX(max_magnitude, magnitude);
+            PIXEL(loc_ctx.correlation_image, row, col) = magnitude;
+        }
+        float norm_scale = 1.0f / max_magnitude;
+        FOR_EACH_PIXEL(loc_ctx.correlation_image) {
+            PIXEL(images[2], row, col) =
+                    255 * norm_scale * PIXEL(loc_ctx.correlation_image, row, col);
+        }
+
         for (int16_t row = 0; row < 32; ++row) {
             for (int16_t col = 0; col < 32; ++col) {
                 SWAP(PIXEL(images[2], row, col), PIXEL(images[2], row + 32, col + 32));
                 SWAP(PIXEL(images[2], row + 32, col), PIXEL(images[2], row, col + 32));
             }
         }
+#if 0
         // display thresholded bm64
         bm64_to_img(&images[1], loc_ctx.binary_image, loc_ctx.binary_mask);
 
