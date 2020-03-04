@@ -35,7 +35,7 @@ static camera_fb_t double_buffers[][2] = {
 #define N_DOUBLE_BUFFERS (sizeof(double_buffers) / sizeof(double_buffers[0]))
 static camera_fb_t* claimed_buffers[N_DOUBLE_BUFFERS + 1];
 
-static Vector2f correlation_buffers[2][64 * 64];
+static Vector2f correlation_buffers[2][32 * 32];
 static LocalizationContext loc_ctx;
 
 /* helper functions */
@@ -112,22 +112,22 @@ static void main_loop(void* pvParameters) {
         int64_t end_time = esp_timer_get_time();
 
         images[2].size = loc_ctx.flow_ctx.correlation_image.size;
-        float max_magnitude = 0;
+        float max_norm_sqr = 0;
         FOR_EACH_PIXEL(loc_ctx.flow_ctx.correlation_image) {
-            float magnitude = cabsf(PIXEL(loc_ctx.flow_ctx.correlation_image, row, col));
-            max_magnitude = MAX(max_magnitude, magnitude);
-            PIXEL(loc_ctx.flow_ctx.correlation_image, row, col) = magnitude;
+            float norm_sqr = v2f_norm_sqr(PIXEL(loc_ctx.flow_ctx.correlation_image, row, col));
+            max_norm_sqr = MAX(max_norm_sqr, norm_sqr);
+            PIXEL(loc_ctx.flow_ctx.correlation_image, row, col).x = norm_sqr;
         }
-        float norm_scale = 1.0f / max_magnitude;
+        float norm_scale = 1.0f / max_norm_sqr;
         FOR_EACH_PIXEL(loc_ctx.flow_ctx.correlation_image) {
             PIXEL(images[2], row, col) =
-                    255 * norm_scale * PIXEL(loc_ctx.flow_ctx.correlation_image, row, col);
+                    255 * norm_scale * PIXEL(loc_ctx.flow_ctx.correlation_image, row, col).x;
         }
 
-        for (int16_t row = 0; row < 32; ++row) {
-            for (int16_t col = 0; col < 32; ++col) {
-                SWAP(PIXEL(images[2], row, col), PIXEL(images[2], row + 32, col + 32));
-                SWAP(PIXEL(images[2], row + 32, col), PIXEL(images[2], row, col + 32));
+        for (int16_t row = 0; row < 16; ++row) {
+            for (int16_t col = 0; col < 16; ++col) {
+                SWAP(PIXEL(images[2], row, col), PIXEL(images[2], row + 16, col + 16));
+                SWAP(PIXEL(images[2], row + 16, col), PIXEL(images[2], row, col + 16));
             }
         }
 #if 0

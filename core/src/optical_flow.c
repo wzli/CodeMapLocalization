@@ -71,11 +71,13 @@ static const float window_lookup[64] = {
 
 void optical_flow_run(OpticalFlowContext* ctx, const ImageMatrix frame) {
     assert(frame.size.x == 64 && frame.size.y == 64);
-    IMG_SET_SIZE(ctx->correlation_image, 64, 64);
-    IMG_SET_SIZE(ctx->correlation_buffer, 64, 64);
-    // apply hann window to remove edge effects, assuming real imput
+    IMG_SET_SIZE(ctx->correlation_image, 32, 32);
+    IMG_SET_SIZE(ctx->correlation_buffer, 32, 32);
+    // 2x2 bin the source image
+    IMG_FILL(ctx->correlation_image, (Vector2f){});
     FOR_EACH_PIXEL(frame) {
-        PIXEL(ctx->correlation_image, row, col).z =
+        // apply hann window to remove edge effects
+        PIXEL(ctx->correlation_image, row / 2, col / 2).x +=
                 PIXEL(frame, row, col) * window_lookup[row] * window_lookup[col];
     }
     // reuse previously transfromed image as 1st frame
@@ -92,10 +94,8 @@ void img_phase_correlation(
     }
     img_fast_fourier_transform(next_frame, false);
     FOR_EACH_PIXEL(frame) {
-        Vector2f* a = (Vector2f*) &PIXEL(frame, row, col);
-        Vector2f* b = (Vector2f*) &PIXEL(next_frame, row, col);
-        Vector2f c = {{v2f_dot(*b, *a), v2f_cross(*b, *a)}};
-        *a = v2f_normalize(c);
+        PIXEL(frame, row, col).z *= conjf(PIXEL(next_frame, row, col).z);
+        PIXEL(frame, row, col) = v2f_normalize(PIXEL(frame, row, col));
     }
     img_fast_fourier_transform(frame, false);
 }
