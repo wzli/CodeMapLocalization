@@ -1,26 +1,29 @@
 #include "localization_loop.h"
 #include <assert.h>
 
+Vector2f img_derotation_filter(
+        ImageMatrix dst, const ImageMatrix src, float rotation_scale, uint8_t bg_fill) {
+    assert(dst.data && src.data);
+    // estimate rotation of original image
+    Vector2f rotation_estimate = img_estimate_rotation(src);
+    if (rotation_estimate.z != 0) {
+        // unrotate
+        rotation_estimate.y *= -rotation_scale;
+        rotation_estimate.x *= rotation_scale;
+        img_rotate(dst, src, rotation_estimate, bg_fill, img_bilinear_interpolation);
+    }
+    return rotation_estimate;
+}
+
 void localization_loop_run(LocalizationContext* ctx, const ImageMatrix image) {
     assert(ctx);
-    assert(image.data);
-    assert(ctx->unrotated_image.data);
     assert(ctx->sharpened_image.data);
     // find threshold of original image
     img_histogram(ctx->histogram, image);
     ctx->threshold[0] = img_compute_otsu_threshold(ctx->histogram);
-
-    // estimate rotation of original image
-    ctx->rotation_estimate = img_estimate_rotation(image);
-    if (ctx->rotation_estimate.z != 0) {
-        // unrotate
-        ctx->rotation_estimate.y *= -ctx->rotation_scale;
-        ctx->rotation_estimate.x *= ctx->rotation_scale;
-        IMG_SET_SIZE(ctx->unrotated_image, 64, 64);
-        img_rotate(ctx->unrotated_image, image, ctx->rotation_estimate, ctx->threshold[0],
-                img_bilinear_interpolation);
-    }
-
+    // unrotate the image
+    ctx->rotation_estimate = img_derotation_filter(
+            ctx->unrotated_image, image, ctx->rotation_scale, ctx->threshold[0]);
     // run optical flow
     img_estimate_translation(&(ctx->correlation), ctx->unrotated_image);
 

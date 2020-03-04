@@ -17,3 +17,6 @@ typedef struct {
 } LocalizationContext;
 
 void localization_loop_run(LocalizationContext* ctx, const ImageMatrix image);
+
+Vector2f img_derotation_filter(
+        ImageMatrix dst, const ImageMatrix src, float rotation_scale, uint8_t bg_fill);
