@@ -89,8 +89,8 @@ static void main_loop(void* pvParameters) {
     loc_ctx.scale_query.lower_bound = 0.8f;
     loc_ctx.scale_query.upper_bound = 1.2f;
     loc_ctx.scale_query.step_size = 0.02f;
-    loc_ctx.flow_ctx.correlation_image.data = correlation_buffers[0];
-    loc_ctx.flow_ctx.correlation_buffer.data = correlation_buffers[1];
+    loc_ctx.correlation.image.data = correlation_buffers[0];
+    loc_ctx.correlation.buffer.data = correlation_buffers[1];
     // initialize queues
     for (int i = 0; i <= N_DOUBLE_BUFFERS; ++i) {
         for (int j = 0; j < 2; ++j) {
@@ -111,17 +111,17 @@ static void main_loop(void* pvParameters) {
         localization_loop_run(&loc_ctx, images[0]);
         int64_t end_time = esp_timer_get_time();
 
-        images[2].size = loc_ctx.flow_ctx.correlation_image.size;
+        images[2].size = loc_ctx.correlation.image.size;
         float max_norm_sqr = 0;
-        FOR_EACH_PIXEL(loc_ctx.flow_ctx.correlation_image) {
-            float norm_sqr = v2f_norm_sqr(PIXEL(loc_ctx.flow_ctx.correlation_image, row, col));
+        FOR_EACH_PIXEL(loc_ctx.correlation.image) {
+            float norm_sqr = v2f_norm_sqr(PIXEL(loc_ctx.correlation.image, row, col));
             max_norm_sqr = MAX(max_norm_sqr, norm_sqr);
-            PIXEL(loc_ctx.flow_ctx.correlation_image, row, col).x = norm_sqr;
+            PIXEL(loc_ctx.correlation.image, row, col).x = norm_sqr;
         }
         float norm_scale = 1.0f / max_norm_sqr;
-        FOR_EACH_PIXEL(loc_ctx.flow_ctx.correlation_image) {
+        FOR_EACH_PIXEL(loc_ctx.correlation.image) {
             PIXEL(images[2], row, col) =
-                    255 * norm_scale * PIXEL(loc_ctx.flow_ctx.correlation_image, row, col).x;
+                    255 * norm_scale * PIXEL(loc_ctx.correlation.image, row, col).x;
         }
 
         for (int16_t row = 0; row < 16; ++row) {

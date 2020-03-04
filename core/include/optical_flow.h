@@ -1,13 +1,13 @@
 #pragma once
-
 #include "image_utils.h"
 
 typedef struct {
-    ImageMatrixComplex correlation_image;
-    ImageMatrixComplex correlation_buffer;
-} OpticalFlowContext;
+    ImageMatrixComplex image;
+    ImageMatrixComplex buffer;
+    Vector2f translation;
+} Correlation;
 
-void optical_flow_run(OpticalFlowContext* ctx, const ImageMatrix frame);
+void img_estimate_translation(Correlation* correlation, const ImageMatrix frame);
 
 void img_phase_correlation(
         ImageMatrixComplex frame, ImageMatrixComplex next_frame, bool reuse_frame);

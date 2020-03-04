@@ -23,7 +23,7 @@ void localization_loop_run(LocalizationContext* ctx, const ImageMatrix image) {
     }
 
     // run optical flow
-    optical_flow_run(&(ctx->flow_ctx), ctx->unrotated_image);
+    img_estimate_translation(&(ctx->correlation), ctx->unrotated_image);
 
     // sharpen unrotated image and remove edge effects
     img_hyper_sharpen(&(ctx->sharpened_image), ctx->unrotated_image);

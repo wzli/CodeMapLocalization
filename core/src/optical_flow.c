@@ -69,20 +69,20 @@ static const float window_lookup[64] = {
         0.0f,
 };
 
-void optical_flow_run(OpticalFlowContext* ctx, const ImageMatrix frame) {
+void img_estimate_translation(Correlation* correlation, const ImageMatrix frame) {
     assert(frame.size.x == 64 && frame.size.y == 64);
-    IMG_SET_SIZE(ctx->correlation_image, 32, 32);
-    IMG_SET_SIZE(ctx->correlation_buffer, 32, 32);
+    IMG_SET_SIZE(correlation->image, 32, 32);
+    IMG_SET_SIZE(correlation->buffer, 32, 32);
     // 2x2 bin the source image
-    IMG_FILL(ctx->correlation_image, (Vector2f){});
+    IMG_FILL(correlation->image, (Vector2f){});
     FOR_EACH_PIXEL(frame) {
         // apply hann window to remove edge effects
-        PIXEL(ctx->correlation_image, row / 2, col / 2).x +=
+        PIXEL(correlation->image, row / 2, col / 2).x +=
                 PIXEL(frame, row, col) * window_lookup[row] * window_lookup[col];
     }
     // reuse previously transfromed image as 1st frame
-    SWAP(ctx->correlation_image.data, ctx->correlation_buffer.data);
-    img_phase_correlation(ctx->correlation_image, ctx->correlation_buffer, true);
+    SWAP(correlation->image.data, correlation->buffer.data);
+    img_phase_correlation(correlation->image, correlation->buffer, true);
 }
 
 void img_phase_correlation(
