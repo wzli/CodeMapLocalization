@@ -1,5 +1,4 @@
 #include "localization_loop.h"
-#include "optical_flow.h"
 #include <assert.h>
 
 void localization_loop_run(LocalizationContext* ctx, const ImageMatrix image) {

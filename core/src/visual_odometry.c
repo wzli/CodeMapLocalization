@@ -1,4 +1,4 @@
-#include "optical_flow.h"
+#include "visual_odometry.h"
 #include <assert.h>
 
 // hann window f(i) = cos(pi * (i - 31.5) / 44) ^ 2

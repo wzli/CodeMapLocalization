@@ -3,7 +3,7 @@ set(srcs
   src/code_extraction.c
   src/localization_loop.c
   src/location_decode.c
-  src/optical_flow.c
+  src/visual_odometry.c
   src/mls_index.c
   src/mls_query.c
   src/micro_image_utils/image_utils.c
@@ -19,7 +19,7 @@ set(srcs
   src/tests/test_code_extraction.c
   src/tests/test_location_decode.c
   src/tests/test_localization_loop.c
-  src/tests/test_optical_flow.c
+  src/tests/test_visual_odometry.c
   src/tests/test_mls_query.c
   src/micro_image_utils/tests/test_generic_utils.c
   src/micro_image_utils/tests/test_image_utils.c

@@ -1,6 +1,6 @@
 #pragma once
 #include "location_decode.h"
-#include "optical_flow.h"
+#include "visual_odometry.h"
 
 typedef struct {
     ImageMatrix unrotated_image;

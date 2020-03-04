@@ -1,5 +1,5 @@
 #include "test_utils.h"
-#include "optical_flow.h"
+#include "visual_odometry.h"
 
 #define CONV_SIZE (8)
 
@@ -34,7 +34,7 @@ static int test_phase_correlation() {
     return 0;
 }
 
-int test_optical_flow() {
+int test_visual_odometry() {
     test_run(test_phase_correlation);
     return 0;
 }
