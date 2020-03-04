@@ -3,19 +3,19 @@
 
 #define CONV_SIZE (8)
 
-static inline bool latch_comp(float complex cur_val, float complex max_val) {
-    return cabsf(cur_val) > cabsf(max_val);
+static inline bool latch_comp(Vector2f cur_val, Vector2f max_val) {
+    return cabsf(cur_val.z) > cabsf(max_val.z);
 }
 
 static int test_phase_correlation() {
-    ImageMatrixComplex frame = {(float complex[SQR(CONV_SIZE)]){}, {CONV_SIZE, CONV_SIZE}};
-    ImageMatrixComplex next_frame = {(float complex[SQR(CONV_SIZE)]){}, {CONV_SIZE, CONV_SIZE}};
+    ImageMatrixComplex frame = {(Vector2f[SQR(CONV_SIZE)]){}, {CONV_SIZE, CONV_SIZE}};
+    ImageMatrixComplex next_frame = {(Vector2f[SQR(CONV_SIZE)]){}, {CONV_SIZE, CONV_SIZE}};
 
-    IMG_FILL(frame, 0);
-    IMG_FILL(next_frame, 0);
+    IMG_FILL(frame, (Vector2f){});
+    IMG_FILL(next_frame, (Vector2f){});
 
-    PIXEL(frame, 2, 2) = 1;
-    PIXEL(next_frame, 3, 3) = 1;
+    PIXEL(frame, 2, 2).x = 1;
+    PIXEL(next_frame, 3, 3).x = 1;
 
     img_phase_correlation(frame, next_frame, false);
 
@@ -25,7 +25,7 @@ static int test_phase_correlation() {
         printf("%3d ", (int16_t)(PIXEL(frame, row, col) & 0xFFFF));
     }
 #endif
-    float complex max_val = 0;
+    Vector2f max_val = {};
     int16_t max_x = -1;
     int16_t max_y = -1;
     IMG_PIXEL_LATCH_INDEX(max_val, max_y, max_x, latch_comp, frame);

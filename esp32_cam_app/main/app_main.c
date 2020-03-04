@@ -35,7 +35,7 @@ static camera_fb_t double_buffers[][2] = {
 #define N_DOUBLE_BUFFERS (sizeof(double_buffers) / sizeof(double_buffers[0]))
 static camera_fb_t* claimed_buffers[N_DOUBLE_BUFFERS + 1];
 
-static float complex correlation_buffers[2][64 * 64];
+static Vector2f correlation_buffers[2][64 * 64];
 static LocalizationContext loc_ctx;
 
 /* helper functions */

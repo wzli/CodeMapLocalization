@@ -75,7 +75,7 @@ void optical_flow_run(OpticalFlowContext* ctx, const ImageMatrix frame) {
     IMG_SET_SIZE(ctx->correlation_buffer, 64, 64);
     // apply hann window to remove edge effects, assuming real imput
     FOR_EACH_PIXEL(frame) {
-        PIXEL(ctx->correlation_image, row, col) =
+        PIXEL(ctx->correlation_image, row, col).z =
                 PIXEL(frame, row, col) * window_lookup[row] * window_lookup[col];
     }
     // reuse previously transfromed image as 1st frame
