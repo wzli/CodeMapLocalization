@@ -209,7 +209,9 @@ class BitMatrixProcessor:
                                       bit_mask, 3)
         row_position = libsim.decode_axis_position(row_code)
         col_position = libsim.decode_axis_position(col_code)
-        location = libsim.deduce_location(row_position, col_position)
+        location = Location()
+        libsim.deduce_location(ctypes.byref(location), row_position,
+                               col_position)
         location.rotation = libsim.test_add_angle(location.rotation,
                                                   image.unrotation)
 

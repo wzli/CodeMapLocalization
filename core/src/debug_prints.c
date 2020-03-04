@@ -35,9 +35,9 @@ void print_axis_position(AxisPosition position) {
             position.inverted, position.reversed);
 }
 
-void print_location(Location location) {
-    printf("x %d y %d c %.3f s %.3f match %d\n", location.x, location.y,
-            (double) location.rotation.x, (double) location.rotation.y, location.match_size);
+void print_location(const Location* location) {
+    printf("x %d y %d c %.3f s %.3f match %d\n", location->x, location->y,
+            (double) location->rotation.x, (double) location->rotation.y, location->match_size);
 }
 
 void bm64_save_to_pgm(BitMatrix64 bit_matrix, BitMatrix64 bit_mask, const char* file_name) {
@@ -49,7 +49,7 @@ void bm64_save_to_pgm(BitMatrix64 bit_matrix, BitMatrix64 bit_mask, const char* 
 // below are used for python access
 
 Vector2f test_add_angle(Vector2f rot_a, Vector2f rot_b) {
-    return v2f_add_angle(rot_a, rot_b);
+    return (Vector2f)(rot_a.z * rot_b.z);
 }
 
 uint8_t test_diff_bits(uint32_t a, uint32_t b) {

@@ -75,28 +75,27 @@ AxisPosition decode_axis_position(AxisCode32 axiscode) {
     return best_position;
 }
 
-Location deduce_location(AxisPosition row_position, AxisPosition col_position) {
-    Location location;
-    location.match_size = row_position.inverted == col_position.inverted
-                                  ? row_position.span * col_position.span
-                                  : 0;
-    assert(location.match_size >= 0);
+void deduce_location(Location* location, AxisPosition row_position, AxisPosition col_position) {
+    location->match_size = row_position.inverted == col_position.inverted
+                                   ? row_position.span * col_position.span
+                                   : 0;
+    assert(location->match_size >= 0);
     float z = 1 - 2 * row_position.reversed;
     if (row_position.reversed ^ col_position.reversed) {
-        location.x = col_position.center;
-        location.y = row_position.center;
-        location.rotation = (Vector2f){0, z};
+        location->x = col_position.center;
+        location->y = row_position.center;
+        location->rotation = (Vector2f){{0, z}};
     } else {
-        location.x = row_position.center;
-        location.y = col_position.center;
-        location.rotation = (Vector2f){z, 0};
+        location->x = row_position.center;
+        location->y = col_position.center;
+        location->rotation = (Vector2f){{z, 0}};
     }
-    return location;
 }
 
 void scale_search_location(ScaleMatch* match, const ScaleQuery* query) {
     assert(match && query);
     assert(query->lower_bound > 0 && query->upper_bound > 0 && query->step_size > 0);
+    Location loc;
     for (float scale = query->lower_bound; scale <= query->upper_bound; scale += query->step_size) {
         // scale and down sample axis codes
         AxisCode64 scaled_row_code = scale_axiscode64(query->row_code, scale);
@@ -106,7 +105,7 @@ void scale_search_location(ScaleMatch* match, const ScaleQuery* query) {
         // decode posiiton
         AxisPosition row_pos = decode_axis_position(row_code_32);
         AxisPosition col_pos = decode_axis_position(col_code_32);
-        Location loc = deduce_location(row_pos, col_pos);
+        deduce_location(&loc, row_pos, col_pos);
         if (loc.match_size >= match->location.match_size) {
             *match = (ScaleMatch){loc, row_code_32, col_code_32, scale};
         }

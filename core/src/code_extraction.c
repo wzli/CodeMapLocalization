@@ -23,22 +23,21 @@ Vector2f img_estimate_rotation(const ImageMatrix mat) {
     Vector2f gradient_sum = {};
     ImageMatrix bounds = {0, {mat.size.x - 2, mat.size.y - 2}};
     FOR_EACH_PIXEL(bounds) {
-        Vector2f gradient = {
+        Vector2f gradient = {{
                 PIXEL(mat, row, col + 2) - PIXEL(mat, row, col) +
                         2 * (PIXEL(mat, row + 1, col + 2) - PIXEL(mat, row + 1, col)) +
                         PIXEL(mat, row + 2, col + 2) - PIXEL(mat, row + 2, col),
                 PIXEL(mat, row + 2, col) - PIXEL(mat, row, col) +
                         2 * (PIXEL(mat, row + 2, col + 1) - PIXEL(mat, row, col + 1)) +
                         PIXEL(mat, row + 2, col + 2) - PIXEL(mat, row, col + 2),
-        };
-        gradient = v2f_double_angle(gradient);
-        gradient = v2f_double_angle(gradient);
-        gradient_sum = v2f_add(gradient_sum, gradient);
+        }};
+        gradient.z *= gradient.z;
+        gradient.z *= gradient.z;
+        gradient_sum.z += gradient.z;
     }
-    if (!v2f_is_zero(gradient_sum)) {
+    if (gradient_sum.z != 0) {
         gradient_sum = v2f_normalize(gradient_sum);
-        gradient_sum = v2f_half_angle(gradient_sum);
-        gradient_sum = v2f_half_angle(gradient_sum);
+        gradient_sum.z = csqrtf(csqrtf(gradient_sum.z));
         assert(!v2f_is_nan(gradient_sum));
     }
     return gradient_sum;

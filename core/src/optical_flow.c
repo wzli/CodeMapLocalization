@@ -94,7 +94,7 @@ void img_phase_correlation(
     FOR_EACH_PIXEL(frame) {
         Vector2f* a = (Vector2f*) &PIXEL(frame, row, col);
         Vector2f* b = (Vector2f*) &PIXEL(next_frame, row, col);
-        Vector2f c = {v2f_dot(*b, *a), v2f_cross(*b, *a)};
+        Vector2f c = {{v2f_dot(*b, *a), v2f_cross(*b, *a)}};
         *a = v2f_normalize(c);
     }
     img_fast_fourier_transform(frame, false);
