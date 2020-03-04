@@ -1,8 +1,10 @@
 #include "visual_odometry.h"
 #include <assert.h>
 
+#define CORRELATION_SIZE (64)
+
 // hann window f(i) = cos(pi * (i - 31.5) / 44) ^ 2
-static const float window_lookup[64] = {
+static const float window_lookup[CORRELATION_SIZE] = {
         0.0f,
         0.0f,
         0.0f,
@@ -94,9 +96,9 @@ Vector2f img_estimate_rotation(const ImageMatrix mat) {
 }
 
 void img_estimate_translation(Correlation* correlation, const ImageMatrix frame) {
-    assert(frame.size.x == 64 && frame.size.y == 64);
-    IMG_SET_SIZE(correlation->image, 32, 32);
-    IMG_SET_SIZE(correlation->buffer, 32, 32);
+    assert(frame.size.x == CORRELATION_SIZE && frame.size.y == CORRELATION_SIZE);
+    IMG_SET_SIZE(correlation->image, CORRELATION_SIZE / 2, CORRELATION_SIZE / 2);
+    IMG_SET_SIZE(correlation->buffer, CORRELATION_SIZE / 2, CORRELATION_SIZE / 2);
     // 2x2 bin the source image
     IMG_FILL(correlation->image, (Vector2f){});
     FOR_EACH_PIXEL(frame) {
@@ -109,21 +111,59 @@ void img_estimate_translation(Correlation* correlation, const ImageMatrix frame)
     img_phase_correlation(correlation->image, correlation->buffer, true);
     // find peak value in correlation image
     correlation->max_squared_magnitude = 0;
+    correlation->translation.z = 0;
     FOR_EACH_PIXEL(correlation->image) {
         float mag_sqr = v2f_norm_sqr(PIXEL(correlation->image, row, col));
         PIXEL(correlation->image, row, col).z = mag_sqr;
-        if (correlation->max_squared_magnitude < mag_sqr) {
+        if (correlation->max_squared_magnitude <= mag_sqr) {
             correlation->max_squared_magnitude = mag_sqr;
             correlation->translation.z = col + I * row;
         }
     }
-    if (correlation->translation.x > 16) {
-        correlation->translation.x -= 32;
+    // return early if correlation is empty
+    if (correlation->max_squared_magnitude == 0) {
+        return;
     }
-    if (correlation->translation.y > 16) {
-        correlation->translation.y -= 32;
+    // find subpixel shift
+    Vector2f subpixel_shift = subpixel_registration(correlation);
+    // zero center the peak index
+    for (uint8_t i = 0; i < 2; ++i) {
+        if (correlation->translation.data[i] > (CORRELATION_SIZE / 4)) {
+            correlation->translation.data[i] -= (CORRELATION_SIZE / 2);
+        }
     }
+    correlation->translation.z += subpixel_shift.z;
     correlation->translation.z *= 2;
+}
+
+Vector2f subpixel_registration(const Correlation* correlation) {
+    assert(correlation && correlation->max_squared_magnitude > 0);
+    // initialize peaks (assume correlation image is square normalized)
+    const float peak = sqrtf(correlation->max_squared_magnitude);
+    int16_t peak_idx[2] = {
+            (int16_t) correlation->translation.x, (int16_t) correlation->translation.y};
+    int8_t side_peaks_dir[2] = {1, 1};
+    Vector2f side_peaks = {{
+            PIXEL(correlation->image, peak_idx[1], (peak_idx[0] + 1) % (CORRELATION_SIZE / 2)).x,
+            PIXEL(correlation->image, (peak_idx[1] + 1) % (CORRELATION_SIZE / 2), peak_idx[0]).x,
+    }};
+    Vector2f other_side_peaks = {{
+            PIXEL(correlation->image, peak_idx[1], (peak_idx[0] - 1) % (CORRELATION_SIZE / 2)).x,
+            PIXEL(correlation->image, (peak_idx[1] - 1) % (CORRELATION_SIZE / 2), peak_idx[0]).x,
+    }};
+    Vector2f subpixel_shift;
+    for (uint8_t i = 0; i < 2; ++i) {
+        // find the highest side peak
+        if (side_peaks.data[i] < other_side_peaks.data[i]) {
+            side_peaks.data[i] = other_side_peaks.data[i];
+            side_peaks_dir[i] = -1;
+        }
+        // compute subpixel shift
+        side_peaks.data[i] = sqrtf(side_peaks.data[i]);
+        subpixel_shift.data[i] =
+                side_peaks_dir[i] * side_peaks.data[i] / (side_peaks.data[i] + peak);
+    };
+    return subpixel_shift;
 }
 
 void img_phase_correlation(

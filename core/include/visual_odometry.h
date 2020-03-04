@@ -14,3 +14,5 @@ void img_estimate_translation(Correlation* correlation, const ImageMatrix frame)
 
 void img_phase_correlation(
         ImageMatrixComplex frame, ImageMatrixComplex next_frame, bool reuse_frame);
+
+Vector2f subpixel_registration(const Correlation* correlation);
