@@ -19,45 +19,6 @@ void img_hyper_sharpen(ImageMatrix* dst, const ImageMatrix src) {
     }
 }
 
-Vector2f img_estimate_rotation(const ImageMatrix mat) {
-    Vector2f gradient_sum = {};
-    ImageMatrix bounds = {0, {mat.size.x - 2, mat.size.y - 2}};
-    FOR_EACH_PIXEL(bounds) {
-        Vector2f gradient = {{
-                PIXEL(mat, row, col + 2) - PIXEL(mat, row, col) +
-                        2 * (PIXEL(mat, row + 1, col + 2) - PIXEL(mat, row + 1, col)) +
-                        PIXEL(mat, row + 2, col + 2) - PIXEL(mat, row + 2, col),
-                PIXEL(mat, row + 2, col) - PIXEL(mat, row, col) +
-                        2 * (PIXEL(mat, row + 2, col + 1) - PIXEL(mat, row, col + 1)) +
-                        PIXEL(mat, row + 2, col + 2) - PIXEL(mat, row, col + 2),
-        }};
-        gradient.z *= gradient.z;
-        gradient.z *= gradient.z;
-        gradient_sum.z += gradient.z;
-    }
-    if (gradient_sum.z != 0) {
-        gradient_sum = v2f_normalize(gradient_sum);
-        gradient_sum.z = csqrtf(csqrtf(gradient_sum.z));
-        assert(!v2f_is_nan(gradient_sum));
-    }
-    return gradient_sum;
-}
-
-float img_estimate_scale(const ImageMatrix mat) {
-    int32_t sum = 0, max_val = 0;
-    ImageMatrix bounds = {0, {mat.size.x - 2, mat.size.y - 2}};
-    FOR_EACH_PIXEL(bounds) {
-        int32_t val = 0;
-        IMG_PIXEL_WEIGHTED_SUM(val, img_edge_detect_kernel, mat, row, col);
-        if (val > 0) {
-            sum += val;
-            max_val = MAX(max_val, val);
-        }
-    }
-    assert(sum >= 0);
-    return bounds.size.y * bounds.size.x * max_val / (2 * sum + 0.00001f) - 1;
-}
-
 AxisCode32 downsample_axiscode(AxisCode64 axiscode64) {
     uint64_t edges = axiscode64.bits ^ (axiscode64.bits >> 1);
     uint8_t offset_index = 0;

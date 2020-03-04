@@ -7,6 +7,8 @@ typedef struct {
     Vector2f translation;
 } Correlation;
 
+Vector2f img_estimate_rotation(const ImageMatrix mat);
+
 void img_estimate_translation(Correlation* correlation, const ImageMatrix frame);
 
 void img_phase_correlation(

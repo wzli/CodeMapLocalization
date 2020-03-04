@@ -20,12 +20,8 @@ typedef struct {
     ((DST).bits = (SRC).bits, (DST).mask = (SRC).mask, (DST).n_errors = (SRC).n_errors, \
             (DST).n_samples = (SRC).n_samples)
 
-// Image filtering
+// Image to bit matrix
 void img_hyper_sharpen(ImageMatrix* dst, const ImageMatrix src);
-
-Vector2f img_estimate_rotation(const ImageMatrix mat);
-
-float img_estimate_scale(const ImageMatrix mat);
 
 void img_to_bm32(BitMatrix32 dst, BitMatrix32 mask, const ImageMatrix src, uint8_t low_thresh,
         uint8_t high_thresh);
