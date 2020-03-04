@@ -5,6 +5,7 @@ typedef struct {
     ImageMatrixComplex image;
     ImageMatrixComplex buffer;
     Vector2f translation;
+    float max_squared_magnitude;
 } Correlation;
 
 Vector2f img_estimate_rotation(const ImageMatrix mat);

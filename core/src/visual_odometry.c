@@ -107,6 +107,23 @@ void img_estimate_translation(Correlation* correlation, const ImageMatrix frame)
     // reuse previously transfromed image as 1st frame
     SWAP(correlation->image.data, correlation->buffer.data);
     img_phase_correlation(correlation->image, correlation->buffer, true);
+    // find peak value in correlation image
+    correlation->max_squared_magnitude = 0;
+    FOR_EACH_PIXEL(correlation->image) {
+        float mag_sqr = v2f_norm_sqr(PIXEL(correlation->image, row, col));
+        PIXEL(correlation->image, row, col).z = mag_sqr;
+        if (correlation->max_squared_magnitude < mag_sqr) {
+            correlation->max_squared_magnitude = mag_sqr;
+            correlation->translation.z = col + I * row;
+        }
+    }
+    if (correlation->translation.x > 16) {
+        correlation->translation.x -= 32;
+    }
+    if (correlation->translation.y > 16) {
+        correlation->translation.y -= 32;
+    }
+    correlation->translation.z *= 2;
 }
 
 void img_phase_correlation(

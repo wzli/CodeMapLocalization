@@ -111,13 +111,12 @@ static void main_loop(void* pvParameters) {
         localization_loop_run(&loc_ctx, images[0]);
         int64_t end_time = esp_timer_get_time();
 
+        IMG_SET_SIZE(images[2], 64, 64);
+        IMG_FILL(images[2], 0);
+        PIXEL(images[2], (int) loc_ctx.correlation.translation.y + 32,
+                (int) loc_ctx.correlation.translation.x + 32) = 255;
+#if 0
         images[2].size = loc_ctx.correlation.image.size;
-        float max_norm_sqr = 0;
-        FOR_EACH_PIXEL(loc_ctx.correlation.image) {
-            float norm_sqr = v2f_norm_sqr(PIXEL(loc_ctx.correlation.image, row, col));
-            max_norm_sqr = MAX(max_norm_sqr, norm_sqr);
-            PIXEL(loc_ctx.correlation.image, row, col).x = norm_sqr;
-        }
         float norm_scale = 1.0f / max_norm_sqr;
         FOR_EACH_PIXEL(loc_ctx.correlation.image) {
             PIXEL(images[2], row, col) =
@@ -130,7 +129,6 @@ static void main_loop(void* pvParameters) {
                 SWAP(PIXEL(images[2], row + 16, col), PIXEL(images[2], row, col + 16));
             }
         }
-#if 0
         // display thresholded bm64
         bm64_to_img(&images[1], loc_ctx.binary_image, loc_ctx.binary_mask);
 
