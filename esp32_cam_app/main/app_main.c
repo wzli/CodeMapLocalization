@@ -21,6 +21,8 @@
 
 /* externals */
 extern QueueHandle_t frame_queues[];
+extern QueueHandle_t record_frame_queue;
+extern uint32_t record_frame_count;
 void app_camera_main();
 void app_wifi_main();
 void app_httpd_main();
@@ -102,14 +104,19 @@ static void main_loop(void* pvParameters) {
         assert(!uxQueueSpacesAvailable(frame_queues[i]));
     }
     // main loop
+    int64_t start_time = esp_timer_get_time();
     for (uint32_t frame_count = 0;; ++frame_count) {
         ImageMatrix images[N_DOUBLE_BUFFERS + 1];
         for (uint8_t i = 0; i <= N_DOUBLE_BUFFERS; ++i) {
             images[i] = queue_fb_get(i);
         }
+        // queue frame for recording
+        if (record_frame_queue) {
+            xQueueSendToBack(record_frame_queue, &claimed_buffers[0], 0);
+        }
+        // assign buffers to localization context
         loc_ctx.unrotated_image = images[1];
         loc_ctx.sharpened_image = images[2];
-        int64_t start_time = esp_timer_get_time();
         localization_loop_run(&loc_ctx, images[0]);
         int64_t end_time = esp_timer_get_time();
 
@@ -158,8 +165,9 @@ static void main_loop(void* pvParameters) {
 
         // end loop
         if (loc_ctx.scale_match.location.match_size > 16) {
-            ESP_LOGI(TAG, "fr %u t %lluus thresh %u (x %d y %d r %f m %d) row %d/%d col %d/%d \n",
-                    frame_count, end_time - start_time,
+            ESP_LOGI(TAG,
+                    "fr %u rfr %u t %lluus thresh %u (x %d y %d r %f m %d) row %d/%d col %d/%d \n",
+                    frame_count, record_frame_count, end_time - start_time,
                     (loc_ctx.threshold[0] + loc_ctx.threshold[1]) / 2,
                     loc_ctx.scale_match.location.x, loc_ctx.scale_match.location.y,
                     180 *
@@ -179,5 +187,5 @@ void app_main() {
     app_camera_main();
     app_httpd_main();
     app_record_main();
-    xTaskCreatePinnedToCore(main_loop, "main_loop", 8192, NULL, 9, NULL, 1);
+    xTaskCreatePinnedToCore(main_loop, "main_loop", 4096, NULL, 9, NULL, 1);
 }
