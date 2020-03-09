@@ -7,11 +7,6 @@
 #include "freertos/task.h"
 #include "freertos/queue.h"
 
-#include "esp_vfs_fat.h"
-#include "sdmmc_cmd.h"
-#undef MIN
-#undef MAX
-
 #include "tests.h"
 #include "localization_loop.h"
 
@@ -29,6 +24,7 @@ extern QueueHandle_t frame_queues[];
 void app_camera_main();
 void app_wifi_main();
 void app_httpd_main();
+void app_record_main();
 
 /* static data */
 static const char* TAG = "main_loop";
@@ -81,46 +77,8 @@ static void queue_fb_return(uint8_t queue_index) {
     assert(!claimed_buffers[queue_index]);
 }
 
-static esp_err_t init_sdcard() {
-    ESP_LOGI(TAG, "Using SDMMC peripheral");
-    sdmmc_host_t host = SDMMC_HOST_DEFAULT();
-    sdmmc_slot_config_t slot_config = SDMMC_SLOT_CONFIG_DEFAULT();
-    slot_config.width = 1;                     // configure 1-line mode
-    gpio_set_pull_mode(15, GPIO_PULLUP_ONLY);  // CMD, needed in 4- and 1- line modes
-    gpio_set_pull_mode(2, GPIO_PULLUP_ONLY);   // D0, needed in 4- and 1-line modes
-    gpio_set_pull_mode(13, GPIO_PULLUP_ONLY);  // D3, needed in 4- and 1-line modes
-    esp_vfs_fat_sdmmc_mount_config_t mount_config = {
-            .format_if_mount_failed = false, .max_files = 5, .allocation_unit_size = 16 * 1024};
-    sdmmc_card_t* card;
-    esp_err_t ret = esp_vfs_fat_sdmmc_mount("/sdcard", &host, &slot_config, &mount_config, &card);
-    if (ret != ESP_OK) {
-        if (ret == ESP_FAIL) {
-            ESP_LOGE(TAG, "Failed to mount filesystem.");
-        } else {
-            ESP_LOGE(TAG, "Failed to initialize the card (%s).", esp_err_to_name(ret));
-        }
-        return ret;
-    }
-    sdmmc_card_print_info(stdout, card);
-    return ESP_OK;
-}
-
 /* run */
 static void main_loop(void* pvParameters) {
-    // init sd card
-    if (ESP_OK == init_sdcard()) {
-#if 0
-        char file_path[32] = {};
-        int path_index = -1;
-        int result;
-        do {
-            ++path_index;
-            snprintf(file_path, 32, "/sdcard/%d", path_index);
-            result = mkdir(file_path, 0755);
-        } while (result);
-        snprintf(file_path, 32, "/sdcard/%d/_.pgm", path_index);
-#endif
-    }
     // initalize FFT tables
     if (dsps_fft2r_init_fc32(NULL, CONFIG_DSP_MAX_FFT_SIZE) != ESP_OK) {
         ESP_LOGE(TAG, "Not able to initialize FFT.");
@@ -220,5 +178,6 @@ void app_main() {
     app_wifi_main();
     app_camera_main();
     app_httpd_main();
+    app_record_main();
     xTaskCreatePinnedToCore(main_loop, "main_loop", 8192, NULL, 9, NULL, 1);
 }

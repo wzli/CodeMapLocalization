@@ -2,6 +2,7 @@ set(srcs
   app_camera.c
   app_wifi.c
   app_httpd.c
+  app_record.c
   app_main.c
 )
 
