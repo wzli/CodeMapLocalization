@@ -143,13 +143,14 @@ Vector2f subpixel_registration(const Correlation* correlation) {
     int16_t peak_idx[2] = {
             (int16_t) correlation->translation.x, (int16_t) correlation->translation.y};
     int8_t side_peaks_dir[2] = {1, 1};
+    static const uint8_t mod_mask = (CORRELATION_SIZE / 2) - 1;
     Vector2f side_peaks = {{
-            PIXEL(correlation->image, peak_idx[1], (peak_idx[0] + 1) % (CORRELATION_SIZE / 2)).x,
-            PIXEL(correlation->image, (peak_idx[1] + 1) % (CORRELATION_SIZE / 2), peak_idx[0]).x,
+            PIXEL(correlation->image, peak_idx[1], (peak_idx[0] + 1) & mod_mask).x,
+            PIXEL(correlation->image, (peak_idx[1] + 1) & mod_mask, peak_idx[0]).x,
     }};
     Vector2f other_side_peaks = {{
-            PIXEL(correlation->image, peak_idx[1], (peak_idx[0] - 1) % (CORRELATION_SIZE / 2)).x,
-            PIXEL(correlation->image, (peak_idx[1] - 1) % (CORRELATION_SIZE / 2), peak_idx[0]).x,
+            PIXEL(correlation->image, peak_idx[1], (peak_idx[0] - 1) & mod_mask).x,
+            PIXEL(correlation->image, (peak_idx[1] - 1) & mod_mask, peak_idx[0]).x,
     }};
     Vector2f subpixel_shift;
     for (uint8_t i = 0; i < 2; ++i) {
