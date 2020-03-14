@@ -6,8 +6,8 @@
 #define TEST_VECTOR_SIZE 10
 
 static int test_full_chain_simulation() {
-    ImageMatrix src_img = {malloc(30 * 30), {30, 30}};
-    ImageMatrix img = {malloc(32 * 32), {32, 32}};
+    ImageMatrix src_img = {malloc(30 * 30), {{30, 30}}};
+    ImageMatrix img = {malloc(32 * 32), {{32, 32}}};
     uint32_t* bit_matrix = malloc(32 * sizeof(uint32_t));
     uint32_t* bit_mask = malloc(32 * sizeof(uint32_t));
     Location loc;
@@ -51,8 +51,8 @@ static int test_full_chain_simulation() {
 
 static int test_localization_loop_run() {
     LocalizationContext* ctx = malloc(sizeof(LocalizationContext));
-    ImageMatrix image = {calloc(64 * 64, 1), {64, 64}};
-    ctx->unrotated_image = (ImageMatrix){calloc(64 * 64, 1), {64, 64}};
+    ImageMatrix image = {calloc(64 * 64, 1), {{64, 64}}};
+    ctx->unrotated_image = (ImageMatrix){calloc(64 * 64, 1), {{64, 64}}};
     ctx->sharpened_image = ctx->unrotated_image;
     ctx->correlation.image.data = calloc(32 * 32, sizeof(Vector2f));
     ctx->correlation.buffer.data = calloc(32 * 32, sizeof(Vector2f));

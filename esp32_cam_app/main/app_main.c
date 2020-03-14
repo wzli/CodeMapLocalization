@@ -45,7 +45,7 @@ static LocalizationContext loc_ctx;
 /* helper functions */
 
 static inline ImageMatrix fb_to_img(camera_fb_t fb) {
-    return (ImageMatrix){fb.buf, {fb.width, fb.height}};
+    return (ImageMatrix){fb.buf, {{fb.width, fb.height}}};
 }
 
 static inline camera_fb_t* camera_fb_swap(camera_fb_t* fb) {

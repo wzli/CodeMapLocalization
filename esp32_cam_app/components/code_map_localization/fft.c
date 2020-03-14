@@ -39,7 +39,7 @@ void fast_fourier_transform(float complex* data, int len, int stride, bool inver
 }
 
 void fft_2d(float complex* data, int x_len, int y_len, bool inverse) {
-    ImageMatrixComplex image = {(Vector2f*) data, {x_len, y_len}};
+    ImageMatrixComplex image = {(Vector2f*) data, {{x_len, y_len}}};
     esp_err_t esp_error = dsp_fft_2d(image, inverse);
     assert(esp_error == ESP_OK);
 }

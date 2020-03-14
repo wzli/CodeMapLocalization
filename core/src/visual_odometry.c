@@ -73,7 +73,7 @@ static const float window_lookup[CORRELATION_SIZE] = {
 
 Vector2f img_estimate_rotation(const ImageMatrix mat) {
     Vector2f gradient_sum = {};
-    ImageMatrix bounds = {0, {mat.size.x - 2, mat.size.y - 2}};
+    ImageMatrix bounds = {0, {{mat.size.x - 2, mat.size.y - 2}}};
     FOR_EACH_PIXEL(bounds) {
         Vector2f gradient = {{
                 PIXEL(mat, row, col + 2) - PIXEL(mat, row, col) +

@@ -41,7 +41,7 @@ void print_location(const Location* location) {
 }
 
 void bm64_save_to_pgm(BitMatrix64 bit_matrix, BitMatrix64 bit_mask, const char* file_name) {
-    ImageMatrix image = {(uint8_t[64 * 64]){}, {64, 64}};
+    ImageMatrix image = {(uint8_t[64 * 64]){}, {{64, 64}}};
     bm64_to_img(&image, bit_matrix, bit_mask);
     img_save_to_pgm(image, file_name);
 }

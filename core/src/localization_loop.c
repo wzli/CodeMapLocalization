@@ -14,7 +14,7 @@ void localization_loop_run(LocalizationContext* ctx, const ImageMatrix image) {
     img_estimate_translation(&(ctx->correlation), ctx->unrotated_image);
     // sharpen unrotated image and remove edge effects
     img_hyper_sharpen(&(ctx->sharpened_image), ctx->unrotated_image);
-    ImagePoint image_center = {ctx->sharpened_image.size.x / 2, ctx->sharpened_image.size.y / 2};
+    ImagePoint image_center = {{ctx->sharpened_image.size.x / 2, ctx->sharpened_image.size.y / 2}};
     Vector2f vertex = {{2 * image_center.x, 2 * image_center.y}};
     vertex.z *= ctx->rotation_estimate.z;
     img_draw_regular_polygon(ctx->sharpened_image, image_center, vertex, 4, ctx->threshold[0], 5);

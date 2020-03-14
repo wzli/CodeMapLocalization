@@ -8,8 +8,8 @@ static inline bool latch_comp(Vector2f cur_val, Vector2f max_val) {
 }
 
 static int test_phase_correlation() {
-    ImageMatrixComplex frame = {(Vector2f[SQR(CONV_SIZE)]){}, {CONV_SIZE, CONV_SIZE}};
-    ImageMatrixComplex next_frame = {(Vector2f[SQR(CONV_SIZE)]){}, {CONV_SIZE, CONV_SIZE}};
+    ImageMatrixComplex frame = {(Vector2f[SQR(CONV_SIZE)]){}, {{CONV_SIZE, CONV_SIZE}}};
+    ImageMatrixComplex next_frame = {(Vector2f[SQR(CONV_SIZE)]){}, {{CONV_SIZE, CONV_SIZE}}};
 
     IMG_FILL(frame, (Vector2f){});
     IMG_FILL(next_frame, (Vector2f){});

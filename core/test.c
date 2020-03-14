@@ -5,13 +5,17 @@
 #include <stdlib.h>
 
 #define FRAME_SIZE 64
-#define MALLOC_IMAGE(SIZE)                   \
-    (ImageMatrix) {                          \
-        calloc(SQR(SIZE), 1), { SIZE, SIZE } \
+#define MALLOC_IMAGE(SIZE)      \
+    (ImageMatrix) {             \
+        calloc(SQR(SIZE), 1), { \
+            { SIZE, SIZE }      \
+        }                       \
     }
-#define MALLOC_IMAGE_COMPLEX(SIZE)                          \
-    (ImageMatrixComplex) {                                  \
-        calloc(SQR(SIZE), sizeof(Vector2f)), { SIZE, SIZE } \
+#define MALLOC_IMAGE_COMPLEX(SIZE)             \
+    (ImageMatrixComplex) {                     \
+        calloc(SQR(SIZE), sizeof(Vector2f)), { \
+            { SIZE, SIZE }                     \
+        }                                      \
     }
 
 int main(int argc, char** argv) {
@@ -79,7 +83,7 @@ int main(int argc, char** argv) {
                 loc_ctx.scale_match.col_code.mask, loc_ctx.scale_match.col_code.n_errors,
                 loc_ctx.scale_match.col_code.n_samples);
         // write raw image to top left
-        ImagePoint top_left = {0, 0};
+        ImagePoint top_left = {{0, 0}};
         IMG_PASTE(output_image, raw_image, top_left);
         // write sharpened image to top right
         top_left.x += FRAME_SIZE;
