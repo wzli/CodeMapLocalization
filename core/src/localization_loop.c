@@ -7,16 +7,16 @@ void localization_loop_run(LocalizationContext* ctx, const ImageMatrix image) {
     // find threshold of original image
     img_histogram(ctx->histogram, image);
     ctx->threshold[0] = img_compute_otsu_threshold(ctx->histogram);
-    // unrotate the image
-    ctx->rotation_estimate = img_derotation_filter(
-            ctx->unrotated_image, image, ctx->rotation_scale, ctx->threshold[0]);
-    // run optical flow
-    img_estimate_translation(&(ctx->correlation), ctx->unrotated_image);
+    // estimate rotation of original image and derotate it
+    Vector2f quadrant_rotation =
+            img_derotate(ctx->unrotated_image, image, ctx->rotation_scale, ctx->threshold[0]);
+    // run visual odometry
+    odom_update(&ctx->odom_ctx, ctx->unrotated_image, quadrant_rotation, ctx->filtered_match.scale);
     // sharpen unrotated image and remove edge effects
     img_hyper_sharpen(&(ctx->sharpened_image), ctx->unrotated_image);
     ImagePoint image_center = {{ctx->sharpened_image.size.x / 2, ctx->sharpened_image.size.y / 2}};
     Vector2f vertex = {{2 * image_center.x, 2 * image_center.y}};
-    vertex.z *= ctx->rotation_estimate.z;
+    vertex.z *= quadrant_rotation.z * ctx->rotation_scale;
     img_draw_regular_polygon(ctx->sharpened_image, image_center, vertex, 4, ctx->threshold[0], 5);
     // find threshold of filtered image
     img_histogram(ctx->histogram, ctx->sharpened_image);
@@ -34,19 +34,16 @@ void localization_loop_run(LocalizationContext* ctx, const ImageMatrix image) {
     ctx->scale_match = (ScaleMatch){};
     scale_search_location(&(ctx->scale_match), &(ctx->scale_query));
     // compensate rotation estimate
-    ctx->scale_match.location.rotation.z *= ctx->rotation_estimate.z;
+    ctx->scale_match.location.rotation.z *= quadrant_rotation.z;
 }
 
-Vector2f img_derotation_filter(
-        ImageMatrix dst, const ImageMatrix src, float rotation_scale, uint8_t bg_fill) {
+Vector2f img_derotate(ImageMatrix dst, const ImageMatrix src, float scale, uint8_t bg_fill) {
     assert(dst.data && src.data);
-    // estimate rotation of original image
     Vector2f rotation_estimate = img_estimate_rotation(src);
+    rotation_estimate.y = -rotation_estimate.y;
     if (rotation_estimate.z != 0) {
-        // unrotate
-        rotation_estimate.y *= -rotation_scale;
-        rotation_estimate.x *= rotation_scale;
-        img_rotate(dst, src, rotation_estimate, bg_fill, img_bilinear_interpolation);
+        img_rotate(dst, src, (Vector2f)(rotation_estimate.z * scale), bg_fill,
+                img_bilinear_interpolation);
     }
     return rotation_estimate;
 }

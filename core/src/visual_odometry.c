@@ -4,7 +4,7 @@
 #define CORRELATION_SIZE (64)
 
 // hann window f(i) = cos(pi * (i - 31.5) / 44) ^ 2
-static const float window_lookup[CORRELATION_SIZE] = {
+static const float WINDOW_LOOKUP[CORRELATION_SIZE] = {
         0.0f,
         0.0f,
         0.0f,
@@ -95,11 +95,36 @@ Vector2f img_estimate_rotation(const ImageMatrix mat) {
     return gradient_sum;
 }
 
-void track_rotation(OdometryContext* ctx, Vector2f quadrant_rotation) {
+void odom_update(OdometryContext* ctx, ImageMatrix image, Vector2f rotation, float scale) {
+    // track if quadrants changed
+    int8_t quadrant_increment = odom_track_rotation(ctx, rotation);
+    // rotate previous buffer according the quadrant change
+    if (quadrant_increment != 0) {
+        IMG_TRANSPOSE(ctx->correlation.buffer, ctx->correlation.buffer);
+        if (quadrant_increment > 0) {
+            IMG_VFLIP(ctx->correlation.buffer, ctx->correlation.buffer);
+        } else {
+            IMG_HFLIP(ctx->correlation.buffer, ctx->correlation.buffer);
+        }
+    }
+    img_estimate_translation(&(ctx->correlation), image);
+    rotation.z *= QUADRANT_LOOKUP[ctx->quadrant_count & 3].z;
+    ctx->position.z += ctx->correlation.translation.z * rotation.z * scale;
+}
+
+int8_t odom_track_rotation(OdometryContext* ctx, Vector2f quadrant_rotation) {
     assert(ctx);
-    ctx->quadrant_count -= (quadrant_rotation.y - ctx->quadrant_rotation.y) > 0.8f;
-    ctx->quadrant_count += (quadrant_rotation.y - ctx->quadrant_rotation.y) < -0.8f;
+    float dy = quadrant_rotation.y - ctx->quadrant_rotation.y;
     ctx->quadrant_rotation = quadrant_rotation;
+    if (dy < -0.8f) {
+        ++ctx->quadrant_count;
+        return 1;
+    }
+    if (dy > 0.8f) {
+        --ctx->quadrant_count;
+        return -1;
+    }
+    return 0;
 }
 
 void img_estimate_translation(Correlation* correlation, const ImageMatrix frame) {
@@ -111,7 +136,7 @@ void img_estimate_translation(Correlation* correlation, const ImageMatrix frame)
     FOR_EACH_PIXEL(frame) {
         // apply hann window to remove edge effects
         PIXEL(correlation->image, row / 2, col / 2).x +=
-                PIXEL(frame, row, col) * window_lookup[row] * window_lookup[col];
+                PIXEL(frame, row, col) * WINDOW_LOOKUP[row] * WINDOW_LOOKUP[col];
     }
     // reuse previously transfromed image as 1st frame
     SWAP(correlation->image.data, correlation->buffer.data);
@@ -132,7 +157,7 @@ void img_estimate_translation(Correlation* correlation, const ImageMatrix frame)
         return;
     }
     // find subpixel shift
-    Vector2f subpixel_shift = subpixel_registration(correlation);
+    Vector2f subpixel_shift = img_subpixel_registration(correlation);
     // zero center the peak index
     for (uint8_t i = 0; i < 2; ++i) {
         if (correlation->translation.data[i] > (CORRELATION_SIZE / 4)) {
@@ -143,7 +168,7 @@ void img_estimate_translation(Correlation* correlation, const ImageMatrix frame)
     correlation->translation.z *= 2;
 }
 
-Vector2f subpixel_registration(const Correlation* correlation) {
+Vector2f img_subpixel_registration(const Correlation* correlation) {
     assert(correlation && correlation->max_squared_magnitude > 0);
     // initialize peaks (assume correlation image is square normalized)
     const float peak = sqrtf(correlation->max_squared_magnitude);
