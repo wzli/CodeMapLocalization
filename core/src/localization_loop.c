@@ -33,8 +33,6 @@ void localization_loop_run(LocalizationContext* ctx, const ImageMatrix image) {
             ctx->binary_image, ctx->binary_mask, 5);
     ctx->scale_match = (ScaleMatch){};
     scale_search_location(&(ctx->scale_match), &(ctx->scale_query));
-    // compensate rotation estimate
-    ctx->scale_match.location.rotation.z *= quadrant_rotation.z;
 }
 
 Vector2f img_derotate(ImageMatrix dst, const ImageMatrix src, float scale, uint8_t bg_fill) {

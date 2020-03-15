@@ -36,8 +36,8 @@ void print_axis_position(AxisPosition position) {
 }
 
 void print_location(const Location* location) {
-    printf("x %d y %d c %.3f s %.3f match %d\n", location->x, location->y,
-            (double) location->rotation.x, (double) location->rotation.y, location->match_size);
+    printf("x %d y %d d %d match %d\n", location->x, location->y, location->direction,
+            location->match_size);
 }
 
 void bm64_save_to_pgm(BitMatrix64 bit_matrix, BitMatrix64 bit_mask, const char* file_name) {

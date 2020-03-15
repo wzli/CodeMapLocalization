@@ -44,10 +44,10 @@ class AxisPosition(ctypes.Structure):
 
 class Location(ctypes.Structure):
     _fields_ = [
+        ('match_size', ctypes.c_short),
         ('x', ctypes.c_ushort),
         ('y', ctypes.c_ushort),
-        ('rotation', Vector2f),
-        ('match_size', ctypes.c_short),
+        ('direction', ctypes.c_byte),
     ]
 
 
@@ -116,3 +116,6 @@ libsim.decode_axis_position.restype = AxisPosition
 libsim.deduce_location.restype = Location
 
 MLS_INDEX = MlsIndex.in_dll(libsim, "MLS_INDEX")
+QUADRANT_LOOKUP = (Vector2f(1, 0), Vector2f(0,
+                                            1), Vector2f(-1,
+                                                         0), Vector2f(0, -1))

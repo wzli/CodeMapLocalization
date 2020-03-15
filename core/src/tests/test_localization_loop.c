@@ -10,7 +10,6 @@ static int test_full_chain_simulation() {
     ImageMatrix img = {malloc(32 * 32), {{32, 32}}};
     uint32_t* bit_matrix = malloc(32 * sizeof(uint32_t));
     uint32_t* bit_mask = malloc(32 * sizeof(uint32_t));
-    Location loc;
     for (int i = 0; i < TEST_VECTOR_SIZE; ++i) {
         // src image setup
         FOR_EACH_PIXEL(src_img) { PIXEL(src_img, row, col) = row + col; }
@@ -36,7 +35,7 @@ static int test_full_chain_simulation() {
         AxisPosition col_pos = decode_axis_position(col_code);
 
         // deduce location
-        deduce_location(&loc, row_pos, col_pos);
+        Location loc = deduce_location(row_pos, col_pos);
 
         // expect a valid location
         test_assert(loc.x == i + row_pos.span / 2);
