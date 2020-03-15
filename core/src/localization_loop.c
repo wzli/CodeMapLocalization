@@ -32,6 +32,7 @@ bool localization_loop_run(LocalizationContext* ctx, const ImageMatrix image) {
     // extract row and column codes
     bm64_extract_axiscodes(&(ctx->scale_query.row_code), &(ctx->scale_query.col_code),
             ctx->binary_image, ctx->binary_mask, 5);
+    // scale search and decode
     ctx->scale_match = (ScaleMatch){};
     scale_search_location(&(ctx->scale_match), &(ctx->scale_query));
     // outlier rejection filter
