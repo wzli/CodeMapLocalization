@@ -16,6 +16,6 @@ typedef struct {
     uint8_t threshold[2];
 } LocalizationContext;
 
-void localization_loop_run(LocalizationContext* ctx, const ImageMatrix image);
+bool localization_loop_run(LocalizationContext* ctx, const ImageMatrix image);
 
 Vector2f img_derotate(ImageMatrix dst, const ImageMatrix src, float scale, uint8_t bg_fill);

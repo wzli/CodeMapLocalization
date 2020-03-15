@@ -1,5 +1,6 @@
 #pragma once
 #include "image_utils.h"
+#include "location_decode.h"
 
 typedef struct {
     ImageMatrixComplex image;
@@ -18,6 +19,7 @@ typedef struct {
 static const Vector2f QUADRANT_LOOKUP[4] = {{{1, 0}}, {{0, 1}}, {{-1, 0}}, {{0, -1}}};
 
 void odom_update(OdometryContext* ctx, ImageMatrix image, Vector2f rotation, float scale);
+void odom_set_location(OdometryContext* ctx, Location loc);
 
 int8_t odom_track_rotation(OdometryContext* ctx, Vector2f quadrant_rotation);
 

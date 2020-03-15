@@ -1,7 +1,7 @@
 #include "localization_loop.h"
 #include <assert.h>
 
-void localization_loop_run(LocalizationContext* ctx, const ImageMatrix image) {
+bool localization_loop_run(LocalizationContext* ctx, const ImageMatrix image) {
     assert(ctx);
     assert(ctx->sharpened_image.data);
     // find threshold of original image
@@ -34,10 +34,13 @@ void localization_loop_run(LocalizationContext* ctx, const ImageMatrix image) {
             ctx->binary_image, ctx->binary_mask, 5);
     ctx->scale_match = (ScaleMatch){};
     scale_search_location(&(ctx->scale_match), &(ctx->scale_query));
+    // outlier rejection filter
     if (outlier_filter_location(&(ctx->outlier_filter), &(ctx->scale_match))) {
-        ctx->odom_ctx.quadrant_count &= ~3u;
-        ctx->odom_ctx.quadrant_count |= ctx->outlier_filter.filtered_match.location.direction;
+        // update odom
+        odom_set_location(&(ctx->odom_ctx), ctx->outlier_filter.filtered_match.location);
+        return true;
     }
+    return false;
 }
 
 Vector2f img_derotate(ImageMatrix dst, const ImageMatrix src, float scale, uint8_t bg_fill) {

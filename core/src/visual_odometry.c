@@ -112,6 +112,13 @@ void odom_update(OdometryContext* ctx, ImageMatrix image, Vector2f rotation, flo
             ctx->correlation.translation.z * QUADRANT_LOOKUP[ctx->quadrant_count & 3].z * scale;
 }
 
+void odom_set_location(OdometryContext* ctx, Location loc) {
+    ctx->position.x = loc.x;
+    ctx->position.y = loc.y;
+    ctx->quadrant_count &= ~3u;
+    ctx->quadrant_count |= loc.direction;
+}
+
 int8_t odom_track_rotation(OdometryContext* ctx, Vector2f quadrant_rotation) {
     assert(ctx);
     float dy = quadrant_rotation.y - ctx->quadrant_rotation.y;
