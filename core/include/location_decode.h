@@ -30,8 +30,19 @@ typedef struct {
     float scale;
 } ScaleMatch;
 
+typedef struct {
+    ScaleMatch filtered_match;
+    uint16_t distance_threshold;
+    uint16_t match_size_threshold;
+    uint8_t bit_error_ratio_threshold;
+    uint8_t max_rejection_count;
+    uint8_t rejection_count;
+} OutlierFilter;
+
 uint8_t next_valid_code_segment(AxisCode32* axiscode, uint8_t code_length);
 AxisPosition decode_axis_position(AxisCode32 axiscode);
 Location deduce_location(AxisPosition row_position, AxisPosition col_position);
 
 void scale_search_location(ScaleMatch* match, const ScaleQuery* query);
+
+bool outlier_filter_location(OutlierFilter* filter, const ScaleMatch* new_match);

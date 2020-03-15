@@ -11,7 +11,8 @@ void localization_loop_run(LocalizationContext* ctx, const ImageMatrix image) {
     Vector2f quadrant_rotation =
             img_derotate(ctx->unrotated_image, image, ctx->rotation_scale, ctx->threshold[0]);
     // run visual odometry
-    odom_update(&ctx->odom_ctx, ctx->unrotated_image, quadrant_rotation, ctx->filtered_match.scale);
+    odom_update(&ctx->odom_ctx, ctx->unrotated_image, quadrant_rotation,
+            ctx->outlier_filter.filtered_match.scale);
     // sharpen unrotated image and remove edge effects
     img_hyper_sharpen(&(ctx->sharpened_image), ctx->unrotated_image);
     ImagePoint image_center = {{ctx->sharpened_image.size.x / 2, ctx->sharpened_image.size.y / 2}};
@@ -33,6 +34,10 @@ void localization_loop_run(LocalizationContext* ctx, const ImageMatrix image) {
             ctx->binary_image, ctx->binary_mask, 5);
     ctx->scale_match = (ScaleMatch){};
     scale_search_location(&(ctx->scale_match), &(ctx->scale_query));
+    if (outlier_filter_location(&(ctx->outlier_filter), &(ctx->scale_match))) {
+        ctx->odom_ctx.quadrant_count &= ~3u;
+        ctx->odom_ctx.quadrant_count |= ctx->outlier_filter.filtered_match.location.direction;
+    }
 }
 
 Vector2f img_derotate(ImageMatrix dst, const ImageMatrix src, float scale, uint8_t bg_fill) {

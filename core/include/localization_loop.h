@@ -9,7 +9,7 @@ typedef struct {
     BitMatrix64 binary_mask;
     ScaleQuery scale_query;
     ScaleMatch scale_match;
-    ScaleMatch filtered_match;
+    OutlierFilter outlier_filter;
     OdometryContext odom_ctx;
     float rotation_scale;
     uint32_t histogram[256];
