@@ -108,8 +108,8 @@ void odom_update(OdometryContext* ctx, ImageMatrix image, Vector2f rotation, flo
         }
     }
     img_estimate_translation(&(ctx->correlation), image);
-    rotation.z *= QUADRANT_LOOKUP[ctx->quadrant_count & 3].z;
-    ctx->position.z += ctx->correlation.translation.z * rotation.z * scale;
+    ctx->position.z +=
+            ctx->correlation.translation.z * QUADRANT_LOOKUP[ctx->quadrant_count & 3].z * scale;
 }
 
 int8_t odom_track_rotation(OdometryContext* ctx, Vector2f quadrant_rotation) {
