@@ -8,7 +8,14 @@ typedef struct {
     float max_squared_magnitude;
 } Correlation;
 
+typedef struct {
+    Vector2f quadrant_rotation;
+    int32_t quadrant_count;
+} OdometryContext;
+
 Vector2f img_estimate_rotation(const ImageMatrix mat);
+
+void track_rotation(OdometryContext* ctx, Vector2f quadrant_rotation);
 
 void img_estimate_translation(Correlation* correlation, const ImageMatrix frame);
 

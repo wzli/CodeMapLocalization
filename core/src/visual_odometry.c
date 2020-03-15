@@ -95,6 +95,13 @@ Vector2f img_estimate_rotation(const ImageMatrix mat) {
     return gradient_sum;
 }
 
+void track_rotation(OdometryContext* ctx, Vector2f quadrant_rotation) {
+    assert(ctx);
+    ctx->quadrant_count -= (quadrant_rotation.y - ctx->quadrant_rotation.y) > 0.8f;
+    ctx->quadrant_count += (quadrant_rotation.y - ctx->quadrant_rotation.y) < -0.8f;
+    ctx->quadrant_rotation = quadrant_rotation;
+}
+
 void img_estimate_translation(Correlation* correlation, const ImageMatrix frame) {
     assert(frame.size.x == CORRELATION_SIZE && frame.size.y == CORRELATION_SIZE);
     IMG_SET_SIZE(correlation->image, CORRELATION_SIZE / 2, CORRELATION_SIZE / 2);
