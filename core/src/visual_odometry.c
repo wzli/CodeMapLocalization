@@ -165,7 +165,7 @@ void img_estimate_translation(Correlation* correlation, const ImageMatrix frame)
         }
     }
     correlation->translation.z += subpixel_shift.z;
-    correlation->translation.z *= 2;
+    correlation->translation.z *= -2;
 }
 
 Vector2f img_subpixel_registration(const Correlation* correlation) {

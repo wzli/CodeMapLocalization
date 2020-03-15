@@ -12,7 +12,7 @@ void localization_loop_run(LocalizationContext* ctx, const ImageMatrix image) {
             img_derotate(ctx->unrotated_image, image, ctx->rotation_scale, ctx->threshold[0]);
     // run visual odometry
     odom_update(&ctx->odom_ctx, ctx->unrotated_image, quadrant_rotation,
-            ctx->outlier_filter.filtered_match.scale);
+            ctx->outlier_filter.filtered_match.scale / 3);
     // sharpen unrotated image and remove edge effects
     img_hyper_sharpen(&(ctx->sharpened_image), ctx->unrotated_image);
     ImagePoint image_center = {{ctx->sharpened_image.size.x / 2, ctx->sharpened_image.size.y / 2}};
