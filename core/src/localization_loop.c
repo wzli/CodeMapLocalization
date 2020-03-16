@@ -16,7 +16,7 @@ bool localization_loop_run(LocalizationContext* ctx, const ImageMatrix image) {
     // sharpen unrotated image and remove edge effects
     img_hyper_sharpen(&(ctx->sharpened_image), ctx->unrotated_image);
     ImagePoint image_center = {{ctx->sharpened_image.size.x / 2, ctx->sharpened_image.size.y / 2}};
-    Vector2f vertex = {{2 * image_center.x, 2 * image_center.y}};
+    Vector2f vertex = {{2 + image_center.x, 2 + image_center.y}};
     vertex.z *= quadrant_rotation.z * ctx->rotation_scale;
     img_draw_regular_polygon(ctx->sharpened_image, image_center, vertex, 4, ctx->threshold[0], 5);
     // find threshold of filtered image
