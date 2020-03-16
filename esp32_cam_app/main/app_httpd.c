@@ -2,7 +2,6 @@
 #include "esp_timer.h"
 #include "esp_camera.h"
 #include "img_converters.h"
-#include "driver/ledc.h"
 #include "sdkconfig.h"
 #include "esp_log.h"
 #include "freertos/queue.h"
@@ -11,10 +10,10 @@
 
 #define N_FRAME_QUEUES 4
 QueueHandle_t frame_queues[N_FRAME_QUEUES] = {};
+int led_duty = -1;
 
 static const char* TAG = "web_ui";
 static char text_buf[1024];
-static int led_duty = -1;
 
 /* helper functions */
 
@@ -36,20 +35,8 @@ static size_t jpg_encode_stream(void* arg, size_t index, const void* data, size_
 }
 
 void set_led(int duty) {
-#ifdef CONFIG_LED_ILLUMINATOR_ENABLED
-#ifdef CONFIG_LED_LEDC_LOW_SPEED_MODE
-#define CONFIG_LED_LEDC_SPEED_MODE LEDC_LOW_SPEED_MODE
-#else
-#define CONFIG_LED_LEDC_SPEED_MODE LEDC_HIGH_SPEED_MODE
-#endif
-    if (duty > CONFIG_LED_MAX_INTENSITY) {
-        duty = CONFIG_LED_MAX_INTENSITY;
-    }
-    ledc_set_duty(CONFIG_LED_LEDC_SPEED_MODE, CONFIG_LED_LEDC_CHANNEL, duty);
-    ledc_update_duty(CONFIG_LED_LEDC_SPEED_MODE, CONFIG_LED_LEDC_CHANNEL);
     ESP_LOGI(TAG, "Set LED intensity to %d", duty);
     led_duty = duty;
-#endif
 }
 
 static int print_heap_info(char* buf, const char* name, uint32_t capabilities) {

@@ -23,6 +23,8 @@
 extern QueueHandle_t frame_queues[];
 extern QueueHandle_t record_frame_queue;
 extern uint32_t record_frame_count;
+extern int led_duty;
+void set_led_duty(int duty);
 void app_camera_main();
 void app_wifi_main();
 void app_httpd_main();
@@ -103,6 +105,7 @@ static void main_loop(void* pvParameters) {
     }
     // main loop
     int64_t start_time = esp_timer_get_time();
+    uint16_t led_duty_control = 0;
     for (uint32_t frame_count = 0;; ++frame_count) {
         ImageMatrix images[N_DOUBLE_BUFFERS + 1];
         // fetch frame buffers
@@ -145,6 +148,13 @@ static void main_loop(void* pvParameters) {
             claimed_buffers[i]->height = images[i].size.y;
             claimed_buffers[i]->len = IMG_PIXEL_COUNT(images[i]);
             queue_fb_return(i);
+        }
+
+        // control LED based on desired threshold
+        if (led_duty_control < ((1 << 12) - 1) && loc_ctx.threshold[0] < led_duty - 8) {
+            set_led_duty((++led_duty_control) >> 4);
+        } else if (led_duty_control > 0 && loc_ctx.threshold[0] > led_duty + 8) {
+            set_led_duty((--led_duty_control) >> 4);
         }
 
         // end loop

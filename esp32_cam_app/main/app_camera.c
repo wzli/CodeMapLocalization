@@ -123,3 +123,18 @@ void app_camera_main() {
     // set contrast to highest (for better binary seperation)
     s->set_contrast(s, 2);
 }
+
+void set_led_duty(int duty) {
+#ifdef CONFIG_LED_ILLUMINATOR_ENABLED
+#ifdef CONFIG_LED_LEDC_LOW_SPEED_MODE
+#define CONFIG_LED_LEDC_SPEED_MODE LEDC_LOW_SPEED_MODE
+#else
+#define CONFIG_LED_LEDC_SPEED_MODE LEDC_HIGH_SPEED_MODE
+#endif
+    if (duty > CONFIG_LED_MAX_INTENSITY) {
+        duty = CONFIG_LED_MAX_INTENSITY;
+    }
+    ledc_set_duty(CONFIG_LED_LEDC_SPEED_MODE, CONFIG_LED_LEDC_CHANNEL, duty);
+    ledc_update_duty(CONFIG_LED_LEDC_SPEED_MODE, CONFIG_LED_LEDC_CHANNEL);
+#endif
+}
