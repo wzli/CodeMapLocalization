@@ -10,7 +10,7 @@ typedef struct {
     ScaleQuery scale_query;
     ScaleMatch scale_match;
     OutlierFilter outlier_filter;
-    OdometryContext odom_ctx;
+    VisualOdometry odom;
     float rotation_scale;
     uint32_t histogram[256];
     uint8_t threshold[2];

@@ -11,7 +11,7 @@ bool localization_loop_run(LocalizationContext* ctx, const ImageMatrix image) {
     Vector2f quadrant_rotation =
             img_derotate(ctx->unrotated_image, image, ctx->rotation_scale, ctx->threshold[0]);
     // run visual odometry
-    odom_update(&ctx->odom_ctx, ctx->unrotated_image, quadrant_rotation,
+    odom_update(&ctx->odom, ctx->unrotated_image, quadrant_rotation,
             ctx->outlier_filter.filtered_match.scale / 3);
     // sharpen unrotated image and remove edge effects
     img_hyper_sharpen(&(ctx->sharpened_image), ctx->unrotated_image);
@@ -38,7 +38,7 @@ bool localization_loop_run(LocalizationContext* ctx, const ImageMatrix image) {
     // outlier rejection filter
     if (outlier_filter_location(&(ctx->outlier_filter), &(ctx->scale_match))) {
         // update odom
-        odom_set_location(&(ctx->odom_ctx), ctx->outlier_filter.filtered_match.location);
+        odom_set_location(&(ctx->odom), ctx->outlier_filter.filtered_match.location);
         return true;
     }
     return false;

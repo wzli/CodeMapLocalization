@@ -95,36 +95,36 @@ Vector2f img_estimate_rotation(const ImageMatrix mat) {
     return gradient_sum;
 }
 
-void odom_update(OdometryContext* ctx, ImageMatrix image, Vector2f rotation, float scale) {
+void odom_update(VisualOdometry* odom, ImageMatrix image, Vector2f rotation, float scale) {
     // track if quadrants changed
-    int8_t quadrant_increment = odom_track_rotation(ctx, rotation);
+    int8_t quadrant_increment = odom_track_rotation(odom, rotation);
     // rotate filter out quadrant changes
     if (quadrant_increment != 0) {
         Vector2f fill = {};
-        IMG_FILL(ctx->correlation.buffer, fill);
+        IMG_FILL(odom->correlation.buffer, fill);
     }
-    img_estimate_translation(&(ctx->correlation), image);
-    ctx->position.z +=
-            ctx->correlation.translation.z * QUADRANT_LOOKUP[ctx->quadrant_count & 3].z * scale;
+    img_estimate_translation(&(odom->correlation), image);
+    odom->position.z +=
+            odom->correlation.translation.z * QUADRANT_LOOKUP[odom->quadrant_count & 3].z * scale;
 }
 
-void odom_set_location(OdometryContext* ctx, Location loc) {
-    ctx->position.x = loc.x;
-    ctx->position.y = loc.y;
-    ctx->quadrant_count &= ~3u;
-    ctx->quadrant_count |= loc.direction;
+void odom_set_location(VisualOdometry* odom, Location loc) {
+    odom->position.x = loc.x;
+    odom->position.y = loc.y;
+    odom->quadrant_count &= ~3u;
+    odom->quadrant_count |= loc.direction;
 }
 
-int8_t odom_track_rotation(OdometryContext* ctx, Vector2f quadrant_rotation) {
-    assert(ctx);
-    float dy = quadrant_rotation.y - ctx->quadrant_rotation.y;
-    ctx->quadrant_rotation = quadrant_rotation;
+int8_t odom_track_rotation(VisualOdometry* odom, Vector2f quadrant_rotation) {
+    assert(odom);
+    float dy = quadrant_rotation.y - odom->quadrant_rotation.y;
+    odom->quadrant_rotation = quadrant_rotation;
     if (dy < -0.8f) {
-        ++ctx->quadrant_count;
+        ++odom->quadrant_count;
         return 1;
     }
     if (dy > 0.8f) {
-        --ctx->quadrant_count;
+        --odom->quadrant_count;
         return -1;
     }
     return 0;

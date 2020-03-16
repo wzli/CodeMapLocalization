@@ -53,8 +53,8 @@ static int test_localization_loop_run() {
     ImageMatrix image = {calloc(64 * 64, 1), {{64, 64}}};
     ctx->unrotated_image = (ImageMatrix){calloc(64 * 64, 1), {{64, 64}}};
     ctx->sharpened_image = ctx->unrotated_image;
-    ctx->odom_ctx.correlation.image.data = calloc(32 * 32, sizeof(Vector2f));
-    ctx->odom_ctx.correlation.buffer.data = calloc(32 * 32, sizeof(Vector2f));
+    ctx->odom.correlation.image.data = calloc(32 * 32, sizeof(Vector2f));
+    ctx->odom.correlation.buffer.data = calloc(32 * 32, sizeof(Vector2f));
     ctx->rotation_scale = 1.0f;
     for (uint32_t src_row_pos = 1000; src_row_pos < 1000 + TEST_VECTOR_SIZE; ++src_row_pos)
         for (uint32_t src_col_pos = 1100; src_col_pos < 1100 + TEST_VECTOR_SIZE; ++src_col_pos) {
@@ -92,8 +92,8 @@ static int test_localization_loop_run() {
         }
     free(image.data);
     free(ctx->unrotated_image.data);
-    free(ctx->odom_ctx.correlation.image.data);
-    free(ctx->odom_ctx.correlation.buffer.data);
+    free(ctx->odom.correlation.image.data);
+    free(ctx->odom.correlation.buffer.data);
     free(ctx);
     return 0;
 }
