@@ -98,14 +98,10 @@ Vector2f img_estimate_rotation(const ImageMatrix mat) {
 void odom_update(OdometryContext* ctx, ImageMatrix image, Vector2f rotation, float scale) {
     // track if quadrants changed
     int8_t quadrant_increment = odom_track_rotation(ctx, rotation);
-    // rotate previous buffer according the quadrant change
+    // rotate filter out quadrant changes
     if (quadrant_increment != 0) {
-        IMG_TRANSPOSE(ctx->correlation.buffer, ctx->correlation.buffer);
-        if (quadrant_increment > 0) {
-            IMG_VFLIP(ctx->correlation.buffer, ctx->correlation.buffer);
-        } else {
-            IMG_HFLIP(ctx->correlation.buffer, ctx->correlation.buffer);
-        }
+        Vector2f fill = {};
+        IMG_FILL(ctx->correlation.buffer, fill);
     }
     img_estimate_translation(&(ctx->correlation), image);
     ctx->position.z +=
@@ -161,6 +157,7 @@ void img_estimate_translation(Correlation* correlation, const ImageMatrix frame)
     }
     // return early if correlation is empty
     if (correlation->max_squared_magnitude == 0) {
+        correlation->translation.z = 0;
         return;
     }
     // find subpixel shift
