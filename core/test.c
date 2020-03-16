@@ -35,53 +35,66 @@ int main(int argc, char** argv) {
     ImageMatrix output_image = MALLOC_IMAGE(2 * FRAME_SIZE);
     loc_ctx.unrotated_image = MALLOC_IMAGE(FRAME_SIZE);
     loc_ctx.sharpened_image = MALLOC_IMAGE(FRAME_SIZE);
-    loc_ctx.correlation.image = MALLOC_IMAGE_COMPLEX(FRAME_SIZE / 2);
-    loc_ctx.correlation.buffer = MALLOC_IMAGE_COMPLEX(FRAME_SIZE / 2);
+    loc_ctx.odom.correlation.image = MALLOC_IMAGE_COMPLEX(FRAME_SIZE / 2);
+    loc_ctx.odom.correlation.buffer = MALLOC_IMAGE_COMPLEX(FRAME_SIZE / 2);
     // setup configs
     loc_ctx.rotation_scale = 1.0f;
     loc_ctx.scale_query.lower_bound = 0.8f;
     loc_ctx.scale_query.upper_bound = 1.2f;
     loc_ctx.scale_query.step_size = 0.02f;
+    loc_ctx.outlier_filter.distance_threshold = 200;
+    loc_ctx.outlier_filter.match_size_threshold = 20;
+    loc_ctx.outlier_filter.bit_error_ratio_threshold = 5;
+    loc_ctx.outlier_filter.max_rejection_count = 10;
+    loc_ctx.odom.correlation.squared_magnitude_threshold = 0.01;
     // print csv headers
     printf("frame, "
-           "match_size, "
+           "updated, "
            "thresh0, "
            "thresh1, "
+           "match_size, "
+           "row_err_ratio, "
+           "col_err_ratio, "
            "scale, "
-           "cor_x, "
-           "cor_y, "
            "loc_x, "
            "loc_y, "
-           "rot_x, "
-           "rot_y, "
-           "row_bits, "
-           "row_mask, "
-           "row_err, "
-           "row_tot, "
-           "col_bits, "
-           "col_mask, "
-           "col_err, "
-           "col_tot"
+           "loc_dir, "
+           "odom_dir, "
+           "odom_x, "
+           "odom_y, "
+           "corr_x, "
+           "corr_y, "
+           "corr_err_ratio"
+           "orientation, "
            "\n");
     // loop through frames
     uint32_t n_frames = 0;
+
     for (size_t read_bytes = fread(raw_image.data, 1, SQR(FRAME_SIZE), fp);
             read_bytes == SQR(FRAME_SIZE);
             read_bytes = fread(raw_image.data, 1, SQR(FRAME_SIZE), fp), ++n_frames) {
         // process frame
-        localization_loop_run(&loc_ctx, raw_image);
-        // print csv values
-        printf("%u, %d, %u, %u, %f, %f, %f, %u, %u, %f, %f, %u, %u, %u, %u, %u, %u, %u, %u\n",
-                n_frames, loc_ctx.scale_match.location.match_size, loc_ctx.threshold[0],
-                loc_ctx.threshold[1], (double) loc_ctx.scale_match.scale,
-                (double) loc_ctx.correlation.translation.x,
-                (double) loc_ctx.correlation.translation.y, loc_ctx.scale_match.location.x,
-                loc_ctx.scale_match.location.y, (double) loc_ctx.scale_match.location.rotation.x,
-                (double) loc_ctx.scale_match.location.rotation.y, loc_ctx.scale_match.row_code.bits,
-                loc_ctx.scale_match.row_code.mask, loc_ctx.scale_match.row_code.n_errors,
-                loc_ctx.scale_match.row_code.n_samples, loc_ctx.scale_match.col_code.bits,
-                loc_ctx.scale_match.col_code.mask, loc_ctx.scale_match.col_code.n_errors,
-                loc_ctx.scale_match.col_code.n_samples);
+        bool updated = localization_loop_run(&loc_ctx, raw_image);
+        Vector2f odom_rot = loc_ctx.odom.quadrant_rotation;
+        odom_rot.z *= QUADRANT_LOOKUP[loc_ctx.odom.quadrant_count & 3].z;
+        printf("%u, %u, %u, %u, %u, %f, %f, %f, %u, %u, %u, %d, %f, %f, %f, %f, %f, %f\n", n_frames,
+                updated, loc_ctx.threshold[0], loc_ctx.threshold[1],
+                loc_ctx.scale_match.location.match_size,
+                (double) loc_ctx.scale_match.row_code.n_errors /
+                        (loc_ctx.scale_match.row_code.n_samples + 1),
+                (double) loc_ctx.scale_match.col_code.n_errors /
+                        (loc_ctx.scale_match.col_code.n_samples + 1),
+                (double) loc_ctx.scale_match.scale,
+                loc_ctx.outlier_filter.filtered_match.location.x,
+                loc_ctx.outlier_filter.filtered_match.location.y,
+                loc_ctx.outlier_filter.filtered_match.location.direction,
+                loc_ctx.odom.quadrant_count, (double) loc_ctx.odom.position.x,
+                (double) loc_ctx.odom.position.y, (double) loc_ctx.odom.correlation.translation.x,
+                (double) loc_ctx.odom.correlation.translation.y,
+                (double) (loc_ctx.odom.correlation.squared_magnitude_max /
+                          (loc_ctx.odom.correlation.squared_magnitude_sum + 0.0001f)),
+                (double) cargf(odom_rot.z));
+
         // write raw image to top left
         ImagePoint top_left = {{0, 0}};
         IMG_PASTE(output_image, raw_image, top_left);
@@ -92,8 +105,8 @@ int main(int argc, char** argv) {
         FOR_EACH_PIXEL(raw_image) {
             // normalize to 255
             PIXEL(raw_image, row, col) = 255 *
-                                         PIXEL(loc_ctx.correlation.image, row / 2, col / 2).x /
-                                         loc_ctx.correlation.max_squared_magnitude;
+                                         PIXEL(loc_ctx.odom.correlation.image, row / 2, col / 2).x /
+                                         loc_ctx.odom.correlation.squared_magnitude_max;
         }
         // roll to center
         for (int16_t row = 0; row < FRAME_SIZE / 2; ++row) {
@@ -122,8 +135,8 @@ int main(int argc, char** argv) {
         img_save_to_pgm(output_image, file_name);
     }
     // deallocate context
-    free(loc_ctx.correlation.buffer.data);
-    free(loc_ctx.correlation.image.data);
+    free(loc_ctx.odom.correlation.buffer.data);
+    free(loc_ctx.odom.correlation.image.data);
     free(loc_ctx.sharpened_image.data);
     free(loc_ctx.unrotated_image.data);
     free(output_image.data);
