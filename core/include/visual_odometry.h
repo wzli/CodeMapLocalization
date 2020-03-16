@@ -6,7 +6,9 @@ typedef struct {
     ImageMatrixComplex image;
     ImageMatrixComplex buffer;
     Vector2f translation;
-    float max_squared_magnitude;
+    float squared_magnitude_threshold;
+    float squared_magnitude_max;
+    float squared_magnitude_sum;
 } Correlation;
 
 typedef struct {

@@ -145,19 +145,25 @@ void img_estimate_translation(Correlation* correlation, const ImageMatrix frame)
     SWAP(correlation->image.data, correlation->buffer.data);
     img_phase_correlation(correlation->image, correlation->buffer, true);
     // find peak value in correlation image
-    correlation->max_squared_magnitude = 0;
+    correlation->squared_magnitude_max = 0;
+    correlation->squared_magnitude_sum = 0;
     correlation->translation.z = 0;
     FOR_EACH_PIXEL(correlation->image) {
         float mag_sqr = v2f_norm_sqr(PIXEL(correlation->image, row, col));
+        correlation->squared_magnitude_sum += mag_sqr;
         PIXEL(correlation->image, row, col).z = mag_sqr;
-        if (correlation->max_squared_magnitude <= mag_sqr) {
-            correlation->max_squared_magnitude = mag_sqr;
+        if (correlation->squared_magnitude_max <= mag_sqr) {
+            correlation->squared_magnitude_max = mag_sqr;
             correlation->translation.z = col + I * row;
         }
     }
     // return early if correlation is empty
-    if (correlation->max_squared_magnitude == 0) {
+    if (correlation->squared_magnitude_max == 0) {
         correlation->translation.z = 0;
+        return;
+    }
+    if (correlation->squared_magnitude_max <
+            (correlation->squared_magnitude_sum * correlation->squared_magnitude_threshold)) {
         return;
     }
     // find subpixel shift
@@ -173,9 +179,9 @@ void img_estimate_translation(Correlation* correlation, const ImageMatrix frame)
 }
 
 Vector2f img_subpixel_registration(const Correlation* correlation) {
-    assert(correlation && correlation->max_squared_magnitude > 0);
+    assert(correlation && correlation->squared_magnitude_max > 0);
     // initialize peaks (assume correlation image is square normalized)
-    const float peak = sqrtf(correlation->max_squared_magnitude);
+    const float peak = sqrtf(correlation->squared_magnitude_max);
     int16_t peak_idx[2] = {
             (int16_t) correlation->translation.x, (int16_t) correlation->translation.y};
     int8_t side_peaks_dir[2] = {1, 1};
