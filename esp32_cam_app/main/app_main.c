@@ -81,20 +81,18 @@ static void queue_fb_return(uint8_t queue_index) {
 
 /* run */
 static void main_loop(void* pvParameters) {
-    // initalize FFT tables
-    if (dsps_fft2r_init_fc32(NULL, CONFIG_DSP_MAX_FFT_SIZE) != ESP_OK) {
-        ESP_LOGE(TAG, "Not able to initialize FFT.");
-        assert(0);
-    }
-    // run unit tests
-    assert(!run_all_tests());
     // configure location context params
     loc_ctx.rotation_scale = 1.0f;
     loc_ctx.scale_query.lower_bound = 0.8f;
     loc_ctx.scale_query.upper_bound = 1.2f;
     loc_ctx.scale_query.step_size = 0.02f;
-    loc_ctx.correlation.image.data = correlation_buffers[0];
-    loc_ctx.correlation.buffer.data = correlation_buffers[1];
+    loc_ctx.outlier_filter.distance_threshold = 200;
+    loc_ctx.outlier_filter.match_size_threshold = 20;
+    loc_ctx.outlier_filter.bit_error_ratio_threshold = 5;
+    loc_ctx.outlier_filter.max_rejection_count = 10;
+    loc_ctx.odom.correlation.squared_magnitude_threshold = 0.01;
+    loc_ctx.odom.correlation.image.data = correlation_buffers[0];
+    loc_ctx.odom.correlation.buffer.data = correlation_buffers[1];
     // initialize queues
     for (int i = 0; i <= N_DOUBLE_BUFFERS; ++i) {
         for (int j = 0; j < 2; ++j) {
@@ -107,54 +105,40 @@ static void main_loop(void* pvParameters) {
     int64_t start_time = esp_timer_get_time();
     for (uint32_t frame_count = 0;; ++frame_count) {
         ImageMatrix images[N_DOUBLE_BUFFERS + 1];
+        // fetch frame buffers
         for (uint8_t i = 0; i <= N_DOUBLE_BUFFERS; ++i) {
             images[i] = queue_fb_get(i);
         }
-        // queue frame for recording
+        // queue raw image for recording
         if (record_frame_queue) {
             xQueueSendToBack(record_frame_queue, &claimed_buffers[0], 0);
         }
         // assign buffers to localization context
-        loc_ctx.unrotated_image = images[1];
-        loc_ctx.sharpened_image = images[2];
-        localization_loop_run(&loc_ctx, images[0]);
-        int64_t end_time = esp_timer_get_time();
+        loc_ctx.unrotated_image = images[2];
+        loc_ctx.sharpened_image = images[1];
 
-        IMG_SET_SIZE(images[2], 64, 64);
-        IMG_FILL(images[2], 0);
-        PIXEL(images[2], (int) loc_ctx.correlation.translation.y + 32,
-                (int) loc_ctx.correlation.translation.x + 32) = 255;
+        // run localization logic
+        bool updated = localization_loop_run(&loc_ctx, images[0]);
 
-#if 0
-        images[2].size = loc_ctx.correlation.image.size;
-        float norm_scale = 1.0f / max_norm_sqr;
-        FOR_EACH_PIXEL(loc_ctx.correlation.image) {
-            PIXEL(images[2], row, col) =
-                    255 * norm_scale * PIXEL(loc_ctx.correlation.image, row, col).x;
-        }
+        // write sharpened image
+        IMG_SET_SIZE(images[1], 62, 62);
 
-        for (int16_t row = 0; row < 16; ++row) {
-            for (int16_t col = 0; col < 16; ++col) {
-                SWAP(PIXEL(images[2], row, col), PIXEL(images[2], row + 16, col + 16));
-                SWAP(PIXEL(images[2], row + 16, col), PIXEL(images[2], row, col + 16));
-            }
-        }
-        // display thresholded bm64
-        bm64_to_img(&images[1], loc_ctx.binary_image, loc_ctx.binary_mask);
-
-        // display extracted bm64
+        // write decoded image
+        AXISCODE_COPY(loc_ctx.scale_query.row_code, loc_ctx.scale_match.row_code);
+        AXISCODE_COPY(loc_ctx.scale_query.col_code, loc_ctx.scale_match.col_code);
+        loc_ctx.scale_query.row_code = scale_axiscode64(loc_ctx.scale_query.row_code, 3);
+        loc_ctx.scale_query.col_code = scale_axiscode64(loc_ctx.scale_query.col_code, 3);
         bm64_from_axiscodes(loc_ctx.binary_image, loc_ctx.binary_mask, loc_ctx.scale_query.row_code,
                 loc_ctx.scale_query.col_code);
         bm64_to_img(&images[2], loc_ctx.binary_image, loc_ctx.binary_mask);
 
-        // display scale matched bm64
-        AXISCODE_COPY(loc_ctx.scale_query.row_code, loc_ctx.scale_match.row_code);
-        AXISCODE_COPY(loc_ctx.scale_query.col_code, loc_ctx.scale_match.col_code);
-        bm64_from_axiscodes(loc_ctx.binary_image, loc_ctx.binary_mask, loc_ctx.scale_query.row_code,
-                loc_ctx.scale_query.col_code);
-        bm64_to_img(&images[3], loc_ctx.binary_image, loc_ctx.binary_mask);
-#endif
+        // write correlation image
+        IMG_SET_SIZE(images[3], 64, 64);
+        IMG_FILL(images[3], 0);
+        PIXEL(images[3], (int) loc_ctx.odom.correlation.translation.y + 32,
+                (int) loc_ctx.odom.correlation.translation.x + 32) = 255;
 
+        // return frame buffers
         for (uint8_t i = 0; i <= N_DOUBLE_BUFFERS; ++i) {
             assert(claimed_buffers[i]);
             claimed_buffers[i]->width = images[i].size.x;
@@ -164,28 +148,35 @@ static void main_loop(void* pvParameters) {
         }
 
         // end loop
-        if (loc_ctx.scale_match.location.match_size > 16) {
+        int64_t end_time = esp_timer_get_time();
+        Vector2f odom_rot = loc_ctx.odom.quadrant_rotation;
+        odom_rot.z *= QUADRANT_LOOKUP[loc_ctx.odom.quadrant_count & 3].z;
+        if (updated) {
             ESP_LOGI(TAG,
-                    "fr %u rfr %u t %lluus thresh %u (x %d y %d r %f m %d) row %d/%d col %d/%d \n",
+                    "frames %u recorded %u loop time %lluus thresh %u (x %d y %d r %f m %d) \n",
                     frame_count, record_frame_count, end_time - start_time,
                     (loc_ctx.threshold[0] + loc_ctx.threshold[1]) / 2,
-                    loc_ctx.scale_match.location.x, loc_ctx.scale_match.location.y,
-                    180 *
-                            atan2(loc_ctx.scale_match.location.rotation.y,
-                                    loc_ctx.scale_match.location.rotation.x) /
-                            M_PI,
-                    loc_ctx.scale_match.location.match_size, loc_ctx.scale_match.row_code.n_errors,
-                    loc_ctx.scale_match.row_code.n_samples, loc_ctx.scale_match.col_code.n_errors,
-                    loc_ctx.scale_match.col_code.n_samples);
+                    loc_ctx.outlier_filter.filtered_match.location.x,
+                    loc_ctx.outlier_filter.filtered_match.location.y,
+                    (double) (180 * cargf(odom_rot.z) / M_PI_F),
+                    loc_ctx.scale_match.location.match_size);
         }
         start_time = end_time;
     }
 }
 
 void app_main() {
-    app_wifi_main();
-    app_camera_main();
-    app_httpd_main();
+    // initalize FFT tables
+    if (dsps_fft2r_init_fc32(NULL, CONFIG_DSP_MAX_FFT_SIZE) != ESP_OK) {
+        ESP_LOGE(TAG, "Not able to initialize FFT.");
+        assert(0);
+    }
+    // run unit tests
+    assert(!run_all_tests());
+    // init tasks
     app_record_main();
+    app_camera_main();
+    app_wifi_main();
+    app_httpd_main();
     xTaskCreatePinnedToCore(main_loop, "main_loop", 4096, NULL, 9, NULL, 1);
 }

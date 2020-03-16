@@ -80,7 +80,7 @@ Location deduce_location(AxisPosition row_position, AxisPosition col_position) {
     loc.match_size = row_position.inverted == col_position.inverted
                              ? row_position.span * col_position.span
                              : 0;
-    assert(location->match_size >= 0);
+    assert(loc.match_size >= 0);
     loc.direction = (row_position.reversed << 1) | (col_position.reversed ^ row_position.reversed);
     if (row_position.reversed ^ col_position.reversed) {
         loc.x = col_position.center;

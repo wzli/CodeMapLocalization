@@ -122,8 +122,8 @@ int main(int argc, char** argv) {
         // write decoded image to bottom left
         AXISCODE_COPY(loc_ctx.scale_query.row_code, loc_ctx.scale_match.row_code);
         AXISCODE_COPY(loc_ctx.scale_query.col_code, loc_ctx.scale_match.col_code);
-        loc_ctx.scale_query.row_code = scale_axiscode64(loc_ctx.scale_query.row_code, 2);
-        loc_ctx.scale_query.col_code = scale_axiscode64(loc_ctx.scale_query.col_code, 2);
+        loc_ctx.scale_query.row_code = scale_axiscode64(loc_ctx.scale_query.row_code, 3);
+        loc_ctx.scale_query.col_code = scale_axiscode64(loc_ctx.scale_query.col_code, 3);
         bm64_from_axiscodes(loc_ctx.binary_image, loc_ctx.binary_mask, loc_ctx.scale_query.row_code,
                 loc_ctx.scale_query.col_code);
         bm64_to_img(&raw_image, loc_ctx.binary_image, loc_ctx.binary_mask);
