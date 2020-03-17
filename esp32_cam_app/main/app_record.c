@@ -63,7 +63,7 @@ static void record_loop(void* pvParameters) {
         fresult = f_mkdir(text_buf);
     } while (FR_OK != fresult && ++path_index);
     // create new recording
-    sprintf(text_buf, "%d/mjpeg.rec", path_index);
+    sprintf(text_buf, "%d/%s", path_index, CONFIG_RECORD_RAW_FRAMES_FILENAME);
     ESP_LOGI(TAG, "creating %s ...", text_buf);
     static FIL rec;
     fresult = f_open(&rec, text_buf, FA_WRITE | FA_CREATE_NEW);

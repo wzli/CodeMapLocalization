@@ -20,6 +20,7 @@
 #define N_DOUBLE_BUFFERS (sizeof(double_buffers) / sizeof(double_buffers[0]))
 
 /* externals */
+extern const uint64_t MLS_ID;
 extern QueueHandle_t frame_queues[];
 extern QueueHandle_t record_frame_queue;
 extern uint32_t record_frame_count;
@@ -83,6 +84,7 @@ static void queue_fb_return(uint8_t queue_index) {
 
 /* run */
 static void main_loop(void* pvParameters) {
+    ESP_LOGI(TAG, "using MLS_INDEX_ID %llx", MLS_ID);
     // configure location context params
     loc_ctx.rotation_scale = 1.0f;
     loc_ctx.scale_query.lower_bound = 0.8f;
@@ -186,8 +188,9 @@ void app_main() {
     // run unit tests
     assert(!run_all_tests());
     // init tasks
-    app_record_main();
+    // camera has to start first otherwise it crashes
     app_camera_main();
+    app_record_main();
     app_wifi_main();
     app_httpd_main();
     xTaskCreatePinnedToCore(main_loop, "main_loop", 4096, NULL, 9, NULL, 1);

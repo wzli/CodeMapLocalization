@@ -7,6 +7,13 @@ config RECORD_RAW_FRAMES_ENABLE
     help
     Record raw frames to MJPEG file.
 
+config RECORD_RAW_FRAMES_FILENAME
+    depends on RECORD_RAW_FRAMES_ENABLE
+    string "Record Raw Frames Filename"
+    default "raw.mjpeg"
+    help
+    Name of the MJPEG file to save raw frames to.
+
 config RECORD_RAW_FRAMES_LIMIT
     depends on RECORD_RAW_FRAMES_ENABLE
     int "Frames Limit"
