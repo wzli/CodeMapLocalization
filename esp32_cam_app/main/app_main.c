@@ -150,12 +150,14 @@ static void main_loop(void* pvParameters) {
             queue_fb_return(i);
         }
 
+#if CONFIG_LED_ILLUMINATOR_ENABLED
         // control LED based on desired threshold
         if (led_duty_control < ((1 << 12) - 1) && loc_ctx.threshold[0] < led_duty - 8) {
             set_led_duty((++led_duty_control) >> 4);
         } else if (led_duty_control > 0 && loc_ctx.threshold[0] > led_duty + 8) {
             set_led_duty((--led_duty_control) >> 4);
         }
+#endif
 
         // end loop
         int64_t end_time = esp_timer_get_time();

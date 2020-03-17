@@ -1,3 +1,4 @@
+#include "sdkconfig.h"
 #include "esp_camera.h"
 #include "esp_log.h"
 #include "esp_vfs_fat.h"
@@ -77,7 +78,7 @@ static void record_loop(void* pvParameters) {
     f_write(&rec, STREAM_CONTENT_TYPE, STREAM_CONTENT_TYPE_LEN, &bytes_written);
     f_write(&rec, STREAM_BOUNDARY, STREAM_BOUNDARY_LEN, &bytes_written);
     // write frames
-    for (;; ++record_frame_count) {
+    for (; record_frame_count < CONFIG_RECORD_RAW_FRAMES_LIMIT; ++record_frame_count) {
         camera_fb_t* fb_ptr;
         xQueueReceive(record_frame_queue, &fb_ptr, portMAX_DELAY);
         f_write(&rec, STREAM_PART, STREAM_PART_LEN, &bytes_written);
@@ -99,8 +100,10 @@ void app_record_main() {
     if (ESP_OK != init_sdcard()) {
         return;
     }
+#if CONFIG_RECORD_RAW_FRAMES_ENABLE
     // init record queue
     record_frame_queue = xQueueCreate(1, sizeof(camera_fb_t*));
     // create record task
     xTaskCreatePinnedToCore(record_loop, "record", 4096, NULL, 7, NULL, 0);
+#endif
 }

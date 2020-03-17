@@ -1,5 +1,20 @@
 menu "Code Map Localization"
 
+menu "SD Record Settings"
+config RECORD_RAW_FRAMES_ENABLE
+    bool "Record Raw Frames"
+    default n
+    help
+    Record raw frames to MJPEG file.
+
+config RECORD_RAW_FRAMES_LIMIT
+    depends on RECORD_RAW_FRAMES_ENABLE
+    int "Frames Limit"
+    default 1000000
+    help
+    Maximum number of frames to record in one run.
+endmenu
+
 menu "WiFi Settings"
 config ESP_WIFI_SSID
     string "WiFi STA SSID"
