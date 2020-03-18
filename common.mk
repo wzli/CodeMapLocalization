@@ -20,8 +20,7 @@ endif
 CXXFLAGS ?= -std=c++11 $(COMMONFLAGS)
 CXX ?= g++
 
-#maybe also -Wdouble-promotion
-CFLAGS ?= -std=c99 $(COMMONFLAGS)
+CFLAGS ?= -std=c99 -Wdouble-promotion $(COMMONFLAGS)
 CC ?= gcc
 
 CPPFLAGS ?= $(INC_FLAGS) -MMD -MP 
