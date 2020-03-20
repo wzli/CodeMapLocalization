@@ -26,25 +26,28 @@ class CodeMapGui:
 
     def __init__(self):
         # initial coordinates
-        self.pos = [0, 0]
+        self.pos = np.array([0, 0])
         self.rotation = 0
         self.zoom = 1
+        self.dragging = False
         # load code map
         self.code_map = cv2.imread('code_map.pbm', cv2.IMREAD_GRAYSCALE)
         # create code map window
-        create_window('CodeMap', (640, 640), (0, 0))
-        cv2.setMouseCallback('CodeMap', self.mouse_callback)
-        # create camera and control view
-        create_window('Camera', (320, 320), (970, 0))
-        create_window('ControlView', (320, 320 + 50), (645, 0))
+        create_window('CodeMap', (512, 512), (0, 0))
+        cv2.setMouseCallback('CodeMap', self.code_map_mouse_callback)
+        # create control view
+        create_window('ControlView', (512, 512 + 50), (512, 0))
         cv2.createTrackbar('Rotation', 'ControlView', 180, 360,
                            self.rotation_callback)
         cv2.createTrackbar('Zoom', 'ControlView', CodeMapGui.max_zoom,
                            CodeMapGui.max_zoom * 2, self.zoom_callback)
+        cv2.setMouseCallback('ControlView', self.control_view_mouse_callback)
+        # create camera
+        create_window('Camera', (512, 512), (1024, 0))
 
     def run(self):
-        cv2.imshow('CodeMap', self.code_map)
         self.update_frame()
+        cv2.imshow('CodeMap', self.code_map)
         while (self.key_callback(cv2.waitKey(50))):
             cv2.imshow('ControlView', self.control_view)
             cv2.imshow('Camera', self.camera)
@@ -73,12 +76,35 @@ class CodeMapGui:
         self.update_frame()
         return True
 
-    def mouse_callback(self, event, x, y, flags, param):
-        if flags == 2:
+    def code_map_mouse_callback(self, event, x, y, flags, param):
+        if flags == cv2.EVENT_FLAG_RBUTTON:
             border = CodeMapGui.camera_res // 2
             self.pos[0] = x - border
             self.pos[1] = y - border
             self.update_frame()
+
+    def control_view_mouse_callback(self, event, x, y, flags, param):
+        if event == cv2.EVENT_LBUTTONDOWN or event == cv2.EVENT_RBUTTONDOWN:
+            self.dragging = True
+            self.prev_mouse_pos = np.array((x, y))
+        elif event == cv2.EVENT_LBUTTONUP or event == cv2.EVENT_RBUTTONUP:
+            self.dragging = False
+        elif event == cv2.EVENT_MOUSEMOVE and self.dragging:
+            mouse_pos = np.array((x, y))
+            displacement = mouse_pos - self.prev_mouse_pos
+            self.prev_mouse_pos = mouse_pos
+            if flags == cv2.EVENT_FLAG_LBUTTON:
+                self.pos -= displacement
+                self.update_frame()
+            elif flags == cv2.EVENT_FLAG_RBUTTON:
+                self.rotation += 2 * displacement[0]
+                cv2.setTrackbarPos('Rotation', 'ControlView',
+                                   (self.rotation + 180) % 360)
+                zoom_val = cv2.getTrackbarPos('Zoom', 'ControlView')
+                zoom_val = np.clip(zoom_val - displacement[1], 0,
+                                   2 * CodeMapGui.max_zoom)
+                cv2.setTrackbarPos('Zoom', 'ControlView', zoom_val)
+                self.update_frame()
 
     def rotation_callback(self, rotation):
         self.rotation = rotation - 180
