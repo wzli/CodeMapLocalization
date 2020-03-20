@@ -29,6 +29,8 @@ class CodeMapGui:
         self.pos = np.array([0, 0])
         self.rotation = 0
         self.zoom = 1
+        self.blur = 0
+        self.noise = 0
         # load code map
         self.code_map = cv2.imread('code_map.pbm', cv2.IMREAD_GRAYSCALE)
         # create code map window
@@ -42,7 +44,9 @@ class CodeMapGui:
                            CodeMapGui.max_zoom * 2, self.zoom_callback)
         cv2.setMouseCallback('Navigate', self.navigate_mouse_callback)
         # create camera window
-        create_window('Camera', (256, 256), (1024, 0))
+        create_window('Camera', (256, 256 + 50), (1024, 0))
+        cv2.createTrackbar('Blur', 'Camera', 0, 3, self.blur_callback)
+        cv2.createTrackbar('Noise', 'Camera', 0, 50, self.noise_callback)
 
     def update_frame(self):
         res = CodeMapGui.camera_res
@@ -66,6 +70,15 @@ class CodeMapGui:
         for i, corner in enumerate(corners):
             corners[i] = np.int0(rot_mat[:, :2].dot(corner)) + (res // 2)
         cv2.drawContours(self.navigate, [corners], 0, (0, 255, 0), 2)
+        # apply camera distortions
+        self.camera = np.float32(self.camera)
+        self.camera = cv2.GaussianBlur(self.camera,
+                                       (2 * self.blur + 1, 2 * self.blur + 1),
+                                       self.blur / 2)
+        noise = np.empty(self.camera.shape, dtype=np.float32)
+        cv2.randn(noise, 0, self.noise)
+        self.camera += noise
+        self.camera = cv2.convertScaleAbs(self.camera)
 
     def run(self):
         self.update_frame()
@@ -125,8 +138,16 @@ class CodeMapGui:
         self.rotation = rotation - 180
         self.update_frame()
 
-    def zoom_callback(self, zoom):
-        self.zoom = 1 + (zoom - CodeMapGui.max_zoom) / 100
+    def zoom_callback(self, val):
+        self.zoom = 1 + (val - CodeMapGui.max_zoom) / 100
+        self.update_frame()
+
+    def blur_callback(self, val):
+        self.blur = val
+        self.update_frame()
+
+    def noise_callback(self, val):
+        self.noise = val
         self.update_frame()
 
     def increment_zoom(self, inc):
