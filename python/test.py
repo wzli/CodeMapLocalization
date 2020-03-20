@@ -43,7 +43,7 @@ class CodeMapGui:
                            CodeMapGui.max_zoom * 2, self.zoom_callback)
         cv2.setMouseCallback('ControlView', self.control_view_mouse_callback)
         # create camera
-        create_window('Camera', (512, 512), (1024, 0))
+        create_window('Camera', (256, 256), (1024, 0))
 
     def run(self):
         self.update_frame()
@@ -67,12 +67,12 @@ class CodeMapGui:
             self.pos[0] += 1
         elif key == ord('q'):
             self.rotation -= 2
-            cv2.setTrackbarPos('Rotation', 'ControlView',
-                               (self.rotation + 180) % 360)
         elif key == ord('e'):
             self.rotation += 2
-            cv2.setTrackbarPos('Rotation', 'ControlView',
-                               (self.rotation + 180) % 360)
+        elif key == ord('r'):
+            self.increment_zoom(1)
+        elif key == ord('f'):
+            self.increment_zoom(-1)
         self.update_frame()
         return True
 
@@ -95,16 +95,10 @@ class CodeMapGui:
             self.prev_mouse_pos = mouse_pos
             if flags == cv2.EVENT_FLAG_LBUTTON:
                 self.pos -= displacement
-                self.update_frame()
             elif flags == cv2.EVENT_FLAG_RBUTTON:
                 self.rotation += 2 * displacement[0]
-                cv2.setTrackbarPos('Rotation', 'ControlView',
-                                   (self.rotation + 180) % 360)
-                zoom_val = cv2.getTrackbarPos('Zoom', 'ControlView')
-                zoom_val = np.clip(zoom_val - displacement[1], 0,
-                                   2 * CodeMapGui.max_zoom)
-                cv2.setTrackbarPos('Zoom', 'ControlView', zoom_val)
-                self.update_frame()
+                self.increment_zoom(-displacement[1])
+            self.update_frame()
 
     def rotation_callback(self, rotation):
         self.rotation = rotation - 180
@@ -114,6 +108,11 @@ class CodeMapGui:
         self.zoom = 1 + (zoom - CodeMapGui.max_zoom) / 100
         self.update_frame()
 
+    def increment_zoom(self, inc):
+        zoom_track = cv2.getTrackbarPos('Zoom', 'ControlView')
+        zoom_track = np.clip(zoom_track + inc, 0, 2 * CodeMapGui.max_zoom)
+        cv2.setTrackbarPos('Zoom', 'ControlView', zoom_track)
+
     def update_frame(self):
         res = CodeMapGui.camera_res
         # clip position to be within boundary
@@ -121,6 +120,9 @@ class CodeMapGui:
                               self.code_map.shape[0] - (res // 2) - 1)
         self.pos[1] = np.clip(self.pos[1], 0,
                               self.code_map.shape[1] - (res // 2) - 1)
+        # sync rotation track bar
+        cv2.setTrackbarPos('Rotation', 'ControlView',
+                           (self.rotation + 180) % 360)
         # crop control view from code map
         self.control_view = self.code_map[self.pos[1]:self.pos[1] +
                                           res, self.pos[0]:self.pos[0] + res]
