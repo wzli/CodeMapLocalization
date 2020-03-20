@@ -28,13 +28,17 @@ class CodeMapGui:
                         flags=cv2.WINDOW_NORMAL | cv2.WINDOW_KEEPRATIO
                         | cv2.WINDOW_GUI_NORMAL)
         cv2.setMouseCallback('CodeMap', self.mouse_callback)
+        cv2.moveWindow('CodeMap', 0, 0)
         cv2.resizeWindow('CodeMap', 640, 640)
         # create camera and control view
         cv2.namedWindow('Camera',
                         flags=cv2.WINDOW_KEEPRATIO | cv2.WINDOW_GUI_NORMAL)
+        cv2.moveWindow('Camera', 970, 0)
+        cv2.resizeWindow('Camera', 320, 320)
         cv2.namedWindow('ControlView',
                         flags=cv2.WINDOW_NORMAL | cv2.WINDOW_KEEPRATIO
                         | cv2.WINDOW_GUI_NORMAL)
+        cv2.moveWindow('ControlView', 645, 0)
         cv2.resizeWindow('ControlView', 320, 320 + 50)
         cv2.createTrackbar('Rotation', 'ControlView', 180, 359,
                            self.rotation_callback)
