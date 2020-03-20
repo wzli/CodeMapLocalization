@@ -21,7 +21,7 @@ def create_window(name, size, pos):
 
 
 class CodeMapGui:
-    max_zoom = 30
+    max_zoom = 20
     camera_res = 64
 
     def __init__(self):
@@ -44,7 +44,7 @@ class CodeMapGui:
 
     def run(self):
         cv2.imshow('CodeMap', self.code_map)
-        self.frame_update()
+        self.update_frame()
         while (self.key_callback(cv2.waitKey(50))):
             cv2.imshow('ControlView', self.control_view)
             cv2.imshow('Camera', self.camera)
@@ -52,38 +52,57 @@ class CodeMapGui:
 
     def key_callback(self, key):
         key = key & 0xFF
-        if key == ord('m'):
-            mode = not mode
-        elif key == 27:
+        if key == 27:  # escape key
             return False
+        elif key == ord('w'):
+            self.pos[1] -= 1
+        elif key == ord('a'):
+            self.pos[0] -= 1
+        elif key == ord('s'):
+            self.pos[1] += 1
+        elif key == ord('d'):
+            self.pos[0] += 1
+        elif key == ord('q'):
+            self.rotation -= 2
+            cv2.setTrackbarPos('Rotation', 'ControlView',
+                               (self.rotation + 180) % 360)
+        elif key == ord('e'):
+            self.rotation += 2
+            cv2.setTrackbarPos('Rotation', 'ControlView',
+                               (self.rotation + 180) % 360)
+        self.update_frame()
         return True
 
     def mouse_callback(self, event, x, y, flags, param):
         if flags == 2:
             border = CodeMapGui.camera_res // 2
-            self.pos[0] = np.clip(x - border, 0,
-                                  self.code_map.shape[0] - border - 1)
-            self.pos[1] = np.clip(y - border, 0,
-                                  self.code_map.shape[1] - border - 1)
-            self.frame_update()
+            self.pos[0] = x - border
+            self.pos[1] = y - border
+            self.update_frame()
 
     def rotation_callback(self, rotation):
         self.rotation = rotation - 180
-        self.frame_update()
+        self.update_frame()
 
     def zoom_callback(self, zoom):
         self.zoom = 1 + (zoom - CodeMapGui.max_zoom) / 100
-        self.frame_update()
+        self.update_frame()
 
-    def frame_update(self):
+    def update_frame(self):
         res = CodeMapGui.camera_res
+        # clip position to be within boundary
+        self.pos[0] = np.clip(self.pos[0], 0,
+                              self.code_map.shape[0] - (res // 2) - 1)
+        self.pos[1] = np.clip(self.pos[1], 0,
+                              self.code_map.shape[1] - (res // 2) - 1)
+        # crop control view from code map
         self.control_view = self.code_map[self.pos[1]:self.pos[1] +
                                           res, self.pos[0]:self.pos[0] + res]
-        rot_mat = cv2.getRotationMatrix2D((0, 0), self.rotation,
+        # rotate and zoom from control view to get camera
+        rot_mat = cv2.getRotationMatrix2D((0, 0), -self.rotation,
                                           2 + res / (6 * self.zoom))
         self.camera = rotate_image(self.control_view, self.rotation,
                                    3 * self.zoom)
-
         # draw box around camera view
         self.control_view = cv2.cvtColor(self.control_view, cv2.COLOR_GRAY2RGB)
         corners = np.array([[-1, -1], [-1, 1], [1, 1], [1, -1]])
