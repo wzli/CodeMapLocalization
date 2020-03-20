@@ -12,6 +12,14 @@ def rotate_image(image, angle, scale):
                           flags=cv2.INTER_CUBIC)
 
 
+def create_window(name, size, pos):
+    cv2.namedWindow(name,
+                    flags=cv2.WINDOW_NORMAL | cv2.WINDOW_KEEPRATIO
+                    | cv2.WINDOW_GUI_NORMAL)
+    cv2.moveWindow(name, *pos)
+    cv2.resizeWindow(name, *size)
+
+
 class CodeMapGui:
     max_zoom = 30
     camera_res = 64
@@ -24,23 +32,12 @@ class CodeMapGui:
         # load code map
         self.code_map = cv2.imread('code_map.pbm', cv2.IMREAD_GRAYSCALE)
         # create code map window
-        cv2.namedWindow('CodeMap',
-                        flags=cv2.WINDOW_NORMAL | cv2.WINDOW_KEEPRATIO
-                        | cv2.WINDOW_GUI_NORMAL)
+        create_window('CodeMap', (640, 640), (0, 0))
         cv2.setMouseCallback('CodeMap', self.mouse_callback)
-        cv2.moveWindow('CodeMap', 0, 0)
-        cv2.resizeWindow('CodeMap', 640, 640)
         # create camera and control view
-        cv2.namedWindow('Camera',
-                        flags=cv2.WINDOW_KEEPRATIO | cv2.WINDOW_GUI_NORMAL)
-        cv2.moveWindow('Camera', 970, 0)
-        cv2.resizeWindow('Camera', 320, 320)
-        cv2.namedWindow('ControlView',
-                        flags=cv2.WINDOW_NORMAL | cv2.WINDOW_KEEPRATIO
-                        | cv2.WINDOW_GUI_NORMAL)
-        cv2.moveWindow('ControlView', 645, 0)
-        cv2.resizeWindow('ControlView', 320, 320 + 50)
-        cv2.createTrackbar('Rotation', 'ControlView', 180, 359,
+        create_window('Camera', (320, 320), (970, 0))
+        create_window('ControlView', (320, 320 + 50), (645, 0))
+        cv2.createTrackbar('Rotation', 'ControlView', 180, 360,
                            self.rotation_callback)
         cv2.createTrackbar('Zoom', 'ControlView', CodeMapGui.max_zoom,
                            CodeMapGui.max_zoom * 2, self.zoom_callback)
@@ -48,24 +45,26 @@ class CodeMapGui:
     def run(self):
         cv2.imshow('CodeMap', self.code_map)
         self.frame_update()
-        while (1):
+        while (self.key_callback(cv2.waitKey(50))):
             cv2.imshow('ControlView', self.control_view)
             cv2.imshow('Camera', self.camera)
-            k = cv2.waitKey(50) & 0xFF
-            if k == ord('m'):
-                mode = not mode
-            elif k == 27:
-                break
         cv2.destroyAllWindows()
+
+    def key_callback(self, key):
+        key = key & 0xFF
+        if key == ord('m'):
+            mode = not mode
+        elif key == 27:
+            return False
+        return True
 
     def mouse_callback(self, event, x, y, flags, param):
         if flags == 2:
-            self.pos[0] = np.clip(
-                x - CodeMapGui.camera_res, 0,
-                self.code_map.shape[0] - CodeMapGui.camera_res - 1)
-            self.pos[1] = np.clip(
-                y - CodeMapGui.camera_res, 0,
-                self.code_map.shape[1] - CodeMapGui.camera_res - 1)
+            border = CodeMapGui.camera_res // 2
+            self.pos[0] = np.clip(x - border, 0,
+                                  self.code_map.shape[0] - border - 1)
+            self.pos[1] = np.clip(y - border, 0,
+                                  self.code_map.shape[1] - border - 1)
             self.frame_update()
 
     def rotation_callback(self, rotation):
@@ -79,17 +78,17 @@ class CodeMapGui:
     def frame_update(self):
         res = CodeMapGui.camera_res
         self.control_view = self.code_map[self.pos[1]:self.pos[1] +
-                                          res * 2, self.pos[0]:self.pos[0] +
-                                          res * 2]
+                                          res, self.pos[0]:self.pos[0] + res]
         rot_mat = cv2.getRotationMatrix2D((0, 0), self.rotation,
-                                          (res // 2) * self.zoom)
+                                          2 + res / (6 * self.zoom))
+        self.camera = rotate_image(self.control_view, self.rotation,
+                                   3 * self.zoom)
+
+        # draw box around camera view
+        self.control_view = cv2.cvtColor(self.control_view, cv2.COLOR_GRAY2RGB)
         corners = np.array([[-1, -1], [-1, 1], [1, 1], [1, -1]])
         for i, corner in enumerate(corners):
-            corners[i] = np.int0(rot_mat[:, :2].dot(corner)) + res
-        self.camera = rotate_image(self.control_view, self.rotation,
-                                   self.zoom)[res // 2 - 1:res * 3 // 2 -
-                                              1, res // 2 - 1:res * 3 // 2 - 1]
-        self.control_view = cv2.cvtColor(self.control_view, cv2.COLOR_GRAY2RGB)
+            corners[i] = np.int0(rot_mat[:, :2].dot(corner)) + (res // 2)
         cv2.drawContours(self.control_view, [corners], 0, (0, 255, 0), 2)
 
 
