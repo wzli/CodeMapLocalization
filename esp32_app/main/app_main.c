@@ -119,7 +119,7 @@ static void main_loop(void* pvParameters) {
             xQueueSendToBack(record_frame_queue, &claimed_buffers[0], 0);
         }
         // assign buffers to localization context
-        loc_ctx.unrotated_image = images[2];
+        loc_ctx.derotated_image = images[2];
         loc_ctx.sharpened_image = images[1];
 
         // run localization logic

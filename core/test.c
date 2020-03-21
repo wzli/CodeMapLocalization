@@ -55,7 +55,7 @@ int main(int argc, char** argv) {
     LocalizationContext loc_ctx = {};
     ImageMatrix raw_image = MALLOC_IMAGE(FRAME_SIZE);
     ImageMatrix output_image = MALLOC_IMAGE(2 * FRAME_SIZE);
-    loc_ctx.unrotated_image = MALLOC_IMAGE(FRAME_SIZE);
+    loc_ctx.derotated_image = MALLOC_IMAGE(FRAME_SIZE);
     loc_ctx.sharpened_image = MALLOC_IMAGE(FRAME_SIZE);
     loc_ctx.odom.correlation.image = MALLOC_IMAGE_COMPLEX(FRAME_SIZE / 2);
     loc_ctx.odom.correlation.buffer = MALLOC_IMAGE_COMPLEX(FRAME_SIZE / 2);
@@ -152,7 +152,7 @@ int main(int argc, char** argv) {
     free(loc_ctx.odom.correlation.buffer.data);
     free(loc_ctx.odom.correlation.image.data);
     free(loc_ctx.sharpened_image.data);
-    free(loc_ctx.unrotated_image.data);
+    free(loc_ctx.derotated_image.data);
     free(output_image.data);
     free(raw_image.data);
     return 0;

@@ -178,12 +178,12 @@ class ImageProcessor:
         rotation.x *= self.bits_per_pixel
         rotation.y *= -self.bits_per_pixel
         # reverse rotation
-        unrotated_matrix = ImageMatrix(32, 32)
-        libsim.img_rotate(unrotated_matrix, matrix, rotation, 127,
+        derotated_matrix = ImageMatrix(32, 32)
+        libsim.img_rotate(derotated_matrix, matrix, rotation, 127,
                           libsim.img_bilinear_interpolation)
         # store bit mask and matrix in image
-        new_image = unrotated_matrix.to_image()
-        new_image.unrotated_matrix = unrotated_matrix
+        new_image = derotated_matrix.to_image()
+        new_image.derotated_matrix = derotated_matrix
         new_image.unrotation = rotation
         new_image.view_image = image.view_image
         if self.update_callback:
@@ -199,7 +199,7 @@ class BitMatrixProcessor:
         # convert to bit matrix
         bit_matrix = BitMatrix32()
         bit_mask = BitMatrix32()
-        libsim.img_to_bm32(bit_matrix, bit_mask, image.unrotated_matrix, 120,
+        libsim.img_to_bm32(bit_matrix, bit_mask, image.derotated_matrix, 120,
                            135)
         # extract row and column code
         row_code = AxisCode32()
@@ -282,10 +282,10 @@ root.title("CodeMap Sim")
 thresholded_canvas = ImagePipelineCanvas(root, scale, view_size)
 bit_array_filter = BitMatrixProcessor(thresholded_canvas.on_image_update)
 
-unrotated_canvas = ImagePipelineCanvas(root, scale, view_size,
+derotated_canvas = ImagePipelineCanvas(root, scale, view_size,
                                        bit_array_filter.process_image)
 image_filter = ImageProcessor(camera_size[0] / camera_resolution[0],
-                              unrotated_canvas.on_image_update)
+                              derotated_canvas.on_image_update)
 camera_view_canvas = ImagePipelineCanvas(root, scale, camera_resolution,
                                          image_filter.process_image)
 code_map_canvas = CodeMapCanvas(root, code_map_image, view_size, camera_size,
@@ -303,6 +303,6 @@ bit_array_filter.text.config(font=(None, 14))
 bit_array_filter.text.grid(row=0, column=1)
 thresholded_canvas.canvas.grid(row=1, column=1)
 camera_view_canvas.canvas.grid(row=2, column=0)
-unrotated_canvas.canvas.grid(row=2, column=1)
+derotated_canvas.canvas.grid(row=2, column=1)
 
 root.mainloop()

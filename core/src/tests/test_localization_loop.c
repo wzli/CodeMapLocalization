@@ -14,7 +14,7 @@ static int test_full_chain_simulation() {
         // src image setup
         FOR_EACH_PIXEL(src_img) { PIXEL(src_img, row, col) = row + col; }
 
-        // unrotate image
+        // derotate image
         Vector2f rot = img_estimate_rotation(src_img);
         img_rotate(img, src_img, rot, 127, img_bilinear_interpolation);
 
@@ -51,8 +51,8 @@ static int test_full_chain_simulation() {
 static int test_localization_loop_run() {
     LocalizationContext* ctx = calloc(1, sizeof(LocalizationContext));
     ImageMatrix image = {calloc(64 * 64, 1), {{64, 64}}};
-    ctx->unrotated_image = (ImageMatrix){calloc(64 * 64, 1), {{64, 64}}};
-    ctx->sharpened_image = ctx->unrotated_image;
+    ctx->derotated_image = (ImageMatrix){calloc(64 * 64, 1), {{64, 64}}};
+    ctx->sharpened_image = ctx->derotated_image;
     ctx->odom.correlation.image.data = calloc(32 * 32, sizeof(Vector2f));
     ctx->odom.correlation.buffer.data = calloc(32 * 32, sizeof(Vector2f));
     ctx->rotation_scale = 1.0f;
@@ -91,7 +91,7 @@ static int test_localization_loop_run() {
                     compare_col_code1 == 0 || compare_col_code1 == ctx->scale_match.col_code.mask);
         }
     free(image.data);
-    free(ctx->unrotated_image.data);
+    free(ctx->derotated_image.data);
     free(ctx->odom.correlation.image.data);
     free(ctx->odom.correlation.buffer.data);
     free(ctx);

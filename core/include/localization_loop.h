@@ -3,7 +3,7 @@
 #include "visual_odometry.h"
 
 typedef struct {
-    ImageMatrix unrotated_image;
+    ImageMatrix derotated_image;
     ImageMatrix sharpened_image;
     BitMatrix64 binary_image;
     BitMatrix64 binary_mask;
