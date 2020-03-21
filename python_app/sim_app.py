@@ -30,7 +30,7 @@ class CodeMapGui:
         self.rotation = 0
         self.zoom = 1
         self.blur = 0
-        self.tunnel = 0
+        self.tunnel = np.ones((CodeMapGui.CAMERA_RES, CodeMapGui.CAMERA_RES))
         self.noise = 0
         # load code map
         self.code_map = cv2.imread('code_map.pbm', cv2.IMREAD_GRAYSCALE)
@@ -79,17 +79,7 @@ class CodeMapGui:
                                        (2 * self.blur + 1, 2 * self.blur + 1),
                                        self.blur / 2)
         # apply tunnel
-        x_env = np.arange(-1,
-                          1.01,
-                          2 / (self.camera.shape[0] - 1),
-                          dtype=np.float32)
-        y_env = np.arange(-1,
-                          1.01,
-                          2 / (self.camera.shape[1] - 1),
-                          dtype=np.float32)
-        x_env = np.exp(-(x_env**2) * self.tunnel / 4)
-        y_env = np.exp(-(y_env**2) * self.tunnel / 4)
-        self.camera *= np.outer(y_env, x_env)
+        self.camera *= self.tunnel
         # apply noise
         noise = np.empty(self.camera.shape, dtype=np.float32)
         cv2.randn(noise, 0, self.noise)
@@ -164,6 +154,12 @@ class CodeMapGui:
 
     def tunnel_callback(self, val):
         self.tunnel = val
+        envelope = np.arange(-1,
+                             1.01,
+                             2 / (CodeMapGui.CAMERA_RES - 1),
+                             dtype=np.float32)
+        envelope = np.exp(-(envelope**2) * val / 4)
+        self.tunnel = np.outer(envelope, envelope)
         self.update_frame()
 
     def noise_callback(self, val):
