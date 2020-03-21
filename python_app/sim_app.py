@@ -21,8 +21,8 @@ def create_window(name, size, pos):
 
 
 class CodeMapGui:
-    camera_res = 64
-    max_zoom = 20
+    CAMERA_RES = 64
+    MAX_ZOOM = 20
 
     def __init__(self):
         # initial coordinates
@@ -41,8 +41,8 @@ class CodeMapGui:
         create_window('Navigate', (512, 512 + 50), (512, 0))
         cv2.createTrackbar('Rotation', 'Navigate', 180, 360,
                            self.rotation_callback)
-        cv2.createTrackbar('Zoom', 'Navigate', CodeMapGui.max_zoom,
-                           CodeMapGui.max_zoom * 2, self.zoom_callback)
+        cv2.createTrackbar('Zoom', 'Navigate', CodeMapGui.MAX_ZOOM,
+                           CodeMapGui.MAX_ZOOM * 2, self.zoom_callback)
         cv2.setMouseCallback('Navigate', self.navigate_mouse_callback)
         # create camera window
         create_window('Camera', (256, 256 + 76), (1024, 0))
@@ -51,7 +51,7 @@ class CodeMapGui:
         cv2.createTrackbar('Noise', 'Camera', 0, 50, self.noise_callback)
 
     def update_frame(self):
-        res = CodeMapGui.camera_res
+        res = CodeMapGui.CAMERA_RES
         # clip position to be within boundary
         self.pos[0] = np.clip(self.pos[0], 0,
                               self.code_map.shape[0] - (res // 2) - 1)
@@ -145,7 +145,7 @@ class CodeMapGui:
 
     def code_map_mouse_callback(self, event, x, y, flags, param):
         if flags == cv2.EVENT_FLAG_RBUTTON:
-            border = CodeMapGui.camera_res // 2
+            border = CodeMapGui.CAMERA_RES // 2
             self.pos[0] = x - border
             self.pos[1] = y - border
             self.update_frame()
@@ -155,7 +155,7 @@ class CodeMapGui:
         self.update_frame()
 
     def zoom_callback(self, val):
-        self.zoom = 1 + (val - CodeMapGui.max_zoom) / 100
+        self.zoom = 1 + (val - CodeMapGui.MAX_ZOOM) / 100
         self.update_frame()
 
     def blur_callback(self, val):
@@ -172,7 +172,7 @@ class CodeMapGui:
 
     def increment_zoom(self, inc):
         zoom_track = cv2.getTrackbarPos('Zoom', 'Navigate')
-        zoom_track = np.clip(zoom_track + inc, 0, 2 * CodeMapGui.max_zoom)
+        zoom_track = np.clip(zoom_track + inc, 0, 2 * CodeMapGui.MAX_ZOOM)
         cv2.setTrackbarPos('Zoom', 'Navigate', zoom_track)
 
 
