@@ -95,6 +95,8 @@ class CodeMapGui:
         cv2.destroyAllWindows()
 
     def key_callback(self, key):
+        if key == -1:
+            return True
         key = key & 0xFF
         if key == 27:  # escape key
             return False
