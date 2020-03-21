@@ -4,6 +4,7 @@
 bool localization_loop_run(LocalizationContext* ctx, const ImageMatrix image) {
     assert(ctx);
     assert(ctx->sharpened_image.data);
+    ++ctx->frame_count;
     // find threshold of original image
     img_histogram(ctx->histogram, image);
     ctx->threshold[0] = img_compute_otsu_threshold(ctx->histogram);

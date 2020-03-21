@@ -70,7 +70,7 @@ int main(int argc, char** argv) {
     loc_ctx.outlier_filter.match_size_threshold = 20;
     loc_ctx.outlier_filter.bit_error_ratio_threshold = 5;
     loc_ctx.outlier_filter.max_rejection_count = 10;
-    loc_ctx.odom.correlation.squared_magnitude_threshold = 0.01;
+    loc_ctx.odom.correlation.squared_magnitude_threshold = 0.01f;
 
     // write csv header
     LocalizationLog_to_csv_header(text_buf, 0, 0);
@@ -78,13 +78,14 @@ int main(int argc, char** argv) {
 
     for (size_t read_bytes = fread(raw_image.data, 1, SQR(FRAME_SIZE), fp);
             read_bytes == SQR(FRAME_SIZE);
-            read_bytes = fread(raw_image.data, 1, SQR(FRAME_SIZE), fp), ++loc_log.frame) {
+            read_bytes = fread(raw_image.data, 1, SQR(FRAME_SIZE), fp)) {
         // process frame
         loc_log.updated = localization_loop_run(&loc_ctx, raw_image);
         Vector2f odom_rot = loc_ctx.odom.quadrant_rotation;
         odom_rot.z *= QUADRANT_LOOKUP[loc_ctx.odom.quadrant_count & 3].z;
 
         // write csv entry
+        loc_log.frame = loc_ctx.frame_count;
         loc_log.thresh0 = loc_ctx.threshold[0];
         loc_log.thresh1 = loc_ctx.threshold[1];
         loc_log.match_size = loc_ctx.scale_match.location.match_size;
@@ -143,7 +144,7 @@ int main(int argc, char** argv) {
         IMG_PASTE(output_image, raw_image, top_left);
         // write pgm
         char file_name[32];
-        sprintf(file_name, "%05d.pgm", loc_log.frame);
+        sprintf(file_name, "%05d.pgm", loc_ctx.frame_count);
         img_save_to_pgm(output_image, file_name);
     }
     // deallocate context
