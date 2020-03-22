@@ -5,6 +5,7 @@
 typedef struct {
     ImageMatrix derotated_image;
     ImageMatrix sharpened_image;
+    ImageMatrix denoised_image;
     BitMatrix64 binary_image;
     BitMatrix64 binary_mask;
     ScaleQuery scale_query;

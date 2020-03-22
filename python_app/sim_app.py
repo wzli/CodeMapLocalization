@@ -13,11 +13,12 @@ def rotate_image(image, angle, scale):
                           flags=cv2.INTER_CUBIC)
 
 
-def create_window(name, size, pos):
+def create_window(name, size, pos=None):
     cv2.namedWindow(name,
                     flags=cv2.WINDOW_NORMAL | cv2.WINDOW_KEEPRATIO
                     | cv2.WINDOW_GUI_NORMAL)
-    cv2.moveWindow(name, *pos)
+    if pos is not None:
+        cv2.moveWindow(name, *pos)
     cv2.resizeWindow(name, *size)
 
 
@@ -38,23 +39,20 @@ class CodeMapGui:
         # load code map
         self.code_map = cv2.imread('code_map.pbm', cv2.IMREAD_GRAYSCALE)
         # create code map window
-        create_window('CodeMap', (512, 512), (0, 0))
+        create_window('CodeMap', (512, 512))
         cv2.setMouseCallback('CodeMap', self.code_map_mouse_callback)
         # create navigate window
-        create_window('Navigate', (512, 512 + 50), (512, 0))
+        create_window('Navigate', (512, 512 + 50))
         cv2.createTrackbar('Rotation', 'Navigate', 0, 360,
                            self.rotation_callback)
         cv2.createTrackbar('Zoom', 'Navigate', CodeMapGui.MAX_ZOOM,
                            CodeMapGui.MAX_ZOOM * 2, self.zoom_callback)
         cv2.setMouseCallback('Navigate', self.navigate_mouse_callback)
-        # create camera window
-        create_window('Camera', (256, 256 + 76), (1024, 0))
-        cv2.createTrackbar('Blur', 'Camera', 0, 3, self.blur_callback)
-        cv2.createTrackbar('Tunnel', 'Camera', 0, 10, self.tunnel_callback)
-        cv2.createTrackbar('Noise', 'Camera', 0, 50, self.noise_callback)
-        # create intermediate stage windows
-        create_window('Derotated', (256, 256), (1024, 256 + 76))
-        create_window('Sharpened', (256, 256), (1024 + 256, 0))
+        # create Pipeline window
+        create_window('Pipeline', (3 * 256, 2 * 256 + 75))
+        cv2.createTrackbar('Blur', 'Pipeline', 0, 30, self.blur_callback)
+        cv2.createTrackbar('Tunnel', 'Pipeline', 0, 30, self.tunnel_callback)
+        cv2.createTrackbar('Noise', 'Pipeline', 0, 30, self.noise_callback)
 
     def update_frame(self):
         res = CodeMapGui.CAMERA_RES
@@ -82,8 +80,8 @@ class CodeMapGui:
         self.camera = np.float32(self.camera)
         # apply blur
         self.camera = cv2.GaussianBlur(self.camera,
-                                       (2 * self.blur + 1, 2 * self.blur + 1),
-                                       self.blur / 2)
+                                       (2 * (self.blur // 10) + 1, 2 *
+                                        (self.blur // 10) + 1), self.blur / 20)
         # apply tunnel
         self.camera *= self.tunnel
         # apply noise
@@ -93,15 +91,27 @@ class CodeMapGui:
         self.camera = cv2.convertScaleAbs(self.camera)
         # run localization algorithm
         self.loc_ctx.run(self.camera)
+        # create pipeline image
+        self.pipeline = np.zeros((res * 2, res * 3), dtype=np.ubyte) + 127
+        self.pipeline[:res, :res] = self.camera
+        self.pipeline[res:res * 2, :res] = self.loc_ctx.derotated_image_array
+        self.pipeline[res:(2 * res) - 2, res:(2 * res) -
+                      2] = self.loc_ctx.sharpened_image_array
+        self.pipeline[:res - 4, res:(2 * res) -
+                      4] = self.loc_ctx.denoised_image_array
+        self.pipeline[:res, (2 *
+                             res):(3 *
+                                   res)] = self.loc_ctx.thresholded_image_array
+        self.pipeline[res:(2 * res), (2 * res):(3 * res)] = cv2.resize(
+            self.loc_ctx.extracted_image_array, (3 * res // 2, 3 * res // 2),
+            interpolation=cv2.INTER_NEAREST)[:res, :res]
 
     def run(self):
         self.update_frame()
         cv2.imshow('CodeMap', self.code_map)
         while (self.key_callback(cv2.waitKey(50))):
             cv2.imshow('Navigate', self.navigate)
-            cv2.imshow('Camera', self.camera)
-            cv2.imshow('Derotated', self.loc_ctx.derotated_image_array)
-            cv2.imshow('Sharpened', self.loc_ctx.sharpened_image_array)
+            cv2.imshow('Pipeline', self.pipeline)
         cv2.destroyAllWindows()
 
     def key_callback(self, key):
@@ -170,7 +180,7 @@ class CodeMapGui:
                              1.01,
                              2 / (CodeMapGui.CAMERA_RES - 1),
                              dtype=np.float32)
-        envelope = np.exp(-(envelope**2) * val / 4)
+        envelope = np.exp(-(envelope**2) * val / 20)
         self.tunnel = np.outer(envelope, envelope)
         self.update_frame()
 

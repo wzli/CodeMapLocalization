@@ -127,10 +127,10 @@ class CorrelationArrays():
 class LocalizationContext(ctypes.Structure):
     _fields_ = [('derotated_image', ImageMatrix),
                 ('sharpened_image', ImageMatrix),
-                ('binary_image', BitMatrix64), ('binary_mask', BitMatrix64),
-                ('scale_query', ScaleQuery), ('scale_match', ScaleMatch),
-                ('outlier_filter', OutlierFilter), ('odom', VisualOdometry),
-                ('rotation_scale', ctypes.c_float),
+                ('denoised_image', ImageMatrix), ('binary_image', BitMatrix64),
+                ('binary_mask', BitMatrix64), ('scale_query', ScaleQuery),
+                ('scale_match', ScaleMatch), ('outlier_filter', OutlierFilter),
+                ('odom', VisualOdometry), ('rotation_scale', ctypes.c_float),
                 ('histogram', ctypes.c_uint * 256),
                 ('threshold', ctypes.c_ubyte * 2),
                 ('frame_count', ctypes.c_uint)]
@@ -144,15 +144,25 @@ class LocalizationContext(ctypes.Structure):
         self.sharpened_image_array = np.empty((62, 62),
                                               dtype=np.ubyte,
                                               order='C')
+        self.denoised_image_array = np.empty((60, 60),
+                                             dtype=np.ubyte,
+                                             order='C')
         self.correlation_image_array = np.empty((32, 32),
                                                 dtype=np.csingle,
                                                 order='C')
         self.correlation_buffer_array = np.empty((32, 32),
                                                  dtype=np.csingle,
                                                  order='C')
+        self.thresholded_image_array = np.empty((64, 64),
+                                                dtype=np.ubyte,
+                                                order='C')
+        self.extracted_image_array = np.empty((32, 32),
+                                              dtype=np.ubyte,
+                                              order='C')
         # set links to buffers
         self.derotated_image.__init__(self.derotated_image_array)
         self.sharpened_image.__init__(self.sharpened_image_array)
+        self.denoised_image.__init__(self.denoised_image_array)
         self.odom.correlation.image.__init__(self.correlation_image_array)
         self.odom.correlation.buffer.__init__(self.correlation_buffer_array)
         # setup params
@@ -167,8 +177,23 @@ class LocalizationContext(ctypes.Structure):
         self.odom.correlation.squared_magnitude_threshold = 0.01
 
     def run(self, frame):
-        return 1 == libcodemap.localization_loop_run(ctypes.byref(self),
-                                                     ImageMatrix(frame))
+        # run loop
+        location_updated = (1 == libcodemap.localization_loop_run(
+            ctypes.byref(self), ImageMatrix(frame)))
+        # create thresholded image
+        libcodemap.bm64_to_img(
+            ctypes.byref(ImageMatrix(self.thresholded_image_array)),
+            self.binary_image, self.binary_mask)
+        # create extracted image
+        binary_image = BitMatrix32()
+        binary_mask = BitMatrix32()
+        libcodemap.bm32_from_axiscodes(binary_image, binary_mask,
+                                       self.scale_match.row_code,
+                                       self.scale_match.col_code)
+        libcodemap.bm32_to_img(
+            ctypes.byref(ImageMatrix(self.extracted_image_array)),
+            binary_image, binary_mask)
+        return location_updated
 
 
 libcodemap.test_add_angle.restype = Vector2f
