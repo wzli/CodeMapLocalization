@@ -1,7 +1,12 @@
 #pragma once
-#include "image_utils.h"
-#include "bitwise_utils.h"
-#include "location_decode.h"
+#include "localization_loop.h"
+#include "msg_defs.h"
+
+// write message helpers
+void write_location_match_msg(LocationMatchMsg* msg, const ScaleMatch* match);
+void write_odometry_msg(OdometryMsg* msg, const VisualOdometry* odom);
+void write_correlation_msg(CorrelationMsg* msg, const Correlation* corr);
+void write_localization_msg(LocalizationMsg* msg, const LocalizationContext* loc_ctx);
 
 // debug prints for internal data structures
 void print_bits(uint64_t word, int8_t word_length);

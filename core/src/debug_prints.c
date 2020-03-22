@@ -1,5 +1,42 @@
 #include "debug_prints.h"
 #include <stdio.h>
+#include <assert.h>
+
+void write_location_match_msg(LocationMatchMsg* msg, const ScaleMatch* match) {
+    assert(msg && match);
+    msg->x = match->location.x;
+    msg->y = match->location.y;
+    msg->match_size = match->location.match_size;
+    msg->err_ratio.x = (float) match->col_code.n_errors / match->col_code.n_samples;
+    msg->err_ratio.y = (float) match->row_code.n_errors / match->row_code.n_samples;
+    msg->scale = match->scale;
+}
+
+void write_odometry_msg(OdometryMsg* msg, const VisualOdometry* odom) {
+    assert(msg && odom);
+    msg->pos.x = odom->position.x;
+    msg->pos.y = odom->position.y;
+    msg->rot = cargf(odom->quadrant_rotation.z * QUADRANT_LOOKUP[odom->quadrant_count & 3].z);
+    msg->quadrants = odom->quadrant_count;
+    msg->steps = odom->step_count;
+}
+
+void write_correlation_msg(CorrelationMsg* msg, const Correlation* corr) {
+    assert(msg && corr);
+    msg->x = corr->translation.x;
+    msg->y = corr->translation.y;
+    msg->err_ratio = 1.0f - (corr->squared_magnitude_max / (corr->squared_magnitude_sum + 0.0001f));
+}
+
+void write_localization_msg(LocalizationMsg* msg, const LocalizationContext* loc_ctx) {
+    assert(msg && loc_ctx);
+    msg->frame = loc_ctx->frame_count;
+    msg->thresh[0] = loc_ctx->threshold[0];
+    msg->thresh[1] = loc_ctx->threshold[1];
+    write_location_match_msg(&msg->loc, &loc_ctx->scale_match);
+    write_odometry_msg(&msg->odom, &loc_ctx->odom);
+    write_correlation_msg(&msg->corr, &loc_ctx->odom.correlation);
+}
 
 void print_bits(uint64_t word, int8_t word_length) {
     for (word_length--; word_length >= 0; word_length--) {
@@ -44,15 +81,4 @@ void bm64_save_to_pgm(BitMatrix64 bit_matrix, BitMatrix64 bit_mask, const char* 
     ImageMatrix image = {(uint8_t[64 * 64]){}, {{64, 64}}};
     bm64_to_img(&image, bit_matrix, bit_mask);
     img_save_to_pgm(image, file_name);
-}
-
-// below are used for python access
-
-Vector2f test_add_angle(Vector2f rot_a, Vector2f rot_b) {
-    return (Vector2f)(rot_a.z * rot_b.z);
-}
-
-uint8_t test_diff_bits(uint32_t a, uint32_t b) {
-    uint8_t diff = count_bits(a ^ b);
-    return diff > 16 ? 32 - diff : diff;
 }

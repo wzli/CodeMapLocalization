@@ -1,6 +1,6 @@
 #include "tests.h"
 #include "localization_loop.h"
-#include "mxgen.h"
+#include "debug_prints.h"
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -18,27 +18,6 @@
             { SIZE, SIZE }                     \
         }                                      \
     }
-
-#define STRUCT_LocalizationLog(FIELD) \
-    FIELD(uint32_t, frame, )          \
-    FIELD(bool, updated, )            \
-    FIELD(uint8_t, thresh0, )         \
-    FIELD(uint8_t, thresh1, )         \
-    FIELD(uint16_t, match_size, )     \
-    FIELD(float, row_err_ratio, )     \
-    FIELD(float, col_err_ratio, )     \
-    FIELD(float, scale, )             \
-    FIELD(uint16_t, loc_x, )          \
-    FIELD(uint16_t, loc_y, )          \
-    FIELD(uint8_t, loc_dir, )         \
-    FIELD(int32_t, odom_dir, )        \
-    FIELD(float, odom_x, )            \
-    FIELD(float, odom_y, )            \
-    FIELD(float, corr_x, )            \
-    FIELD(float, corr_y, )            \
-    FIELD(float, corr_err_ratio, )    \
-    FIELD(float, orientation, )
-GEN_STRUCT(LocalizationLog);
 
 int main(int argc, char** argv) {
     // run unit tests by default
@@ -60,7 +39,7 @@ int main(int argc, char** argv) {
     loc_ctx.odom.correlation.image = MALLOC_IMAGE_COMPLEX(FRAME_SIZE / 2);
     loc_ctx.odom.correlation.buffer = MALLOC_IMAGE_COMPLEX(FRAME_SIZE / 2);
     char* text_buf = malloc(512);
-    LocalizationLog loc_log = {};
+    LocalizationMsg loc_msg = {};
     // setup configs
     loc_ctx.rotation_scale = 1.0f;
     loc_ctx.scale_query.lower_bound = 0.8f;
@@ -73,41 +52,20 @@ int main(int argc, char** argv) {
     loc_ctx.odom.correlation.squared_magnitude_threshold = 0.01f;
 
     // write csv header
-    LocalizationLog_to_csv_header(text_buf, 0, 0);
+    LocalizationMsg_to_csv_header(text_buf, 0, 0);
     puts(text_buf);
 
     for (size_t read_bytes = fread(raw_image.data, 1, SQR(FRAME_SIZE), fp);
             read_bytes == SQR(FRAME_SIZE);
             read_bytes = fread(raw_image.data, 1, SQR(FRAME_SIZE), fp)) {
         // process frame
-        loc_log.updated = localization_loop_run(&loc_ctx, raw_image);
+        localization_loop_run(&loc_ctx, raw_image);
         Vector2f odom_rot = loc_ctx.odom.quadrant_rotation;
         odom_rot.z *= QUADRANT_LOOKUP[loc_ctx.odom.quadrant_count & 3].z;
-
         // write csv entry
-        loc_log.frame = loc_ctx.frame_count;
-        loc_log.thresh0 = loc_ctx.threshold[0];
-        loc_log.thresh1 = loc_ctx.threshold[1];
-        loc_log.match_size = loc_ctx.scale_match.location.match_size;
-        loc_log.row_err_ratio = (float) loc_ctx.scale_match.row_code.n_errors /
-                                (loc_ctx.scale_match.row_code.n_samples + 1);
-        loc_log.col_err_ratio = (float) loc_ctx.scale_match.col_code.n_errors /
-                                (loc_ctx.scale_match.col_code.n_samples + 1);
-        loc_log.scale = loc_ctx.scale_match.scale;
-        loc_log.loc_x = loc_ctx.outlier_filter.filtered_match.location.x;
-        loc_log.loc_y = loc_ctx.outlier_filter.filtered_match.location.y;
-        loc_log.loc_dir = loc_ctx.outlier_filter.filtered_match.location.direction;
-        loc_log.odom_dir = loc_ctx.odom.quadrant_count;
-        loc_log.odom_x = loc_ctx.odom.position.x;
-        loc_log.odom_y = loc_ctx.odom.position.y;
-        loc_log.corr_x = loc_ctx.odom.correlation.translation.x;
-        loc_log.corr_y = loc_ctx.odom.correlation.translation.y;
-        loc_log.corr_err_ratio = loc_ctx.odom.correlation.squared_magnitude_max /
-                                 (loc_ctx.odom.correlation.squared_magnitude_sum + 0.0001f);
-        loc_log.orientation = cargf(odom_rot.z);
-        LocalizationLog_to_csv_entry(&loc_log, text_buf);
+        write_localization_msg(&loc_msg, &loc_ctx);
+        LocalizationMsg_to_csv_entry(&loc_msg, text_buf);
         puts(text_buf);
-
         // write raw image to top left
         ImagePoint top_left = {{0, 0}};
         IMG_PASTE(output_image, raw_image, top_left);

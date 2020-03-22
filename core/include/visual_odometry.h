@@ -16,6 +16,7 @@ typedef struct {
     Vector2f position;
     Vector2f quadrant_rotation;
     int32_t quadrant_count;
+    uint32_t step_count;
 } VisualOdometry;
 
 static const Vector2f QUADRANT_LOOKUP[4] = {{{1, 0}}, {{0, 1}}, {{-1, 0}}, {{0, -1}}};
