@@ -5,8 +5,7 @@
     X(uint16_t, x, )               \
     X(uint16_t, y, )               \
     X(uint16_t, match_size, )      \
-    X(float, x_err_ratio, )        \
-    X(float, y_err_ratio, )        \
+    X(float, bit_err_ratio, )      \
     X(float, scale, )
 GEN_STRUCT(LocationMatchMsg);
 

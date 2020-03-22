@@ -111,11 +111,10 @@ class CodeMapGui:
         self.pipeline[res:(2 * res), :res] = cv2.resize(
             self.loc_ctx.centered_correlation, (res, res))
         # debug prints
-        match = self.loc_ctx.scale_match
-        estimate = [match.location.x, match.location.y]
-        print(f'actual',
-              list(self.pos + 24) + [self.rotation], 'estimate', estimate,
-              match.location.match_size)
+        print(
+            f'\nGround Truth\t{{\"x\":{self.pos[0] + 24}, \"y\":{self.pos[1] + 24}, \"rot\":{round(np.radians(self.rotation), 6)}}}'
+        )
+        self.loc_ctx.print()
 
     def run(self):
         self.update_frame()

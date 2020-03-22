@@ -7,8 +7,9 @@ void write_location_match_msg(LocationMatchMsg* msg, const ScaleMatch* match) {
     msg->x = match->location.x;
     msg->y = match->location.y;
     msg->match_size = match->location.match_size;
-    msg->x_err_ratio = (float) match->col_code.n_errors / match->col_code.n_samples;
-    msg->y_err_ratio = (float) match->row_code.n_errors / match->row_code.n_samples;
+    msg->bit_err_ratio = ((float) match->col_code.n_errors / match->col_code.n_samples +
+                                 (float) match->row_code.n_errors / match->row_code.n_samples) *
+                         0.5f;
     msg->scale = match->scale;
 }
 
@@ -81,4 +82,22 @@ void bm64_save_to_pgm(BitMatrix64 bit_matrix, BitMatrix64 bit_mask, const char* 
     ImageMatrix image = {(uint8_t[64 * 64]){}, {{64, 64}}};
     bm64_to_img(&image, bit_matrix, bit_mask);
     img_save_to_pgm(image, file_name);
+}
+
+void print_location_match(const ScaleMatch* match) {
+    char buf[128];
+    LocationMatchMsg msg;
+    write_location_match_msg(&msg, match);
+    LocationMatchMsg_to_json(&msg, buf);
+    printf("Location Match\t");
+    puts(buf);
+}
+
+void print_odometry(const VisualOdometry* odom) {
+    char buf[128];
+    OdometryMsg msg;
+    write_odometry_msg(&msg, odom);
+    OdometryMsg_to_json(&msg, buf);
+    printf("Odom Estimate\t");
+    puts(buf);
 }

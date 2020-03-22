@@ -109,9 +109,13 @@ class Correlation(ctypes.Structure):
 
 
 class VisualOdometry(ctypes.Structure):
-    _fields_ = [('correlation', Correlation), ('position', Vector2f),
-                ('quadrant_rotation', Vector2f),
-                ('quadrant_count', ctypes.c_int)]
+    _fields_ = [
+        ('correlation', Correlation),
+        ('position', Vector2f),
+        ('quadrant_rotation', Vector2f),
+        ('quadrant_count', ctypes.c_int),
+        ('step_count', ctypes.c_uint),
+    ]
 
 
 # localization_loop.h
@@ -200,6 +204,10 @@ class LocalizationContext(ctypes.Structure):
         self.centered_correlation *= 255
         self.centered_correlation /= self.odom.correlation.squared_magnitude_max
         return location_updated
+
+    def print(self):
+        libcodemap.print_odometry(ctypes.byref(self.odom))
+        libcodemap.print_location_match(ctypes.byref(self.scale_match))
 
 
 MLS_INDEX = MlsIndex.in_dll(libcodemap, "MLS_INDEX")

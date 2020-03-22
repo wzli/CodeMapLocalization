@@ -15,4 +15,6 @@ void print_image_matrix(ImageMatrix src);
 void print_axiscode(AxisCode32 axiscode);
 void print_axis_position(AxisPosition position);
 void print_location(const Location* location);
+void print_location_match(const ScaleMatch* match);
+void print_odometry(const VisualOdometry* odom);
 void bm64_save_to_pgm(BitMatrix64 bit_matrix, BitMatrix64 bit_mask, const char* file_name);
