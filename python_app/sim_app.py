@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import cv2
 import numpy as np
+import code_map as cm
 
 
 def rotate_image(image, angle, scale):
@@ -32,6 +33,8 @@ class CodeMapGui:
         self.blur = 0
         self.tunnel = np.ones((CodeMapGui.CAMERA_RES, CodeMapGui.CAMERA_RES))
         self.noise = 0
+        # initialize localization context
+        self.loc_ctx = cm.LocalizationContext()
         # load code map
         self.code_map = cv2.imread('code_map.pbm', cv2.IMREAD_GRAYSCALE)
         # create code map window
@@ -39,7 +42,7 @@ class CodeMapGui:
         cv2.setMouseCallback('CodeMap', self.code_map_mouse_callback)
         # create navigate window
         create_window('Navigate', (512, 512 + 50), (512, 0))
-        cv2.createTrackbar('Rotation', 'Navigate', 180, 360,
+        cv2.createTrackbar('Rotation', 'Navigate', 0, 360,
                            self.rotation_callback)
         cv2.createTrackbar('Zoom', 'Navigate', CodeMapGui.MAX_ZOOM,
                            CodeMapGui.MAX_ZOOM * 2, self.zoom_callback)
@@ -49,6 +52,9 @@ class CodeMapGui:
         cv2.createTrackbar('Blur', 'Camera', 0, 3, self.blur_callback)
         cv2.createTrackbar('Tunnel', 'Camera', 0, 10, self.tunnel_callback)
         cv2.createTrackbar('Noise', 'Camera', 0, 50, self.noise_callback)
+        # create intermediate stage windows
+        create_window('Derotated', (256, 256), (1024, 256 + 76))
+        create_window('Sharpened', (256, 256), (1024 + 256, 0))
 
     def update_frame(self):
         res = CodeMapGui.CAMERA_RES
@@ -58,7 +64,7 @@ class CodeMapGui:
         self.pos[1] = np.clip(self.pos[1], 0,
                               self.code_map.shape[1] - (res // 2) - 1)
         # sync rotation track bar
-        cv2.setTrackbarPos('Rotation', 'Navigate', (self.rotation + 180) % 360)
+        cv2.setTrackbarPos('Rotation', 'Navigate', (self.rotation) % 360)
         # crop navigate view from code map
         self.navigate = self.code_map[self.pos[1]:self.pos[1] +
                                       res, self.pos[0]:self.pos[0] + res]
@@ -85,6 +91,8 @@ class CodeMapGui:
         cv2.randn(noise, 0, self.noise)
         self.camera += noise
         self.camera = cv2.convertScaleAbs(self.camera)
+        # run localization algorithm
+        self.loc_ctx.run(self.camera)
 
     def run(self):
         self.update_frame()
@@ -92,6 +100,8 @@ class CodeMapGui:
         while (self.key_callback(cv2.waitKey(50))):
             cv2.imshow('Navigate', self.navigate)
             cv2.imshow('Camera', self.camera)
+            cv2.imshow('Derotated', self.loc_ctx.derotated_image_array)
+            cv2.imshow('Sharpened', self.loc_ctx.sharpened_image_array)
         cv2.destroyAllWindows()
 
     def key_callback(self, key):
@@ -143,7 +153,7 @@ class CodeMapGui:
             self.update_frame()
 
     def rotation_callback(self, rotation):
-        self.rotation = rotation - 180
+        self.rotation = rotation
         self.update_frame()
 
     def zoom_callback(self, val):
