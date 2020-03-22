@@ -115,7 +115,7 @@ bool outlier_filter_location(OutlierFilter* ctx, const ScaleMatch* new_match) {
     assert(ctx && new_match);
     if (new_match->location.x == ctx->filtered_match.location.x &&
             new_match->location.y == ctx->filtered_match.location.y) {
-        return false;
+        return true;
     }
     if (new_match->location.match_size < ctx->match_size_threshold) {
         return false;

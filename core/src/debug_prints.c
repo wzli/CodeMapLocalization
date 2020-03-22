@@ -7,15 +7,15 @@ void write_location_match_msg(LocationMatchMsg* msg, const ScaleMatch* match) {
     msg->x = match->location.x;
     msg->y = match->location.y;
     msg->match_size = match->location.match_size;
-    msg->err_ratio.x = (float) match->col_code.n_errors / match->col_code.n_samples;
-    msg->err_ratio.y = (float) match->row_code.n_errors / match->row_code.n_samples;
+    msg->x_err_ratio = (float) match->col_code.n_errors / match->col_code.n_samples;
+    msg->y_err_ratio = (float) match->row_code.n_errors / match->row_code.n_samples;
     msg->scale = match->scale;
 }
 
 void write_odometry_msg(OdometryMsg* msg, const VisualOdometry* odom) {
     assert(msg && odom);
-    msg->pos.x = odom->position.x;
-    msg->pos.y = odom->position.y;
+    msg->x = odom->position.x;
+    msg->y = odom->position.y;
     msg->rot = cargf(odom->quadrant_rotation.z * QUADRANT_LOOKUP[odom->quadrant_count & 3].z);
     msg->quadrants = odom->quadrant_count;
     msg->steps = odom->step_count;
