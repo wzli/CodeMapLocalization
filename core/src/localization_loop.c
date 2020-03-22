@@ -20,18 +20,15 @@ bool localization_loop_run(LocalizationContext* ctx, const ImageMatrix image) {
     Vector2f vertex = {{2 + image_center.x, 2 + image_center.y}};
     vertex.z *= quadrant_rotation.z * ctx->rotation_scale;
     img_draw_regular_polygon(ctx->sharpened_image, image_center, vertex, 4, ctx->threshold[0], 5);
-    // denoise via median filter
-    ImageMatrix filter_block = {(uint8_t[9]){}, {{3, 3}}};
-    img_median_filter(&ctx->denoised_image, ctx->sharpened_image, filter_block);
     // find threshold of filtered image
-    img_histogram(ctx->histogram, ctx->denoised_image);
+    img_histogram(ctx->histogram, ctx->sharpened_image);
     ctx->histogram[ctx->threshold[0]] = 0;
     ctx->threshold[1] = img_compute_otsu_threshold(ctx->histogram);
     if (ctx->threshold[1] < ctx->threshold[0]) {
         SWAP(ctx->threshold[1], ctx->threshold[0]);
     }
     // binarize to bit matrix
-    img_to_bm64(ctx->binary_image, ctx->binary_mask, ctx->denoised_image, ctx->threshold[0],
+    img_to_bm64(ctx->binary_image, ctx->binary_mask, ctx->sharpened_image, ctx->threshold[0],
             ctx->threshold[1]);
     // extract row and column codes
     bm64_extract_axiscodes(&(ctx->scale_query.row_code), &(ctx->scale_query.col_code),

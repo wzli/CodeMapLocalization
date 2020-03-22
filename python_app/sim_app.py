@@ -93,18 +93,29 @@ class CodeMapGui:
         self.loc_ctx.run(self.camera)
         # create pipeline image
         self.pipeline = np.zeros((res * 2, res * 3), dtype=np.ubyte) + 127
+        # top left
         self.pipeline[:res, :res] = self.camera
-        self.pipeline[res:res * 2, :res] = self.loc_ctx.derotated_image_array
-        self.pipeline[res:(2 * res) - 2, res:(2 * res) -
+        # top mid
+        self.pipeline[:res, res:(2 * res)] = self.loc_ctx.derotated_image_array
+        # top right
+        self.pipeline[:res - 2, (2 * res):(3 * res) -
                       2] = self.loc_ctx.sharpened_image_array
-        self.pipeline[:res - 4, res:(2 * res) -
-                      4] = self.loc_ctx.denoised_image_array
-        self.pipeline[:res, (2 *
-                             res):(3 *
-                                   res)] = self.loc_ctx.thresholded_image_array
-        self.pipeline[res:(2 * res), (2 * res):(3 * res)] = cv2.resize(
+        # bottom right
+        self.pipeline[res:(2 * res), (2 * res):(
+            3 * res)] = self.loc_ctx.thresholded_image_array
+        # bottom mid
+        self.pipeline[res:(2 * res), res:(2 * res)] = cv2.resize(
             self.loc_ctx.extracted_image_array, (3 * res // 2, 3 * res // 2),
             interpolation=cv2.INTER_NEAREST)[:res, :res]
+        # bottom left
+        self.pipeline[res:(2 * res), :res] = cv2.resize(
+            self.loc_ctx.centered_correlation, (res, res))
+        # debug prints
+        match = self.loc_ctx.scale_match
+        estimate = [match.location.x, match.location.y]
+        print(f'actual',
+              list(self.pos + 24) + [self.rotation], 'estimate', estimate,
+              match.location.match_size)
 
     def run(self):
         self.update_frame()
