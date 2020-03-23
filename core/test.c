@@ -6,17 +6,13 @@
 #include <stdlib.h>
 
 #define FRAME_SIZE 64
-#define MALLOC_IMAGE(SIZE)      \
-    (ImageMatrix) {             \
-        calloc(SQR(SIZE), 1), { \
-            { SIZE, SIZE }      \
-        }                       \
+#define MALLOC_IMAGE(SIZE)                   \
+    (ImageMatrix) {                          \
+        calloc(SQR(SIZE), 1), { SIZE, SIZE } \
     }
-#define MALLOC_IMAGE_COMPLEX(SIZE)             \
-    (ImageMatrixComplex) {                     \
-        calloc(SQR(SIZE), sizeof(Vector2f)), { \
-            { SIZE, SIZE }                     \
-        }                                      \
+#define MALLOC_IMAGE_COMPLEX(SIZE)                          \
+    (ImageMatrixComplex) {                                  \
+        calloc(SQR(SIZE), sizeof(Vector2f)), { SIZE, SIZE } \
     }
 
 int main(int argc, char** argv) {
@@ -52,7 +48,7 @@ int main(int argc, char** argv) {
     loc_ctx.odom.correlation.squared_magnitude_threshold = 0.01f;
 
     // write csv header
-    LocalizationMsg_to_csv_header(text_buf, 0, 0);
+    LocalizationMsg_to_csv_header(0, text_buf);
     puts(text_buf);
 
     for (size_t read_bytes = fread(raw_image.data, 1, SQR(FRAME_SIZE), fp);
@@ -67,7 +63,7 @@ int main(int argc, char** argv) {
         LocalizationMsg_to_csv_entry(&loc_msg, text_buf);
         puts(text_buf);
         // write raw image to top left
-        ImagePoint top_left = {{0, 0}};
+        ImagePoint top_left = {0, 0};
         IMG_PASTE(output_image, raw_image, top_left);
         // write sharpened image to top right
         top_left.x += FRAME_SIZE;
@@ -75,9 +71,9 @@ int main(int argc, char** argv) {
         // write correlation image to bottom right
         FOR_EACH_PIXEL(raw_image) {
             // normalize to 255
-            PIXEL(raw_image, row, col) = 255 *
-                                         PIXEL(loc_ctx.odom.correlation.image, row / 2, col / 2).x /
-                                         loc_ctx.odom.correlation.squared_magnitude_max;
+            PIXEL(raw_image, row, col) =
+                    255 * PIXEL(loc_ctx.odom.correlation.image, row / 2, col / 2).xy[0] /
+                    loc_ctx.odom.correlation.squared_magnitude_max;
         }
         // roll to center
         for (int16_t row = 0; row < FRAME_SIZE / 2; ++row) {

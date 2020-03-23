@@ -73,7 +73,7 @@ static const float WINDOW_LOOKUP[CORRELATION_SIZE] = {
 
 Vector2f img_estimate_rotation(const ImageMatrix mat) {
     Vector2f gradient_sum = {};
-    ImageMatrix bounds = {0, {{mat.size.x - 2, mat.size.y - 2}}};
+    ImageMatrix bounds = {0, {mat.size.x - 2, mat.size.y - 2}};
     FOR_EACH_PIXEL(bounds) {
         Vector2f gradient = {{
                 PIXEL(mat, row, col + 2) - PIXEL(mat, row, col) +
@@ -110,8 +110,8 @@ void odom_update(VisualOdometry* odom, ImageMatrix image, Vector2f rotation, flo
 }
 
 void odom_set_location(VisualOdometry* odom, Location loc) {
-    odom->position.x = loc.x;
-    odom->position.y = loc.y;
+    odom->position.xy[0] = loc.x;
+    odom->position.xy[1] = loc.y;
     odom->quadrant_count &= ~3u;
     odom->quadrant_count |= loc.direction;
     odom->step_count = 0;
@@ -119,7 +119,7 @@ void odom_set_location(VisualOdometry* odom, Location loc) {
 
 int8_t odom_track_rotation(VisualOdometry* odom, Vector2f quadrant_rotation) {
     assert(odom);
-    float dy = quadrant_rotation.y - odom->quadrant_rotation.y;
+    float dy = quadrant_rotation.xy[1] - odom->quadrant_rotation.xy[1];
     odom->quadrant_rotation = quadrant_rotation;
     if (dy < -0.8f) {
         ++odom->quadrant_count;
@@ -140,7 +140,7 @@ void img_estimate_translation(Correlation* correlation, const ImageMatrix frame)
     IMG_FILL(correlation->image, (Vector2f){});
     FOR_EACH_PIXEL(frame) {
         // apply hann window to remove edge effects
-        PIXEL(correlation->image, row / 2, col / 2).x +=
+        PIXEL(correlation->image, row / 2, col / 2).xy[0] +=
                 PIXEL(frame, row, col) * WINDOW_LOOKUP[row] * WINDOW_LOOKUP[col];
     }
     // reuse previously transfromed image as 1st frame
@@ -172,8 +172,8 @@ void img_estimate_translation(Correlation* correlation, const ImageMatrix frame)
     Vector2f subpixel_shift = img_subpixel_registration(correlation);
     // zero center the peak index
     for (uint8_t i = 0; i < 2; ++i) {
-        if (correlation->translation.data[i] > (CORRELATION_SIZE / 4)) {
-            correlation->translation.data[i] -= (CORRELATION_SIZE / 2);
+        if (correlation->translation.xy[i] > (CORRELATION_SIZE / 4)) {
+            correlation->translation.xy[i] -= (CORRELATION_SIZE / 2);
         }
     }
     correlation->translation.z += subpixel_shift.z;
@@ -185,28 +185,27 @@ Vector2f img_subpixel_registration(const Correlation* correlation) {
     // initialize peaks (assume correlation image is square normalized)
     const float peak = sqrtf(correlation->squared_magnitude_max);
     int16_t peak_idx[2] = {
-            (int16_t) correlation->translation.x, (int16_t) correlation->translation.y};
+            (int16_t) correlation->translation.xy[0], (int16_t) correlation->translation.xy[1]};
     int8_t side_peaks_dir[2] = {1, 1};
     static const uint8_t mod_mask = (CORRELATION_SIZE / 2) - 1;
     Vector2f side_peaks = {{
-            PIXEL(correlation->image, peak_idx[1], (peak_idx[0] + 1) & mod_mask).x,
-            PIXEL(correlation->image, (peak_idx[1] + 1) & mod_mask, peak_idx[0]).x,
+            PIXEL(correlation->image, peak_idx[1], (peak_idx[0] + 1) & mod_mask).xy[0],
+            PIXEL(correlation->image, (peak_idx[1] + 1) & mod_mask, peak_idx[0]).xy[0],
     }};
     Vector2f other_side_peaks = {{
-            PIXEL(correlation->image, peak_idx[1], (peak_idx[0] - 1) & mod_mask).x,
-            PIXEL(correlation->image, (peak_idx[1] - 1) & mod_mask, peak_idx[0]).x,
+            PIXEL(correlation->image, peak_idx[1], (peak_idx[0] - 1) & mod_mask).xy[0],
+            PIXEL(correlation->image, (peak_idx[1] - 1) & mod_mask, peak_idx[0]).xy[0],
     }};
     Vector2f subpixel_shift;
     for (uint8_t i = 0; i < 2; ++i) {
         // find the highest side peak
-        if (side_peaks.data[i] < other_side_peaks.data[i]) {
-            side_peaks.data[i] = other_side_peaks.data[i];
+        if (side_peaks.xy[i] < other_side_peaks.xy[i]) {
+            side_peaks.xy[i] = other_side_peaks.xy[i];
             side_peaks_dir[i] = -1;
         }
         // compute subpixel shift
-        side_peaks.data[i] = sqrtf(side_peaks.data[i]);
-        subpixel_shift.data[i] =
-                side_peaks_dir[i] * side_peaks.data[i] / (side_peaks.data[i] + peak);
+        side_peaks.xy[i] = sqrtf(side_peaks.xy[i]);
+        subpixel_shift.xy[i] = side_peaks_dir[i] * side_peaks.xy[i] / (side_peaks.xy[i] + peak);
     };
     return subpixel_shift;
 }

@@ -7,8 +7,8 @@
 
 static int test_localization_loop_run() {
     LocalizationContext* ctx = calloc(1, sizeof(LocalizationContext));
-    ImageMatrix image = {calloc(64 * 64, 1), {{64, 64}}};
-    ctx->derotated_image = (ImageMatrix){calloc(64 * 64, 1), {{64, 64}}};
+    ImageMatrix image = {calloc(64 * 64, 1), {64, 64}};
+    ctx->derotated_image = (ImageMatrix){calloc(64 * 64, 1), {64, 64}};
     ctx->sharpened_image = ctx->derotated_image;
     ctx->odom.correlation.image.data = calloc(32 * 32, sizeof(Vector2f));
     ctx->odom.correlation.buffer.data = calloc(32 * 32, sizeof(Vector2f));

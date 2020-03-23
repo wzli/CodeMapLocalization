@@ -16,7 +16,7 @@ bool localization_loop_run(LocalizationContext* ctx, const ImageMatrix image) {
             ctx->outlier_filter.filtered_match.scale / 3);
     // sharpen derotated image and remove edge effects
     img_hyper_sharpen(&(ctx->sharpened_image), ctx->derotated_image);
-    ImagePoint image_center = {{ctx->sharpened_image.size.x / 2, ctx->sharpened_image.size.y / 2}};
+    ImagePoint image_center = {ctx->sharpened_image.size.x / 2, ctx->sharpened_image.size.y / 2};
     Vector2f vertex = {{2 + image_center.x, 2 + image_center.y}};
     vertex.z *= quadrant_rotation.z * ctx->rotation_scale;
     img_draw_regular_polygon(ctx->sharpened_image, image_center, vertex, 4, ctx->threshold[0], 5);
@@ -48,7 +48,7 @@ bool localization_loop_run(LocalizationContext* ctx, const ImageMatrix image) {
 Vector2f img_derotate(ImageMatrix dst, const ImageMatrix src, float scale, uint8_t bg_fill) {
     assert(dst.data && src.data);
     Vector2f rotation_estimate = img_estimate_rotation(src);
-    rotation_estimate.y = -rotation_estimate.y;
+    rotation_estimate.xy[1] = -rotation_estimate.xy[1];
     if (rotation_estimate.z != 0) {
         img_rotate(dst, src, (Vector2f)(rotation_estimate.z * scale), bg_fill,
                 img_bilinear_interpolation);

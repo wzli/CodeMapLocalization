@@ -15,8 +15,8 @@ void write_location_match_msg(LocationMatchMsg* msg, const ScaleMatch* match) {
 
 void write_odometry_msg(OdometryMsg* msg, const VisualOdometry* odom) {
     assert(msg && odom);
-    msg->x = odom->position.x;
-    msg->y = odom->position.y;
+    msg->x = odom->position.xy[0];
+    msg->y = odom->position.xy[1];
     msg->rot = cargf(odom->quadrant_rotation.z * QUADRANT_LOOKUP[odom->quadrant_count & 3].z);
     msg->quadrants = odom->quadrant_count;
     msg->steps = odom->step_count;
@@ -24,8 +24,8 @@ void write_odometry_msg(OdometryMsg* msg, const VisualOdometry* odom) {
 
 void write_correlation_msg(CorrelationMsg* msg, const Correlation* corr) {
     assert(msg && corr);
-    msg->x = corr->translation.x;
-    msg->y = corr->translation.y;
+    msg->x = corr->translation.xy[0];
+    msg->y = corr->translation.xy[1];
     msg->err_ratio = 1.0f - (corr->squared_magnitude_max / (corr->squared_magnitude_sum + 0.0001f));
 }
 
@@ -79,7 +79,7 @@ void print_location(const Location* location) {
 }
 
 void bm64_save_to_pgm(BitMatrix64 bit_matrix, BitMatrix64 bit_mask, const char* file_name) {
-    ImageMatrix image = {(uint8_t[64 * 64]){}, {{64, 64}}};
+    ImageMatrix image = {(uint8_t[64 * 64]){0}, {64, 64}};
     bm64_to_img(&image, bit_matrix, bit_mask);
     img_save_to_pgm(image, file_name);
 }
