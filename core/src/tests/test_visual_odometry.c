@@ -11,8 +11,8 @@ static int test_phase_correlation() {
     ImageMatrixComplex frame = {(Vector2f[SQR(CONV_SIZE)]){{{0}}}, {CONV_SIZE, CONV_SIZE}};
     ImageMatrixComplex next_frame = {(Vector2f[SQR(CONV_SIZE)]){{{0}}}, {CONV_SIZE, CONV_SIZE}};
 
-    IMG_FILL(frame, (Vector2f){});
-    IMG_FILL(next_frame, (Vector2f){});
+    IMG_FILL(frame, (Vector2f){0});
+    IMG_FILL(next_frame, (Vector2f){0});
 
     PIXEL(frame, 2, 2).xy[0] = 1;
     PIXEL(next_frame, 3, 3).xy[0] = 1;
@@ -25,7 +25,7 @@ static int test_phase_correlation() {
         printf("%3d ", (int16_t)(PIXEL(frame, row, col) & 0xFFFF));
     }
 #endif
-    Vector2f max_val = {};
+    Vector2f max_val = {0};
     int16_t max_x = -1;
     int16_t max_y = -1;
     IMG_PIXEL_LATCH_INDEX(max_val, max_y, max_x, latch_comp, frame);

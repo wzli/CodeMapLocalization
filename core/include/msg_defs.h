@@ -7,7 +7,7 @@
     X(uint16_t, match_size, )      \
     X(float, bit_err_ratio, )      \
     X(float, scale, )
-GEN_STRUCT(LocationMatchMsg);
+GEN_STRUCT(LocationMatchMsg)
 
 #define STRUCT_OdometryMsg(X) \
     X(float, x, )             \
@@ -15,13 +15,13 @@ GEN_STRUCT(LocationMatchMsg);
     X(float, rot, )           \
     X(int32_t, quadrants, )   \
     X(uint32_t, steps, )
-GEN_STRUCT(OdometryMsg);
+GEN_STRUCT(OdometryMsg)
 
 #define STRUCT_CorrelationMsg(X) \
     X(float, x, )                \
     X(float, y, )                \
     X(float, err_ratio, )
-GEN_STRUCT(CorrelationMsg);
+GEN_STRUCT(CorrelationMsg)
 
 #define STRUCT_LocalizationMsg(FIELD) \
     FIELD(uint32_t, frame, )          \
@@ -29,4 +29,4 @@ GEN_STRUCT(CorrelationMsg);
     FIELD(LocationMatchMsg, loc, )    \
     FIELD(OdometryMsg, odom, )        \
     FIELD(CorrelationMsg, corr, )
-GEN_STRUCT(LocalizationMsg);
+GEN_STRUCT(LocalizationMsg)

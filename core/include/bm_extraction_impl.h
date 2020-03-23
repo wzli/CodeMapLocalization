@@ -51,8 +51,8 @@ TEMPLATE(bm, WIDTH, _extract_column_code)
 (TEMPLATE(uint, WIDTH, _t) row_estimate, const TEMPLATE(BitMatrix, WIDTH, ) matrix,
         const TEMPLATE(BitMatrix, WIDTH, ) mask, uint8_t min_row_samples) {
     assert(matrix && mask);
-    TEMPLATE(AxisCode, WIDTH, ) column_code = {};
-    int8_t bit_votes[(WIDTH)] = {};
+    TEMPLATE(AxisCode, WIDTH, ) column_code = {0};
+    int8_t bit_votes[(WIDTH)] = {0};
     for (uint8_t i = 0; i < (WIDTH); ++i) {
         uint8_t mask_sum = count_bits(mask[i]);
         if (mask_sum < min_row_samples) {

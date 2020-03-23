@@ -72,7 +72,7 @@ static const float WINDOW_LOOKUP[CORRELATION_SIZE] = {
 };
 
 Vector2f img_estimate_rotation(const ImageMatrix mat) {
-    Vector2f gradient_sum = {};
+    Vector2f gradient_sum = {0};
     ImageMatrix bounds = {0, {mat.size.x - 2, mat.size.y - 2}};
     FOR_EACH_PIXEL(bounds) {
         Vector2f gradient = {{
@@ -100,7 +100,7 @@ void odom_update(VisualOdometry* odom, ImageMatrix image, Vector2f rotation, flo
     int8_t quadrant_increment = odom_track_rotation(odom, rotation);
     // rotate filter out quadrant changes
     if (quadrant_increment != 0) {
-        Vector2f fill = {};
+        Vector2f fill = {0};
         IMG_FILL(odom->correlation.buffer, fill);
     }
     img_estimate_translation(&(odom->correlation), image);
@@ -137,7 +137,7 @@ void img_estimate_translation(Correlation* correlation, const ImageMatrix frame)
     IMG_SET_SIZE(correlation->image, CORRELATION_SIZE / 2, CORRELATION_SIZE / 2);
     IMG_SET_SIZE(correlation->buffer, CORRELATION_SIZE / 2, CORRELATION_SIZE / 2);
     // 2x2 bin the source image
-    IMG_FILL(correlation->image, (Vector2f){});
+    IMG_FILL(correlation->image, (Vector2f){0});
     FOR_EACH_PIXEL(frame) {
         // apply hann window to remove edge effects
         PIXEL(correlation->image, row / 2, col / 2).xy[0] +=

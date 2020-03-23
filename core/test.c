@@ -27,7 +27,7 @@ int main(int argc, char** argv) {
         return errno;
     }
     // allocate context
-    LocalizationContext loc_ctx = {};
+    LocalizationContext loc_ctx = {0};
     ImageMatrix raw_image = MALLOC_IMAGE(FRAME_SIZE);
     ImageMatrix output_image = MALLOC_IMAGE(2 * FRAME_SIZE);
     loc_ctx.derotated_image = MALLOC_IMAGE(FRAME_SIZE);
@@ -35,7 +35,7 @@ int main(int argc, char** argv) {
     loc_ctx.odom.correlation.image = MALLOC_IMAGE_COMPLEX(FRAME_SIZE / 2);
     loc_ctx.odom.correlation.buffer = MALLOC_IMAGE_COMPLEX(FRAME_SIZE / 2);
     char* text_buf = malloc(512);
-    LocalizationMsg loc_msg = {};
+    LocalizationMsg loc_msg = {0};
     // setup configs
     loc_ctx.rotation_scale = 1.0f;
     loc_ctx.scale_query.lower_bound = 0.8f;

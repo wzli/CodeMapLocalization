@@ -23,27 +23,27 @@ static inline bool bv32_get_bit(const uint32_t* vector, uint32_t k) {
 
 static inline bool bm32_get_bit(const BitMatrix32 matrix, uint8_t row, uint8_t col) {
     return (matrix[row] >> col) & 1u;
-};
+}
 
 static inline bool bm64_get_bit(const BitMatrix64 matrix, uint8_t row, uint8_t col) {
     return (matrix[row] >> col) & 1u;
-};
+}
 
 static inline void bm32_set_bit(BitMatrix32 matrix, uint8_t row, uint8_t col) {
     matrix[row] |= 1u << col;
-};
+}
 
 static inline void bm64_set_bit(BitMatrix64 matrix, uint8_t row, uint8_t col) {
     matrix[row] |= 1ull << col;
-};
+}
 
 static inline void bm32_clear_bit(BitMatrix32 matrix, uint8_t row, uint8_t col) {
     matrix[row] &= ~(1u << col);
-};
+}
 
 static inline void bm64_clear_bit(BitMatrix64 matrix, uint8_t row, uint8_t col) {
     matrix[row] &= ~(1ull << col);
-};
+}
 
 void bm32_transpose(BitMatrix32 matrix);
 void bm64_transpose(BitMatrix64 matrix);
@@ -69,4 +69,4 @@ uint8_t perfect_log2_64(uint64_t x);
 uint8_t count_bits_32(uint32_t x);
 static inline uint8_t count_bits_64(uint64_t x) {
     return count_bits_32(x) + count_bits_32(x >> 32);
-};
+}

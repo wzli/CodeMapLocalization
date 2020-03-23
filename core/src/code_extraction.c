@@ -49,4 +49,4 @@ AxisCode32 downsample_axiscode(AxisCode64 axiscode64) {
         axiscode64.mask >>= 3;
     }
     return axiscode32;
-};
+}

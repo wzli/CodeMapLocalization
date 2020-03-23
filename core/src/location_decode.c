@@ -15,16 +15,16 @@ uint8_t next_valid_code_segment(AxisCode32* axiscode, uint8_t code_length) {
         valid_segment_length = count_trailing_zeros(~axiscode->mask);
     }
     return valid_segment_length;
-};
+}
 
 AxisPosition decode_axis_position(AxisCode32 axiscode) {
-    AxisPosition best_position = {};
+    AxisPosition best_position = {0};
     const uint32_t code_mask = mask_bits(MLS_INDEX.code_length);
     for (uint8_t valid_segment_length = next_valid_code_segment(&axiscode, MLS_INDEX.code_length);
             valid_segment_length > 0;
             valid_segment_length = next_valid_code_segment(&axiscode, MLS_INDEX.code_length)) {
         uint32_t code = axiscode.bits & code_mask;
-        AxisPosition position = {};
+        AxisPosition position = {0};
         position.center = mlsq_position_from_code(MLS_INDEX, code);
         if (position.center == MLSQ_NOT_FOUND) {
             code = invert_bits(code, MLS_INDEX.code_length);
@@ -76,7 +76,7 @@ AxisPosition decode_axis_position(AxisCode32 axiscode) {
 }
 
 Location deduce_location(AxisPosition row_position, AxisPosition col_position) {
-    Location loc = {};
+    Location loc = {0};
     loc.match_size = row_position.inverted == col_position.inverted
                              ? row_position.span * col_position.span
                              : 0;

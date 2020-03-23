@@ -34,7 +34,7 @@ bool localization_loop_run(LocalizationContext* ctx, const ImageMatrix image) {
     bm64_extract_axiscodes(&(ctx->scale_query.row_code), &(ctx->scale_query.col_code),
             ctx->binary_image, ctx->binary_mask, 5);
     // scale search and decode
-    ctx->scale_match = (ScaleMatch){};
+    ctx->scale_match = (ScaleMatch){0};
     scale_search_location(&(ctx->scale_match), &(ctx->scale_query));
     // outlier rejection filter
     if (outlier_filter_location(&(ctx->outlier_filter), &(ctx->scale_match))) {
@@ -48,10 +48,11 @@ bool localization_loop_run(LocalizationContext* ctx, const ImageMatrix image) {
 Vector2f img_derotate(ImageMatrix dst, const ImageMatrix src, float scale, uint8_t bg_fill) {
     assert(dst.data && src.data);
     Vector2f rotation_estimate = img_estimate_rotation(src);
-    rotation_estimate.xy[1] = -rotation_estimate.xy[1];
     if (rotation_estimate.z != 0) {
-        img_rotate(dst, src, (Vector2f)(rotation_estimate.z * scale), bg_fill,
-                img_bilinear_interpolation);
+        rotation_estimate.xy[1] = -rotation_estimate.xy[1];
+        Vector2f derotation = rotation_estimate;
+        derotation.z *= scale;
+        img_rotate(dst, src, derotation, bg_fill, img_bilinear_interpolation);
     }
     return rotation_estimate;
 }

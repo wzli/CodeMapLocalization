@@ -9,7 +9,7 @@ DEPS := $(OBJS:.o=.d)
 INC_DIRS := $(shell find -L $(INC_DIR) -type d)
 INC_FLAGS := $(addprefix -I,$(INC_DIRS))
 
-COMMONFLAGS = -Wall -Wextra
+COMMONFLAGS = -Wall -Wextra -Wpedantic
 
 ifeq ($(mode), debug)
     COMMONFLAGS += -Og -g -DDEBUG

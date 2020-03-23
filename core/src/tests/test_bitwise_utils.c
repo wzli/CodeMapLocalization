@@ -39,7 +39,7 @@ static int test_count_trailing_zeros() {
 }
 
 static int test_bit_matrix_transpose() {
-    BitMatrix32 bm32 = {};
+    BitMatrix32 bm32 = {0};
     bm32[0] = ~0;
     bm32_transpose(bm32);
     for (int i = 0; i < 32; ++i) {
@@ -51,7 +51,7 @@ static int test_bit_matrix_transpose() {
         test_assert(bm32[i] == 0);
     }
 
-    BitMatrix64 bm64 = {};
+    BitMatrix64 bm64 = {0};
     bm64[0] = ~0ull;
     bm64_transpose(bm64);
     for (int i = 0; i < 64; ++i) {
@@ -66,13 +66,13 @@ static int test_bit_matrix_transpose() {
 }
 
 static int test_bit_matrix_set_clear_bits() {
-    BitMatrix32 bm32 = {};
+    BitMatrix32 bm32 = {0};
     bm32_set_bit(bm32, 30, 30);
     test_assert(bm32_get_bit(bm32, 30, 30) == 1);
     bm32_clear_bit(bm32, 30, 30);
     test_assert(bm32_get_bit(bm32, 30, 30) == 0);
 
-    BitMatrix64 bm64 = {};
+    BitMatrix64 bm64 = {0};
     bm64_set_bit(bm64, 60, 60);
     test_assert(bm64_get_bit(bm64, 60, 60) == 1);
     bm64_clear_bit(bm64, 60, 60);
