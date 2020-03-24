@@ -1,32 +1,32 @@
 #pragma once
 #include "mxgen.h"
 
-#define STRUCT_LocationMatchMsg(X) \
-    X(uint16_t, x, )               \
-    X(uint16_t, y, )               \
-    X(uint16_t, match_size, )      \
-    X(float, bit_err_ratio, )      \
+#define TYPEDEF_LocationMatchMsg(X, _) \
+    X(uint16_t, x, )                   \
+    X(uint16_t, y, )                   \
+    X(uint16_t, match_size, )          \
+    X(float, bit_err_ratio, )          \
     X(float, scale, )
-GEN_STRUCT(LocationMatchMsg)
+MXGEN(struct, LocationMatchMsg)
 
-#define STRUCT_OdometryMsg(X) \
-    X(float, x, )             \
-    X(float, y, )             \
-    X(float, rot, )           \
-    X(int32_t, quadrants, )   \
+#define TYPEDEF_OdometryMsg(X, _) \
+    X(float, x, )                 \
+    X(float, y, )                 \
+    X(float, rot, )               \
+    X(int32_t, quadrants, )       \
     X(uint32_t, steps, )
-GEN_STRUCT(OdometryMsg)
+MXGEN(struct, OdometryMsg)
 
-#define STRUCT_CorrelationMsg(X) \
-    X(float, x, )                \
-    X(float, y, )                \
+#define TYPEDEF_CorrelationMsg(X, _) \
+    X(float, x, )                    \
+    X(float, y, )                    \
     X(float, err_ratio, )
-GEN_STRUCT(CorrelationMsg)
+MXGEN(struct, CorrelationMsg)
 
-#define STRUCT_LocalizationMsg(FIELD) \
-    FIELD(uint32_t, frame, )          \
-    FIELD(uint8_t, thresh, [2])       \
-    FIELD(LocationMatchMsg, loc, )    \
-    FIELD(OdometryMsg, odom, )        \
-    FIELD(CorrelationMsg, corr, )
-GEN_STRUCT(LocalizationMsg)
+#define TYPEDEF_LocalizationMsg(X, _) \
+    X(uint32_t, frame, )              \
+    X(uint8_t, thresh, [2])           \
+    X(LocationMatchMsg, loc, )        \
+    X(OdometryMsg, odom, )            \
+    X(CorrelationMsg, corr, )
+MXGEN(struct, LocalizationMsg)
