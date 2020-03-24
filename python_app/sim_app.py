@@ -111,8 +111,11 @@ class CodeMapGui:
         self.pipeline[res:(2 * res), :res] = cv2.resize(
             self.loc_ctx.centered_correlation, (res, res))
         # debug prints
+        radians = np.radians(self.rotation)
+        if radians > np.pi:
+            radians -= 2 * np.pi
         print(
-            f'\nGround Truth\t{{\"x\":{self.pos[0] + 24}, \"y\":{self.pos[1] + 24}, \"rot\":{round(np.radians(self.rotation), 6)}}}'
+            f'\nGround Truth\t{{\"x\":{self.pos[0] + 24}, \"y\":{self.pos[1] + 24}, \"rot\":{round(radians, 6)}}}'
         )
         self.loc_ctx.print()
 
