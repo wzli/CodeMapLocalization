@@ -183,8 +183,9 @@ class LocalizationContext(ctypes.Structure):
         location_updated = (1 == libcodemap.localization_loop_run(
             ctypes.byref(self), ImageMatrix(frame)))
         # create thresholded image
-        libcodemap.bm64_transpose(self.binary_image)
-        libcodemap.bm64_transpose(self.binary_mask)
+        libcodemap.bm64_from_axiscodes(self.binary_image, self.binary_mask,
+                                       self.scale_query.row_code,
+                                       self.scale_query.col_code)
         libcodemap.bm64_to_img(
             ctypes.byref(ImageMatrix(self.thresholded_image_array)),
             self.binary_image, self.binary_mask)
