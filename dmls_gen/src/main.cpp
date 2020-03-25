@@ -11,9 +11,9 @@ int main(int argc, char** argv) {
     }
     std::cout << "Generating ...\n" << std::endl;
     DmlsGen dmls_gen;
-    std::vector<bool> sequence;
+    std::vector<bool> dmls_sequence;
     dmls_gen.generate_dmls(
-            sequence, atoi(argv[1]), 0, [](std::vector<bool>& sequence, uint8_t word_length) {
+            dmls_sequence, atoi(argv[1]), 0, [](std::vector<bool>& sequence, uint8_t word_length) {
                 std::stringstream sequence_string, file_name;
                 std::ofstream file;
                 for (bool bit : sequence) {
@@ -32,7 +32,7 @@ int main(int argc, char** argv) {
                           << " sequence_length: " << sequence.size() << '\n'
                           << std::endl;
             });
-    if (sequence.empty()) {
+    if (dmls_sequence.empty()) {
         std::cout << "word length must be between 1 to 32" << std::endl;
     }
     return 0;
