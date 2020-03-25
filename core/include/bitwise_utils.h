@@ -12,7 +12,7 @@ static inline void bv32_set_bit(uint32_t* vector, uint8_t k) {
 }
 
 static inline void bv64_set_bit(uint64_t* vector, uint8_t k) {
-    vector[k >> 6] |= 1 << (k & 0x3F);
+    vector[k >> 6] |= 1ull << (k & 0x3F);
 }
 
 static inline void bv32_clear_bit(uint32_t* vector, uint8_t k) {
@@ -20,7 +20,7 @@ static inline void bv32_clear_bit(uint32_t* vector, uint8_t k) {
 }
 
 static inline void bv64_clear_bit(uint64_t* vector, uint8_t k) {
-    vector[k >> 6] &= ~(1 << (k & 0x3F));
+    vector[k >> 6] &= ~(1ull << (k & 0x3F));
 }
 
 static inline bool bv32_get_bit(const uint32_t* vector, uint8_t k) {
