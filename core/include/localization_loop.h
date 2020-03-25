@@ -1,4 +1,5 @@
 #pragma once
+#include "mls_query.h"
 #include "location_decode.h"
 #include "visual_odometry.h"
 

@@ -33,7 +33,7 @@ typedef struct {
 typedef struct {
     ScaleMatch filtered_match;
     uint16_t distance_threshold;
-    uint16_t match_size_threshold;
+    uint16_t match_length_threshold;
     uint8_t bit_error_ratio_threshold;
     uint8_t max_rejection_count;
     uint8_t rejection_count;

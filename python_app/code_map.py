@@ -41,6 +41,9 @@ class MlsIndex(ctypes.Structure):
     ]
 
 
+MLS_INDEX = MlsIndex.in_dll(libcodemap, "MLS_INDEX")
+
+
 # code_extraction.h
 class AxisCode32(ctypes.Structure):
     _fields_ = [
@@ -93,7 +96,7 @@ class ScaleMatch(ctypes.Structure):
 class OutlierFilter(ctypes.Structure):
     _fields_ = [('filtered_match', ScaleMatch),
                 ('distance_threshold', ctypes.c_ushort),
-                ('match_size_threshold', ctypes.c_ushort),
+                ('match_length_threshold', ctypes.c_ushort),
                 ('bit_error_ratio_threshold', ctypes.c_ubyte),
                 ('max_rejection_count', ctypes.c_ubyte),
                 ('rejection_count', ctypes.c_ubyte)]
@@ -173,7 +176,7 @@ class LocalizationContext(ctypes.Structure):
         self.scale_query.upper_bound = 1.2
         self.scale_query.step_size = 0.02
         self.outlier_filter.distance_threshold = 200
-        self.outlier_filter.match_size_threshold = 20
+        self.outlier_filter.match_length_threshold = 21 - MLS_INDEX.code_length
         self.outlier_filter.bit_error_ratio_threshold = 5
         self.outlier_filter.max_rejection_count = 10
         self.odom.correlation.squared_magnitude_threshold = 0.01
@@ -209,9 +212,3 @@ class LocalizationContext(ctypes.Structure):
     def print(self):
         libcodemap.print_odometry(ctypes.byref(self.odom))
         libcodemap.print_location_match(ctypes.byref(self.scale_match))
-
-
-MLS_INDEX = MlsIndex.in_dll(libcodemap, "MLS_INDEX")
-QUADRANT_LOOKUP = (Vector2f(1, 0), Vector2f(0,
-                                            1), Vector2f(-1,
-                                                         0), Vector2f(0, -1))
