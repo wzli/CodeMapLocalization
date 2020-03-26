@@ -146,16 +146,9 @@ AxisCode64 downsample_axiscode64(AxisCode64 axiscode, float scale) {
     assert(scale > 0 && scale <= 1);
     volatile uint64_t scaled_bits[3] = {0};
     volatile uint64_t scaled_mask[3] = {0};
-    uint8_t dst_idx = 0;
-    float src_inc = 1.0f / (3 * scale);
-    for (float src_idx = 0; dst_idx < 64 * 3 && src_idx < 64; ++dst_idx, src_idx += src_inc) {
-        if (bv32_get_bit((uint32_t*) &axiscode.bits, (uint8_t) src_idx)) {
-            bv32_set_bit((uint32_t*) scaled_bits, dst_idx);
-        }
-        if (bv32_get_bit((uint32_t*) &axiscode.mask, (uint8_t) src_idx)) {
-            bv32_set_bit((uint32_t*) scaled_mask, dst_idx);
-        }
-    }
+    uint32_t scaled_length =
+            bv32_scale((uint32_t*) scaled_bits, (uint32_t*) &axiscode.bits, 64 * 3, 64, scale * 3);
+    bv32_scale((uint32_t*) scaled_mask, (uint32_t*) &axiscode.mask, 64 * 3, 64, scale * 3);
     uint64_t edges[3] = {
             scaled_bits[0] ^ (scaled_bits[0] << 1),
             scaled_bits[1] ^ (scaled_bits[1] << 1),
@@ -178,8 +171,8 @@ AxisCode64 downsample_axiscode64(AxisCode64 axiscode, float scale) {
     static const uint8_t count_bits_3[8] = {0, 1, 1, 2, 1, 2, 2, 3};
     axiscode.bits = 0;
     axiscode.mask = 0;
-    dst_idx -= 3;
-    for (uint64_t current_bit = 1; offset < dst_idx; offset += 3, current_bit <<= 1) {
+    scaled_length -= 3;
+    for (uint64_t current_bit = 1; offset < scaled_length; offset += 3, current_bit <<= 1) {
         uint8_t mask_triplet = bv32_get_slice((uint32_t*) scaled_mask, offset, 3);
         if (mask_triplet == 7) {
             axiscode.mask |= current_bit;

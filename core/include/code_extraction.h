@@ -46,3 +46,7 @@ AxisCode32 bm32_extract_column_code(uint32_t row_estimate, const BitMatrix32 mat
         const BitMatrix32 mask, uint8_t min_row_samples);
 AxisCode64 bm64_extract_column_code(uint64_t row_estimate, const BitMatrix64 matrix,
         const BitMatrix64 mask, uint8_t min_row_samples);
+
+// bit vector extraction
+uint8_t estimate_bit_triplet_offset(
+        uint32_t* bit_errors, const uint32_t* bits, const uint32_t* mask, uint16_t len);

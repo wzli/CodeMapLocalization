@@ -14,7 +14,7 @@ uint32_t bv32_get_slice(const uint32_t* vector, uint32_t k, uint8_t n) {
     return code & mask_bits(n);
 }
 
-void bv32_scale(
+uint32_t bv32_scale(
         uint32_t* dst, const uint32_t* src, uint32_t dst_len, uint32_t src_len, float scale) {
     assert(dst && src && dst_len > 0 && src_len > 0 && scale > 0);
     uint32_t dst_idx = 0;
@@ -27,6 +27,7 @@ void bv32_scale(
         ++dst_idx;
         src_idx += src_inc;
     }
+    return dst_idx;
 }
 
 // bunch of bit twiddling hacks
