@@ -180,10 +180,10 @@ AxisCode64 downsample_axiscode64(AxisCode64 axiscode, float scale) {
     axiscode.mask = 0;
     dst_idx -= 3;
     for (uint64_t current_bit = 1; offset < dst_idx; offset += 3, current_bit <<= 1) {
-        uint8_t mask_triplet = mlsq_code_from_position((uint32_t*) scaled_mask, 3, offset);
+        uint8_t mask_triplet = bv64_get_slice(scaled_mask, offset, 3);
         if (mask_triplet == 7) {
             axiscode.mask |= current_bit;
-            uint8_t bit_triplet = mlsq_code_from_position((uint32_t*) scaled_bits, 3, offset);
+            uint8_t bit_triplet = bv64_get_slice(scaled_bits, offset, 3);
             if (2 * count_bits_3[bit_triplet] > 3) {
                 axiscode.bits |= current_bit;
             }

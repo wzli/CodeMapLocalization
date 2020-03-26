@@ -1,17 +1,6 @@
 #include "mls_query.h"
 #include <assert.h>
 
-uint32_t mlsq_code_from_position(const uint32_t* sequence, uint8_t code_length, uint16_t position) {
-    assert(code_length > 0 && code_length <= 32);
-    uint32_t index = position >> 5;
-    uint8_t offset = position & 0x1F;
-    uint32_t code = sequence[index] >> offset;
-    if (offset + code_length > 32) {
-        code |= sequence[index + 1] << (32 - offset);
-    }
-    return code & mask_bits(code_length);
-}
-
 uint16_t mlsq_position_from_code(const MlsIndex query_index, uint32_t code) {
     assert(query_index.sorted_code_positions);
     assert(query_index.sequence_length >= query_index.code_length);

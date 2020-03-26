@@ -13,9 +13,13 @@ typedef struct {
 extern const uint64_t MLS_ID;
 extern const MlsIndex MLS_INDEX;
 
-uint32_t mlsq_code_from_position(const uint32_t* sequence, uint8_t code_length, uint16_t position);
 uint16_t mlsq_position_from_code(const MlsIndex query_index, uint32_t code);
 uint16_t mlsq_sort_code_positions(MlsIndex query_index);
+
+static inline uint32_t mlsq_code_from_position(
+        const uint32_t* sequence, uint8_t code_length, uint16_t position) {
+    return bv32_get_slice(sequence, position, code_length);
+}
 
 static inline uint32_t mlsq_code_from_position_indexed(uint8_t code_length, uint16_t position) {
     return position > MLS_INDEX.sequence_length ||
