@@ -15,17 +15,6 @@ uint32_t bv32_get_slice(const uint32_t* vector, uint32_t k, uint8_t n) {
     return code & mask_bits(n);
 }
 
-uint64_t bv64_get_slice(const uint64_t* vector, uint32_t k, uint8_t n) {
-    assert(n > 0 && n <= 64);
-    uint32_t index = k >> 6;
-    uint8_t offset = k & 0x3F;
-    uint64_t code = vector[index] >> offset;
-    if (offset + n > 64) {
-        code |= vector[index + 1] << (64 - offset);
-    }
-    return code & (~0ull >> (64 - n));
-}
-
 void bm32_transpose(BitMatrix32 A) {
     uint32_t m = 0xFFFF0000;
     for (uint8_t j = 16; j != 0; j = j >> 1, m = m ^ (m >> j)) {

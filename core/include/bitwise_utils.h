@@ -11,28 +11,15 @@ static inline void bv32_set_bit(uint32_t* vector, uint32_t k) {
     vector[k >> 5] |= 1 << (k & 0x1F);
 }
 
-static inline void bv64_set_bit(uint64_t* vector, uint32_t k) {
-    vector[k >> 6] |= 1ull << (k & 0x3F);
-}
-
 static inline void bv32_clear_bit(uint32_t* vector, uint32_t k) {
     vector[k >> 5] &= ~(1 << (k & 0x1F));
-}
-
-static inline void bv64_clear_bit(uint64_t* vector, uint32_t k) {
-    vector[k >> 6] &= ~(1ull << (k & 0x3F));
 }
 
 static inline bool bv32_get_bit(const uint32_t* vector, uint32_t k) {
     return (vector[k >> 5] >> (k & 0x1F)) & 1;
 }
 
-static inline bool bv64_get_bit(const uint64_t* vector, uint32_t k) {
-    return (vector[k >> 6] >> (k & 0x3F)) & 1;
-}
-
 uint32_t bv32_get_slice(const uint32_t* vector, uint32_t k, uint8_t n);
-uint64_t bv64_get_slice(const uint64_t* vector, uint32_t k, uint8_t n);
 
 // bit matrix operations
 

@@ -149,11 +149,11 @@ AxisCode64 downsample_axiscode64(AxisCode64 axiscode, float scale) {
     uint8_t dst_idx = 0;
     float src_inc = 1.0f / (3 * scale);
     for (float src_idx = 0; dst_idx < 64 * 3 && src_idx < 64; ++dst_idx, src_idx += src_inc) {
-        if (bv64_get_bit(&axiscode.bits, (uint8_t) src_idx)) {
-            bv64_set_bit(scaled_bits, dst_idx);
+        if (bv32_get_bit((uint32_t*) &axiscode.bits, (uint8_t) src_idx)) {
+            bv32_set_bit((uint32_t*) scaled_bits, dst_idx);
         }
-        if (bv64_get_bit(&axiscode.mask, (uint8_t) src_idx)) {
-            bv64_set_bit(scaled_mask, dst_idx);
+        if (bv32_get_bit((uint32_t*) &axiscode.mask, (uint8_t) src_idx)) {
+            bv32_set_bit((uint32_t*) scaled_mask, dst_idx);
         }
     }
     uint64_t edges[3] = {
@@ -180,10 +180,10 @@ AxisCode64 downsample_axiscode64(AxisCode64 axiscode, float scale) {
     axiscode.mask = 0;
     dst_idx -= 3;
     for (uint64_t current_bit = 1; offset < dst_idx; offset += 3, current_bit <<= 1) {
-        uint8_t mask_triplet = bv64_get_slice(scaled_mask, offset, 3);
+        uint8_t mask_triplet = bv32_get_slice((uint32_t*) scaled_mask, offset, 3);
         if (mask_triplet == 7) {
             axiscode.mask |= current_bit;
-            uint8_t bit_triplet = bv64_get_slice(scaled_bits, offset, 3);
+            uint8_t bit_triplet = bv32_get_slice((uint32_t*) scaled_bits, offset, 3);
             if (2 * count_bits_3[bit_triplet] > 3) {
                 axiscode.bits |= current_bit;
             }
