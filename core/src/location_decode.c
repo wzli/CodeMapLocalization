@@ -144,8 +144,8 @@ bool outlier_filter_location(OutlierFilter* ctx, const ScaleMatch* new_match) {
 
 AxisCode64 downsample_axiscode64(AxisCode64 axiscode, float scale) {
     assert(scale > 0 && scale <= 1);
-    uint64_t scaled_bits[3] = {0};
-    uint64_t scaled_mask[3] = {0};
+    volatile uint64_t scaled_bits[3] = {0};
+    volatile uint64_t scaled_mask[3] = {0};
     uint8_t dst_idx = 0;
     float src_inc = 1.0f / (3 * scale);
     for (float src_idx = 0; dst_idx < 64 * 3 && src_idx < 64; ++dst_idx, src_idx += src_inc) {

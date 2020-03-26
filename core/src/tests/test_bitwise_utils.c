@@ -1,6 +1,75 @@
 #include "test_utils.h"
 #include "bitwise_utils.h"
 
+static int test_bv32_clear_all() {
+    uint32_t v[3] = {0xFFFF, 0xFFFF, 0xFFFF};
+    bv32_clear_all(v, 32 * 3);
+    test_assert(v[0] == 0);
+    test_assert(v[1] == 0);
+    test_assert(v[2] == 0);
+    return 0;
+}
+
+static int test_bv32_get_slice() {
+    uint32_t v[3] = {0xFFFF, 0xFFFF, 0xFFFF};
+    test_assert(bv32_get_slice(v, 0, 4) == 0xF);
+    test_assert(bv32_get_slice(v, 0 + 32, 4) == 0xF);
+    test_assert(bv32_get_slice(v, 0, 20) == 0xFFFF);
+    test_assert(bv32_get_slice(v, 0 + 32, 20) == 0xFFFF);
+    test_assert(bv32_get_slice(v, 8, 20) == 0xFF);
+    test_assert(bv32_get_slice(v, 8 + 32, 20) == 0xFF);
+    test_assert(bv32_get_slice(v, 8, 20) == 0xFF);
+    test_assert(bv32_get_slice(v, 8 + 32, 20) == 0xFF);
+    test_assert(bv32_get_slice(v, 24, 20) == 0xFFF00);
+    test_assert(bv32_get_slice(v, 24 + 32, 20) == 0xFFF00);
+    return 0;
+}
+
+static int test_bv32_scale() {
+    uint32_t src[1] = {0xF0F0};
+    uint32_t dst[6] = {0};
+    bv32_scale(dst, src, 16, 16, 1);
+    test_assert(dst[0] == src[0]);
+
+    bv32_clear_all(dst, 32 * 6);
+    bv32_scale(dst, src, 8, 16, 1);
+    test_assert(dst[0] == 0xF0);
+
+    bv32_clear_all(dst, 32 * 6);
+    bv32_scale(dst, src, 16, 8, 1);
+    test_assert(dst[0] == 0xF0);
+
+    bv32_clear_all(dst, 32 * 6);
+    bv32_scale(dst, src, 32, 16, 2);
+    test_assert(dst[0] == 0xFF00FF00);
+
+    bv32_clear_all(dst, 32 * 6);
+    bv32_scale(dst, src, 64, 16, 4);
+    test_assert(dst[0] == 0xFFFF0000);
+    test_assert(dst[1] == 0xFFFF0000);
+
+    bv32_clear_all(dst, 32 * 6);
+    bv32_scale(dst, src, 64, 16, 0.5f);
+    test_assert(dst[0] == 0xCC);
+    test_assert(dst[1] == 0);
+
+    bv32_clear_all(dst, 32 * 6);
+    bv32_scale(dst, src, 64, 16, 0.5f);
+    test_assert(dst[0] == 0xCC);
+    test_assert(dst[1] == 0);
+
+    bv32_clear_all(dst, 32 * 6);
+    bv32_scale(dst, src, 64, 16, 0.25f);
+    test_assert(dst[0] == 0xA);
+    test_assert(dst[1] == 0);
+
+    bv32_clear_all(dst, 32 * 6);
+    bv32_scale(dst, src, 64, 16, 100);
+    test_assert(dst[0] == 0);
+    test_assert(dst[1] == 0);
+    return 0;
+}
+
 static int test_invert_bits() {
     test_assert(invert_bits(0, 2) == 3);
     test_assert(invert_bits(0, 32) == ~0u);
@@ -81,6 +150,9 @@ static int test_bit_matrix_set_clear_bits() {
 }
 
 int test_bitwise_utils() {
+    test_run(test_bv32_clear_all);
+    test_run(test_bv32_get_slice);
+    test_run(test_bv32_scale);
     test_run(test_invert_bits);
     test_run(test_reverse_bits);
     test_run(test_count_bits);

@@ -19,7 +19,16 @@ static inline bool bv32_get_bit(const uint32_t* vector, uint32_t k) {
     return (vector[k >> 5] >> (k & 0x1F)) & 1;
 }
 
+static inline void bv32_clear_all(uint32_t* vector, uint32_t len) {
+    for (uint32_t i = 0; i < (len >> 5); ++i) {
+        vector[i] = 0;
+    }
+}
+
 uint32_t bv32_get_slice(const uint32_t* vector, uint32_t k, uint8_t n);
+
+void bv32_scale(
+        uint32_t* dst, const uint32_t* src, uint32_t dst_len, uint32_t src_len, float scale);
 
 // bit matrix operations
 

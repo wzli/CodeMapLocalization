@@ -1,8 +1,7 @@
 #include "bitwise_utils.h"
 #include <assert.h>
 
-// bunch of bit twiddling hacks
-// see https://graphics.stanford.edu/~seander/bithacks.html
+// bit vector operations
 
 uint32_t bv32_get_slice(const uint32_t* vector, uint32_t k, uint8_t n) {
     assert(n > 0 && n <= 32);
@@ -14,6 +13,24 @@ uint32_t bv32_get_slice(const uint32_t* vector, uint32_t k, uint8_t n) {
     }
     return code & mask_bits(n);
 }
+
+void bv32_scale(
+        uint32_t* dst, const uint32_t* src, uint32_t dst_len, uint32_t src_len, float scale) {
+    assert(dst && src && dst_len > 0 && src_len > 0 && scale > 0);
+    uint32_t dst_idx = 0;
+    float src_idx = 0;
+    float src_inc = 1.0f / scale;
+    while (dst_idx < dst_len && src_idx < src_len) {
+        if (bv32_get_bit(src, (uint8_t) src_idx)) {
+            bv32_set_bit(dst, dst_idx);
+        }
+        ++dst_idx;
+        src_idx += src_inc;
+    }
+}
+
+// bunch of bit twiddling hacks
+// see https://graphics.stanford.edu/~seander/bithacks.html
 
 void bm32_transpose(BitMatrix32 A) {
     uint32_t m = 0xFFFF0000;
