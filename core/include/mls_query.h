@@ -22,8 +22,7 @@ static inline uint32_t mlsq_code_from_position(
 }
 
 static inline uint32_t mlsq_code_from_position_indexed(uint8_t code_length, uint16_t position) {
-    return position > MLS_INDEX.sequence_length ||
-                           position + code_length >= MLS_INDEX.sequence_length
+    return position + code_length >= MLS_INDEX.sequence_length
                    ? 0
-                   : mlsq_code_from_position(MLS_INDEX.sequence, code_length, position);
+                   : bv32_get_slice(MLS_INDEX.sequence, position, code_length);
 }
