@@ -46,8 +46,3 @@ AxisCode32 bm32_extract_column_code(uint32_t row_estimate, const BitMatrix32 mat
         const BitMatrix32 mask, uint8_t min_row_samples);
 AxisCode64 bm64_extract_column_code(uint64_t row_estimate, const BitMatrix64 matrix,
         const BitMatrix64 mask, uint8_t min_row_samples);
-
-AxisCode32 scale_axiscode32(AxisCode32 axiscode, float scale);
-AxisCode64 scale_axiscode64(AxisCode64 axiscode, float scale);
-
-AxisCode32 downsample_axiscode(AxisCode64 axiscode);

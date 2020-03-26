@@ -20,9 +20,7 @@ static int test_localization_loop_run() {
             // generate source image from known position
             // disable scale search, since it causes some false positives which fail the test
             ctx->scale_query = (ScaleQuery){
-                    {src_row_code, ~0ull, 0, 0}, {src_col_code, ~0ull, 0, 0}, 1.0f, 1.0f, 1.0f};
-            ctx->scale_query.row_code = scale_axiscode64(ctx->scale_query.row_code, 3);
-            ctx->scale_query.col_code = scale_axiscode64(ctx->scale_query.col_code, 3);
+                    {src_row_code, ~0ull, 0, 0}, {src_col_code, ~0ull, 0, 0}, 3, 1.0f, 3};
             bm64_from_axiscodes(ctx->binary_image, ctx->binary_mask, ctx->scale_query.row_code,
                     ctx->scale_query.col_code);
             bm64_to_img(&image, ctx->binary_image, ctx->binary_mask);

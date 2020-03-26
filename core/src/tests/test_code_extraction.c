@@ -78,36 +78,9 @@ static int test_bit_matrix_from_axiscodes() {
     return 0;
 }
 
-static int test_downsample_axiscode() {
-    AxisCode64 axiscode64 = {0x71C71C71C71C71C7ull, ~0ull, 0, 0};
-    AxisCode32 axiscode32 = downsample_axiscode(axiscode64);
-    test_assert(axiscode32.bits == 0x155555);
-    test_assert(axiscode32.mask == (1 << 21) - 1);
-
-    axiscode64.bits = 0xF0F0;
-    axiscode64.mask = 0xFFFF;
-    AxisCode64 scaled_axiscode = scale_axiscode64(axiscode64, 1.0f);
-    test_assert(axiscode64.bits == scaled_axiscode.bits);
-    test_assert(axiscode64.mask == scaled_axiscode.mask);
-
-    scaled_axiscode = scale_axiscode64(axiscode64, 2.0f);
-    test_assert(scaled_axiscode.bits == 0xFF00FF00);
-    test_assert(scaled_axiscode.mask == 0xFFFFFFFF);
-
-    scaled_axiscode = scale_axiscode64(axiscode64, 100.0f);
-    test_assert(scaled_axiscode.bits == 0ull);
-    test_assert(scaled_axiscode.mask == ~0ull);
-
-    scaled_axiscode = scale_axiscode64(axiscode64, 0.5f);
-    test_assert(scaled_axiscode.bits == 0xCC);
-    test_assert(scaled_axiscode.mask == 0xFF);
-    return 0;
-}
-
 int test_code_extraction() {
     test_run(test_hyper_sharpen);
     test_run(test_code_extract_64);
     test_run(test_bit_matrix_from_axiscodes);
-    test_run(test_downsample_axiscode);
     return 0;
 }
