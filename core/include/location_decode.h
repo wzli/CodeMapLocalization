@@ -46,3 +46,5 @@ Location deduce_location(AxisPosition row_position, AxisPosition col_position);
 void scale_search_location(ScaleMatch* match, const ScaleQuery* query);
 
 bool outlier_filter_location(OutlierFilter* filter, const ScaleMatch* new_match);
+
+AxisCode64 downsample_axiscode64(AxisCode64 axiscode, float scale);

@@ -140,3 +140,53 @@ bool outlier_filter_location(OutlierFilter* ctx, const ScaleMatch* new_match) {
     ctx->filtered_match = *new_match;
     return true;
 }
+
+AxisCode64 downsample_axiscode64(AxisCode64 axiscode, float scale) {
+    assert(scale > 0 && scale <= 1);
+    uint64_t scaled_bits[3] = {0};
+    uint64_t scaled_mask[3] = {0};
+    uint8_t dst_idx = 0;
+    float src_inc = 1.0f / (3 * scale);
+    for (float src_idx = 0; dst_idx < 64 * 3 && src_idx < 64; ++dst_idx, src_idx += src_inc) {
+        if (bv64_get_bit(&axiscode.bits, (uint8_t) src_idx)) {
+            bv64_set_bit(scaled_bits, dst_idx);
+        }
+        if (bv64_get_bit(&axiscode.mask, (uint8_t) src_idx)) {
+            bv64_set_bit(scaled_mask, dst_idx);
+        }
+    }
+    uint64_t edges[3] = {
+            scaled_bits[0] ^ (scaled_bits[0] << 1),
+            scaled_bits[1] ^ (scaled_bits[1] << 1),
+            scaled_bits[2] ^ (scaled_bits[2] << 1),
+    };
+    uint8_t offset = 0;
+    uint8_t lowest_bit_errors = UINT8_MAX;
+    for (uint8_t i = 0; i < 3; ++i) {
+        uint8_t bit_errors = 0;
+        uint64_t repeating001s = 0x9249249249249249ull << i;
+        for (uint8_t j = 0; j < 3; ++j) {
+            bit_errors += count_bits((edges[j] ^ repeating001s) & scaled_mask[j]);
+            repeating001s >>= 1;
+        }
+        if (bit_errors < lowest_bit_errors) {
+            lowest_bit_errors = bit_errors;
+            offset = i;
+        }
+    }
+    static const uint8_t count_bits_3[8] = {0, 1, 1, 2, 1, 2, 2, 3};
+    axiscode.bits = 0;
+    axiscode.mask = 0;
+    dst_idx -= 3;
+    for (uint64_t current_bit = 1; offset < dst_idx; offset += 3, current_bit <<= 1) {
+        uint8_t mask_triplet = mlsq_code_from_position((uint32_t*) scaled_mask, 3, offset);
+        if (mask_triplet == 7) {
+            axiscode.mask |= current_bit;
+            uint8_t bit_triplet = mlsq_code_from_position((uint32_t*) scaled_bits, 3, offset);
+            if (2 * count_bits_3[bit_triplet] > 3) {
+                axiscode.bits |= current_bit;
+            }
+        }
+    }
+    return axiscode;
+}
