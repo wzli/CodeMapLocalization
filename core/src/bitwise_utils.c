@@ -15,7 +15,7 @@ uint32_t bv32_get_slice(const uint32_t* vector, uint32_t k, uint8_t n) {
     return code & mask_bits(n);
 }
 
-uint32_t bv64_get_slice(const uint64_t* vector, uint32_t k, uint8_t n) {
+uint64_t bv64_get_slice(const uint64_t* vector, uint32_t k, uint8_t n) {
     assert(n > 0 && n <= 64);
     uint32_t index = k >> 6;
     uint8_t offset = k & 0x3F;

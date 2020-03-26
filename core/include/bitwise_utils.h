@@ -32,7 +32,7 @@ static inline bool bv64_get_bit(const uint64_t* vector, uint32_t k) {
 }
 
 uint32_t bv32_get_slice(const uint32_t* vector, uint32_t k, uint8_t n);
-uint32_t bv64_get_slice(const uint64_t* vector, uint32_t k, uint8_t n);
+uint64_t bv64_get_slice(const uint64_t* vector, uint32_t k, uint8_t n);
 
 // bit matrix operations
 
