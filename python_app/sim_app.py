@@ -57,10 +57,8 @@ class CodeMapGui:
     def update_frame(self):
         res = CodeMapGui.CAMERA_RES
         # clip position to be within boundary
-        self.pos[0] = np.clip(self.pos[0], 0,
-                              self.code_map.shape[0] - (res // 2) - 1)
-        self.pos[1] = np.clip(self.pos[1], 0,
-                              self.code_map.shape[1] - (res // 2) - 1)
+        self.pos[0] = np.clip(self.pos[0], 0, self.code_map.shape[0] - res - 1)
+        self.pos[1] = np.clip(self.pos[1], 0, self.code_map.shape[1] - res - 1)
         # sync rotation track bar
         cv2.setTrackbarPos('Rotation', 'Navigate', (self.rotation) % 360)
         # crop navigate view from code map
