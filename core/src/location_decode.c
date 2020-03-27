@@ -8,64 +8,6 @@
 #define WIDTH 64
 #include "position_decode_impl.h"
 
-AxisPosition decode_axis_position(AxisCode32 axiscode) {
-    AxisPosition best_position = {0};
-    const uint32_t code_mask = mask_bits(MLS_INDEX.code_length);
-    for (uint8_t valid_segment_length = ac32_next_valid_segment(&axiscode, MLS_INDEX.code_length);
-            valid_segment_length > 0;
-            valid_segment_length = ac32_next_valid_segment(&axiscode, MLS_INDEX.code_length)) {
-        uint32_t code = axiscode.bits & code_mask;
-        AxisPosition position = {0};
-        position.center = mlsq_position_from_code(MLS_INDEX, code);
-        if (position.center == MLSQ_NOT_FOUND) {
-            code = invert_bits(code, MLS_INDEX.code_length);
-            position.inverted = 1;
-            position.center = mlsq_position_from_code(MLS_INDEX, code);
-        }
-        if (position.center == MLSQ_NOT_FOUND) {
-            code = reverse_bits(code, MLS_INDEX.code_length);
-            position.reversed = 1;
-            position.center = mlsq_position_from_code(MLS_INDEX, code);
-        }
-        if (position.center == MLSQ_NOT_FOUND) {
-            code = invert_bits(code, MLS_INDEX.code_length);
-            position.inverted = 0;
-            position.center = mlsq_position_from_code(MLS_INDEX, code);
-        }
-        position.span = position.center != MLSQ_NOT_FOUND;
-        if (position.span && valid_segment_length > MLS_INDEX.code_length) {
-            uint32_t extended_code = position.inverted
-                                             ? invert_bits(axiscode.bits, valid_segment_length)
-                                             : axiscode.bits & mask_bits(valid_segment_length);
-            uint32_t expected_code =
-                    position.reversed
-                            ? reverse_bits(mlsq_code_from_position_indexed(valid_segment_length,
-                                                   position.center + MLS_INDEX.code_length -
-                                                           valid_segment_length),
-                                      valid_segment_length)
-                            : mlsq_code_from_position_indexed(
-                                      valid_segment_length, position.center);
-            uint8_t first_diff = count_trailing_zeros(extended_code ^ expected_code);
-            position.span += MIN(first_diff, valid_segment_length) - MLS_INDEX.code_length;
-        }
-        if (position.span > best_position.span) {
-            best_position = position;
-        }
-        if (position.span >= 32) {
-            break;
-        }
-        position.span += !position.span;
-        axiscode.bits >>= position.span;
-        axiscode.mask >>= position.span;
-    }
-    best_position.center +=
-            best_position.reversed ? 1 - best_position.span / 2 : best_position.span / 2;
-    if (axiscode.n_errors * 4 > axiscode.n_samples) {
-        best_position.span = 0;
-    }
-    return best_position;
-}
-
 Location deduce_location(AxisPosition row_position, AxisPosition col_position) {
     Location loc = {0};
     loc.match_size = row_position.inverted == col_position.inverted
@@ -94,8 +36,8 @@ void scale_search_location(ScaleMatch* match, const ScaleQuery* query) {
         AXISCODE_COPY(row_code_32, row_code);
         AXISCODE_COPY(col_code_32, col_code);
         // decode posiiton
-        AxisPosition row_pos = decode_axis_position(row_code_32);
-        AxisPosition col_pos = decode_axis_position(col_code_32);
+        AxisPosition row_pos = ac64_decode_position(row_code);
+        AxisPosition col_pos = ac64_decode_position(col_code);
         Location loc = deduce_location(row_pos, col_pos);
         if (loc.match_size >= match->location.match_size) {
             *match = (ScaleMatch){loc, row_code_32, col_code_32, scale};

@@ -42,7 +42,9 @@ typedef struct {
 uint8_t ac32_next_valid_segment(AxisCode32* axiscode, uint8_t code_length);
 uint8_t ac64_next_valid_segment(AxisCode64* axiscode, uint8_t code_length);
 
-AxisPosition decode_axis_position(AxisCode32 axiscode);
+AxisPosition ac32_decode_position(AxisCode32 axiscode);
+AxisPosition ac64_decode_position(AxisCode64 axiscode);
+
 Location deduce_location(AxisPosition row_position, AxisPosition col_position);
 
 void scale_search_location(ScaleMatch* match, const ScaleQuery* query);
