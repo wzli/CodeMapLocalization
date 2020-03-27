@@ -16,7 +16,7 @@ uint32_t bv32_get_slice(const uint32_t* vector, uint32_t k, uint8_t n) {
 
 uint32_t bv32_scale(
         uint32_t* dst, const uint32_t* src, uint32_t dst_len, uint32_t src_len, float scale) {
-    assert(dst && src && dst_len > 0 && src_len > 0 && scale > 0);
+    assert(dst && src && dst != src && dst_len > 0 && src_len > 0 && scale > 0);
     uint32_t dst_idx = 0;
     float src_idx = 0;
     float src_inc = 1.0f / scale;

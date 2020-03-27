@@ -143,44 +143,17 @@ bool outlier_filter_location(OutlierFilter* ctx, const ScaleMatch* new_match) {
 }
 
 AxisCode64 downsample_axiscode64(AxisCode64 axiscode, float scale) {
-    assert(scale > 0 && scale <= 1);
-    volatile uint64_t scaled_bits[3] = {0};
-    volatile uint64_t scaled_mask[3] = {0};
-    uint32_t scaled_length =
-            bv32_scale((uint32_t*) scaled_bits, (uint32_t*) &axiscode.bits, 64 * 3, 64, scale * 3);
-    bv32_scale((uint32_t*) scaled_mask, (uint32_t*) &axiscode.mask, 64 * 3, 64, scale * 3);
-    uint64_t edges[3] = {
-            scaled_bits[0] ^ (scaled_bits[0] << 1),
-            scaled_bits[1] ^ (scaled_bits[1] << 1),
-            scaled_bits[2] ^ (scaled_bits[2] << 1),
-    };
-    uint8_t offset = 0;
-    uint8_t lowest_bit_errors = UINT8_MAX;
-    for (uint8_t i = 0; i < 3; ++i) {
-        uint8_t bit_errors = 0;
-        uint64_t repeating001s = 0x9249249249249249ull << i;
-        for (uint8_t j = 0; j < 3; ++j) {
-            bit_errors += count_bits((edges[j] ^ repeating001s) & scaled_mask[j]);
-            repeating001s >>= 1;
-        }
-        if (bit_errors < lowest_bit_errors) {
-            lowest_bit_errors = bit_errors;
-            offset = i;
-        }
-    }
-    static const uint8_t count_bits_3[8] = {0, 1, 1, 2, 1, 2, 2, 3};
-    axiscode.bits = 0;
-    axiscode.mask = 0;
-    scaled_length -= 3;
-    for (uint64_t current_bit = 1; offset < scaled_length; offset += 3, current_bit <<= 1) {
-        uint8_t mask_triplet = bv32_get_slice((uint32_t*) scaled_mask, offset, 3);
-        if (mask_triplet == 7) {
-            axiscode.mask |= current_bit;
-            uint8_t bit_triplet = bv32_get_slice((uint32_t*) scaled_bits, offset, 3);
-            if (2 * count_bits_3[bit_triplet] > 3) {
-                axiscode.bits |= current_bit;
-            }
-        }
-    }
+    uint32_t bits[2] = {0};
+    uint32_t mask[2] = {0};
+    downsample_axiscode_64(bits, mask, scale, &axiscode);
+
+    axiscode.bits = bits[1];
+    axiscode.bits <<= 32;
+    axiscode.bits |= bits[0];
+
+    axiscode.mask = mask[1];
+    axiscode.mask <<= 32;
+    axiscode.mask |= mask[0];
+
     return axiscode;
 }
