@@ -84,28 +84,28 @@ static int test_estimate_bit_triplet_offset() {
     uint32_t bit_errors;
     uint32_t comb_pattern = 0xAAAAAAAA;
     bv32_scale(bits, &comb_pattern, 3 * 32, 32, 2.999);
-    uint8_t offset = estimate_bit_triplet_offset(&bit_errors, bits, mask, 3);
+    uint8_t offset = estimate_bit_triplet_offset(&bit_errors, bits, mask, 3 * 32);
     test_assert(offset == 0);
     test_assert(bit_errors <= 2);
 
     bits[0] <<= 1;
     bits[1] <<= 1;
     bits[2] <<= 1;
-    offset = estimate_bit_triplet_offset(&bit_errors, bits, mask, 3);
+    offset = estimate_bit_triplet_offset(&bit_errors, bits, mask, 3 * 32);
     test_assert(offset == 1);
     test_assert(offset <= 3);
 
     bits[0] <<= 1;
     bits[1] <<= 1;
     bits[2] <<= 1;
-    offset = estimate_bit_triplet_offset(&bit_errors, bits, mask, 3);
+    offset = estimate_bit_triplet_offset(&bit_errors, bits, mask, 3 * 32);
     test_assert(offset == 2);
     test_assert(offset <= 4);
 
     bits[0] <<= 1;
     bits[1] <<= 1;
     bits[2] <<= 1;
-    offset = estimate_bit_triplet_offset(&bit_errors, bits, mask, 3);
+    offset = estimate_bit_triplet_offset(&bit_errors, bits, mask, 3 * 32);
     test_assert(offset == 0);
     test_assert(offset <= 5);
     return 0;
