@@ -22,12 +22,8 @@ static int test_code_extract_64() {
     uint64_t* matrix_mask = malloc(64 * sizeof(uint64_t));
     uint32_t src_row_pos = 1000;
     uint32_t src_col_pos = 1001;
-    uint64_t src_row_code = mlsq_code_from_position(MLS_INDEX.sequence, 32, src_row_pos);
-    src_row_code |= (uint64_t) mlsq_code_from_position(MLS_INDEX.sequence, 32, src_row_pos + 32)
-                    << 32;
-    uint64_t src_col_code = mlsq_code_from_position(MLS_INDEX.sequence, 32, src_col_pos);
-    src_col_code |= (uint64_t) mlsq_code_from_position(MLS_INDEX.sequence, 32, src_col_pos + 32)
-                    << 32;
+    uint64_t src_row_code = bv32_get_slice_64(MLS_INDEX.sequence, src_row_pos, 64);
+    uint64_t src_col_code = bv32_get_slice_64(MLS_INDEX.sequence, src_col_pos, 64);
     for (uint8_t i = 0; i < 64; ++i) {
         matrix_mask[i] = ~0ull;
         matrix[i] = src_row_code ^ -((uint64_t)(src_col_code >> i) & 1ull);
@@ -58,8 +54,8 @@ static int test_bit_matrix_from_axiscodes() {
     uint32_t* matrix_mask = malloc(32 * sizeof(uint32_t));
     uint32_t* generated_matrix = malloc(32 * sizeof(uint32_t));
     uint32_t* generated_matrix_mask = malloc(32 * sizeof(uint32_t));
-    uint32_t src_row_code = mlsq_code_from_position(MLS_INDEX.sequence, 32, 1000);
-    uint32_t src_col_code = mlsq_code_from_position(MLS_INDEX.sequence, 32, 1100);
+    uint32_t src_row_code = bv32_get_slice(MLS_INDEX.sequence, 1000, 32);
+    uint32_t src_col_code = bv32_get_slice(MLS_INDEX.sequence, 1100, 32);
     for (uint8_t i = 0; i < 32; ++i) {
         matrix_mask[i] = ~0;
         matrix[i] = src_row_code ^ -((src_col_code >> i) & 1);

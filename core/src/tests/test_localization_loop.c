@@ -15,8 +15,8 @@ static int test_localization_loop_run() {
     ctx->rotation_scale = 1.0f;
     for (uint32_t src_row_pos = 1000; src_row_pos < 1000 + TEST_VECTOR_SIZE; ++src_row_pos)
         for (uint32_t src_col_pos = 1100; src_col_pos < 1100 + TEST_VECTOR_SIZE; ++src_col_pos) {
-            uint32_t src_row_code = mlsq_code_from_position(MLS_INDEX.sequence, 32, src_row_pos);
-            uint32_t src_col_code = mlsq_code_from_position(MLS_INDEX.sequence, 32, src_col_pos);
+            uint32_t src_row_code = bv32_get_slice(MLS_INDEX.sequence, src_row_pos, 32);
+            uint32_t src_col_code = bv32_get_slice(MLS_INDEX.sequence, src_col_pos, 32);
             // generate source image from known position
             // disable scale search, since it causes some false positives which fail the test
             ctx->scale_query = (ScaleQuery){

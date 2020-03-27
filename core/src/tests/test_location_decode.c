@@ -60,8 +60,8 @@ static int test_location_decode_blocks() {
     BitMatrix32 matrix, matrix_mask;
     for (uint32_t src_row_pos = 1000; src_row_pos < 1000 + TEST_VECTOR_SIZE; ++src_row_pos)
         for (uint32_t src_col_pos = 1000; src_col_pos < 1000 + TEST_VECTOR_SIZE; ++src_col_pos) {
-            uint32_t src_row_code = mlsq_code_from_position(MLS_INDEX.sequence, 32, src_row_pos);
-            uint32_t src_col_code = mlsq_code_from_position(MLS_INDEX.sequence, 32, src_col_pos);
+            uint32_t src_row_code = bv32_get_slice(MLS_INDEX.sequence, src_row_pos, 32);
+            uint32_t src_col_code = bv32_get_slice(MLS_INDEX.sequence, src_col_pos, 32);
             AxisCode32 row_code = {src_row_code, ~0, 0, 0};
             AxisCode32 col_code = {src_col_code, ~0, 0, 0};
             bm32_from_axiscodes(matrix, matrix_mask, row_code, col_code);
@@ -85,8 +85,8 @@ static int test_location_decode_reversed_blocks() {
     BitMatrix32 matrix, matrix_mask;
     for (uint32_t src_row_pos = 1000; src_row_pos < 1000 + TEST_VECTOR_SIZE; ++src_row_pos)
         for (uint32_t src_col_pos = 1000; src_col_pos < 1000 + TEST_VECTOR_SIZE; ++src_col_pos) {
-            uint32_t src_row_code = mlsq_code_from_position(MLS_INDEX.sequence, 32, src_row_pos);
-            uint32_t src_col_code = mlsq_code_from_position(MLS_INDEX.sequence, 32, src_col_pos);
+            uint32_t src_row_code = bv32_get_slice(MLS_INDEX.sequence, src_row_pos, 32);
+            uint32_t src_col_code = bv32_get_slice(MLS_INDEX.sequence, src_col_pos, 32);
             src_row_code = reverse_bits(src_row_code, 32);
             src_col_code = reverse_bits(src_col_code, 32);
             AxisCode32 row_code = {src_row_code, ~0, 0, 0};
@@ -110,8 +110,8 @@ static int test_location_decode_punctured_blocks() {
     BitMatrix32 matrix, matrix_mask;
     for (uint32_t src_row_pos = 1000; src_row_pos < 1000 + TEST_VECTOR_SIZE; ++src_row_pos)
         for (uint32_t src_col_pos = 1000; src_col_pos < 1000 + TEST_VECTOR_SIZE; ++src_col_pos) {
-            uint32_t src_row_code = mlsq_code_from_position(MLS_INDEX.sequence, 32, src_row_pos);
-            uint32_t src_col_code = mlsq_code_from_position(MLS_INDEX.sequence, 32, src_col_pos);
+            uint32_t src_row_code = bv32_get_slice(MLS_INDEX.sequence, src_row_pos, 32);
+            uint32_t src_col_code = bv32_get_slice(MLS_INDEX.sequence, src_col_pos, 32);
             for (uint8_t i = 0; i < 32; ++i) {
                 matrix_mask[i] = ~0xA;
                 matrix[i] = src_row_code ^ -((src_col_code >> i) & 1);
@@ -136,8 +136,8 @@ static int test_location_decode_truncated_blocks() {
     BitMatrix32 matrix, matrix_mask;
     for (uint32_t src_row_pos = 1000; src_row_pos < 1000 + TEST_VECTOR_SIZE; ++src_row_pos)
         for (uint32_t src_col_pos = 1000; src_col_pos < 1000 + TEST_VECTOR_SIZE; ++src_col_pos) {
-            uint32_t src_row_code = mlsq_code_from_position(MLS_INDEX.sequence, 32, src_row_pos);
-            uint32_t src_col_code = mlsq_code_from_position(MLS_INDEX.sequence, 32, src_col_pos);
+            uint32_t src_row_code = bv32_get_slice(MLS_INDEX.sequence, src_row_pos, 32);
+            uint32_t src_col_code = bv32_get_slice(MLS_INDEX.sequence, src_col_pos, 32);
             for (uint8_t i = 0; i < 32; ++i) {
                 matrix_mask[i] = ~0x400000F;
                 matrix[i] = src_row_code ^ -((src_col_code >> i) & 1);
