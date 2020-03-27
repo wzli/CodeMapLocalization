@@ -20,8 +20,8 @@ void img_hyper_sharpen(ImageMatrix* dst, const ImageMatrix src) {
 }
 
 uint8_t estimate_bit_triplet_offset(
-        uint32_t* bit_errors, const uint32_t* bits, const uint32_t* mask, uint8_t len) {
-    assert(bit_errors && bits && mask && len > 0 && len <= 30);
+        uint32_t* bit_errors, const uint32_t* bits, const uint32_t* mask, uint32_t len) {
+    assert(bit_errors && bits && mask && len > 0);
     static const uint64_t repeating001s = 0x4924924924924924ull;
     uint8_t offset = 0;
     *bit_errors = UINT8_MAX;
@@ -29,7 +29,7 @@ uint8_t estimate_bit_triplet_offset(
         uint32_t offset_bit_errors = 0;
         for (uint32_t j = 0; j < len; ++j) {
             uint32_t edges = bits[j] ^ (bits[j] << 1);
-            uint32_t match_pattern = repeating001s >> (32 - (j + i));
+            uint32_t match_pattern = repeating001s >> (32 - ((j + i) % 3));
             offset_bit_errors += count_bits((edges ^ match_pattern) & mask[j]);
         }
         if (offset_bit_errors < *bit_errors) {
