@@ -12,23 +12,45 @@ static int test_downsample_axiscode() {
     return 0;
 }
 
-static int test_next_valid_code_segment() {
+static int test_ac32_next_valid_segment() {
     AxisCode32 test_code = {0xFFFF00FF, 0xFFFF00FF, 0, 1};
     uint8_t valid_segment_length;
-    valid_segment_length = next_valid_code_segment(&test_code, 1);
+    valid_segment_length = ac32_next_valid_segment(&test_code, 1);
     test_assert(test_code.bits == 0xFFFF00FF);
     test_assert(test_code.mask == 0xFFFF00FF);
     test_assert(valid_segment_length == 8);
-    valid_segment_length = next_valid_code_segment(&test_code, 9);
+    valid_segment_length = ac32_next_valid_segment(&test_code, 9);
     test_assert(valid_segment_length == 16);
     test_assert(test_code.bits == 0x0000FFFF);
     test_assert(test_code.mask == 0x0000FFFF);
     test_code = (AxisCode32){~0, ~0, 0, 1};
-    test_assert(next_valid_code_segment(&test_code, 15) == 32);
+    test_assert(ac32_next_valid_segment(&test_code, 15) == 32);
     test_assert(test_code.bits == ~0u);
     test_assert(test_code.mask == ~0u);
     test_code = (AxisCode32){0, 0, 0, 1};
-    test_assert(next_valid_code_segment(&test_code, 15) == 0);
+    test_assert(ac32_next_valid_segment(&test_code, 15) == 0);
+    test_assert(test_code.bits == 0);
+    test_assert(test_code.mask == 0);
+    return 0;
+}
+
+static int test_ac64_next_valid_segment() {
+    AxisCode64 test_code = {0xFFFF00FFull << 32, 0xFFFF00FFull << 32, 0, 1};
+    uint8_t valid_segment_length;
+    valid_segment_length = ac64_next_valid_segment(&test_code, 1);
+    test_assert(test_code.bits == 0xFFFF00FF);
+    test_assert(test_code.mask == 0xFFFF00FF);
+    test_assert(valid_segment_length == 8);
+    valid_segment_length = ac64_next_valid_segment(&test_code, 9);
+    test_assert(valid_segment_length == 16);
+    test_assert(test_code.bits == 0x0000FFFF);
+    test_assert(test_code.mask == 0x0000FFFF);
+    test_code = (AxisCode64){~0ull, ~0ull, 0, 1};
+    test_assert(ac64_next_valid_segment(&test_code, 15) == 64);
+    test_assert(test_code.bits == ~0ull);
+    test_assert(test_code.mask == ~0ull);
+    test_code = (AxisCode64){0, 0, 0, 1};
+    test_assert(ac64_next_valid_segment(&test_code, 15) == 0);
     test_assert(test_code.bits == 0);
     test_assert(test_code.mask == 0);
     return 0;
@@ -138,7 +160,8 @@ static int test_location_decode_truncated_blocks() {
 
 int test_location_decode() {
     test_run(test_downsample_axiscode);
-    test_run(test_next_valid_code_segment);
+    test_run(test_ac32_next_valid_segment);
+    test_run(test_ac64_next_valid_segment);
     test_run(test_location_decode_blocks);
     test_run(test_location_decode_reversed_blocks);
     test_run(test_location_decode_punctured_blocks);

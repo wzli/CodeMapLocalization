@@ -39,7 +39,9 @@ typedef struct {
     uint8_t rejection_count;
 } OutlierFilter;
 
-uint8_t next_valid_code_segment(AxisCode32* axiscode, uint8_t code_length);
+uint8_t ac32_next_valid_segment(AxisCode32* axiscode, uint8_t code_length);
+uint8_t ac64_next_valid_segment(AxisCode64* axiscode, uint8_t code_length);
+
 AxisPosition decode_axis_position(AxisCode32 axiscode);
 Location deduce_location(AxisPosition row_position, AxisPosition col_position);
 

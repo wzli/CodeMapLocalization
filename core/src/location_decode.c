@@ -2,27 +2,18 @@
 #include "mls_query.h"
 #include <assert.h>
 
-uint8_t next_valid_code_segment(AxisCode32* axiscode, uint8_t code_length) {
-    assert(axiscode);
-    assert(code_length <= 32);
-    uint8_t valid_segment_length = count_trailing_zeros(~axiscode->mask);
-    while (axiscode->mask && valid_segment_length < code_length) {
-        axiscode->mask >>= valid_segment_length;
-        axiscode->bits >>= valid_segment_length;
-        valid_segment_length = count_trailing_zeros(axiscode->mask);
-        axiscode->mask >>= valid_segment_length;
-        axiscode->bits >>= valid_segment_length;
-        valid_segment_length = count_trailing_zeros(~axiscode->mask);
-    }
-    return valid_segment_length;
-}
+#define WIDTH 32
+#include "position_decode_impl.h"
+
+#define WIDTH 64
+#include "position_decode_impl.h"
 
 AxisPosition decode_axis_position(AxisCode32 axiscode) {
     AxisPosition best_position = {0};
     const uint32_t code_mask = mask_bits(MLS_INDEX.code_length);
-    for (uint8_t valid_segment_length = next_valid_code_segment(&axiscode, MLS_INDEX.code_length);
+    for (uint8_t valid_segment_length = ac32_next_valid_segment(&axiscode, MLS_INDEX.code_length);
             valid_segment_length > 0;
-            valid_segment_length = next_valid_code_segment(&axiscode, MLS_INDEX.code_length)) {
+            valid_segment_length = ac32_next_valid_segment(&axiscode, MLS_INDEX.code_length)) {
         uint32_t code = axiscode.bits & code_mask;
         AxisPosition position = {0};
         position.center = mlsq_position_from_code(MLS_INDEX, code);
