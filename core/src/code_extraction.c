@@ -2,10 +2,10 @@
 #include <assert.h>
 
 #define WIDTH 32
-#include "bm_extraction_impl.h"
+#include "bitmatrix_extraction_impl.h"
 
 #define WIDTH 64
-#include "bm_extraction_impl.h"
+#include "bitmatrix_extraction_impl.h"
 
 void img_hyper_sharpen(ImageMatrix* dst, const ImageMatrix src) {
     IMG_SET_SIZE(*dst, src.size.x - 2, src.size.y - 2);
