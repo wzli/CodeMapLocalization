@@ -25,7 +25,9 @@ static inline void bv32_clear_all(uint32_t* vector, uint32_t len) {
     }
 }
 
-uint32_t bv32_get_slice(const uint32_t* vector, uint32_t k, uint8_t n);
+#define bv32_get_slice bv32_get_slice_32
+uint32_t bv32_get_slice_32(const uint32_t* vector, uint32_t k, uint8_t n);
+uint64_t bv32_get_slice_64(const uint32_t* vector, uint32_t k, uint8_t n);
 
 uint32_t bv32_scale(
         uint32_t* dst, const uint32_t* src, uint32_t dst_len, uint32_t src_len, float scale);

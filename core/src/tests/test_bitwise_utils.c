@@ -22,6 +22,9 @@ static int test_bv32_get_slice() {
     test_assert(bv32_get_slice(v, 8 + 32, 20) == 0xFF);
     test_assert(bv32_get_slice(v, 24, 20) == 0xFFF00);
     test_assert(bv32_get_slice(v, 24 + 32, 20) == 0xFFF00);
+
+    test_assert(bv32_get_slice_64(v, 0, 64) == 0xFFFF0000FFFFull);
+    test_assert(bv32_get_slice_64(v, 16, 48) == 0x0000FFFF0000ull);
     return 0;
 }
 
