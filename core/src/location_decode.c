@@ -30,17 +30,16 @@ void scale_search_location(ScaleMatch* match, const ScaleQuery* query) {
     assert(query->lower_bound > 0 && query->upper_bound > 0 && query->step_size > 0);
     for (float scale = query->lower_bound; scale <= query->upper_bound; scale += query->step_size) {
         // scale and down sample axis codes
-        AxisCode64 row_code = downsample_axiscode64(query->row_code, scale / 3);
-        AxisCode64 col_code = downsample_axiscode64(query->col_code, scale / 3);
-        AxisCode32 row_code_32, col_code_32;
-        AXISCODE_COPY(row_code_32, row_code);
-        AXISCODE_COPY(col_code_32, col_code);
+        AxisCode64 row_code = query->row_code;
+        AxisCode64 col_code = query->col_code;
+        ac64_downsample(&row_code, scale / 3);
+        ac64_downsample(&col_code, scale / 3);
         // decode posiiton
         AxisPosition row_pos = ac64_decode_position(row_code);
         AxisPosition col_pos = ac64_decode_position(col_code);
         Location loc = deduce_location(row_pos, col_pos);
         if (loc.match_size >= match->location.match_size) {
-            *match = (ScaleMatch){loc, row_code_32, col_code_32, scale};
+            *match = (ScaleMatch){loc, row_code, col_code, scale};
         }
     }
 }
@@ -73,20 +72,4 @@ bool outlier_filter_location(OutlierFilter* ctx, const ScaleMatch* new_match) {
     ctx->rejection_count = 0;
     ctx->filtered_match = *new_match;
     return true;
-}
-
-AxisCode64 downsample_axiscode64(AxisCode64 axiscode, float scale) {
-    uint32_t bits[2] = {0};
-    uint32_t mask[2] = {0};
-    downsample_axiscode_64(bits, mask, scale, &axiscode);
-
-    axiscode.bits = bits[1];
-    axiscode.bits <<= 32;
-    axiscode.bits |= bits[0];
-
-    axiscode.mask = mask[1];
-    axiscode.mask <<= 32;
-    axiscode.mask |= mask[0];
-
-    return axiscode;
 }

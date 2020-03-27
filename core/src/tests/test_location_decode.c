@@ -4,14 +4,6 @@
 
 #define TEST_VECTOR_SIZE 20
 
-static int test_downsample_axiscode() {
-    AxisCode64 axiscode = {0x71C71C71C71C71C7ull, ~0ull, 0, 0};
-    axiscode = downsample_axiscode64(axiscode, 1.0f / 3);
-    test_assert(axiscode.bits == 0x155555);
-    test_assert(axiscode.mask == (1 << 21) - 1);
-    return 0;
-}
-
 static int test_ac32_next_valid_segment() {
     AxisCode32 test_code = {0xFFFF00FF, 0xFFFF00FF, 0, 1};
     uint8_t valid_segment_length;
@@ -159,7 +151,6 @@ static int test_location_decode_truncated_blocks() {
 }
 
 int test_location_decode() {
-    test_run(test_downsample_axiscode);
     test_run(test_ac32_next_valid_segment);
     test_run(test_ac64_next_valid_segment);
     test_run(test_location_decode_blocks);

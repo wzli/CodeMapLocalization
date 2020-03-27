@@ -77,31 +77,31 @@ static int test_bit_matrix_from_axiscodes() {
 static int test_estimate_bit_triplet_offset() {
     uint32_t bits[3] = {0};
     uint32_t mask[3] = {~0, ~0, ~0};
-    uint32_t bit_errors;
+    uint8_t offset;
     uint32_t comb_pattern = 0xAAAAAAAA;
     bv32_scale(bits, &comb_pattern, 3 * 32, 32, 2.999);
-    uint8_t offset = estimate_bit_triplet_offset(&bit_errors, bits, mask, 3 * 32);
+    uint32_t bit_errors = estimate_bit_triplet_offset(&offset, bits, mask, 3 * 32);
     test_assert(offset == 0);
     test_assert(bit_errors <= 2);
 
     bits[0] <<= 1;
     bits[1] <<= 1;
     bits[2] <<= 1;
-    offset = estimate_bit_triplet_offset(&bit_errors, bits, mask, 3 * 32);
+    bit_errors = estimate_bit_triplet_offset(&offset, bits, mask, 3 * 32);
     test_assert(offset == 1);
     test_assert(offset <= 3);
 
     bits[0] <<= 1;
     bits[1] <<= 1;
     bits[2] <<= 1;
-    offset = estimate_bit_triplet_offset(&bit_errors, bits, mask, 3 * 32);
+    bit_errors = estimate_bit_triplet_offset(&offset, bits, mask, 3 * 32);
     test_assert(offset == 2);
     test_assert(offset <= 4);
 
     bits[0] <<= 1;
     bits[1] <<= 1;
     bits[2] <<= 1;
-    offset = estimate_bit_triplet_offset(&bit_errors, bits, mask, 3 * 32);
+    bit_errors = estimate_bit_triplet_offset(&offset, bits, mask, 3 * 32);
     test_assert(offset == 0);
     test_assert(offset <= 5);
     return 0;
@@ -165,11 +165,20 @@ static int test_downsample_triplet_code() {
     return 0;
 }
 
+static int test_downsample_axiscode() {
+    AxisCode64 axiscode = {0x71C71C71C71C71C7ull, ~0ull, 0, 0};
+    ac64_downsample(&axiscode, 1.0f / 3);
+    test_assert(axiscode.bits == 0x155555);
+    test_assert(axiscode.mask == (1 << 21) - 1);
+    return 0;
+}
+
 int test_code_extraction() {
     test_run(test_hyper_sharpen);
     test_run(test_code_extract_64);
     test_run(test_bit_matrix_from_axiscodes);
     test_run(test_estimate_bit_triplet_offset);
     test_run(test_downsample_triplet_code);
+    test_run(test_downsample_axiscode);
     return 0;
 }

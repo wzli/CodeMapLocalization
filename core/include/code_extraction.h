@@ -48,11 +48,11 @@ AxisCode64 bm64_extract_column_code(uint64_t row_estimate, const BitMatrix64 mat
         const BitMatrix64 mask, uint8_t min_row_samples);
 
 // bit vector extraction
-uint8_t estimate_bit_triplet_offset(
-        uint32_t* bit_errors, const uint32_t* bits, const uint32_t* mask, uint32_t len);
+uint32_t estimate_bit_triplet_offset(
+        uint8_t* offset, const uint32_t* bits, const uint32_t* mask, uint32_t len);
 
 uint32_t downsample_triplet_code(uint32_t* dst_bits, uint32_t* dst_mask, uint32_t dst_len,
         const uint32_t* src_bits, const uint32_t* src_mask, uint32_t src_len, uint8_t offset);
 
-uint32_t downsample_axiscode_64(
-        uint32_t* bits, uint32_t* mask, float scale, const AxisCode64* axiscode);
+uint8_t ac32_downsample(AxisCode32* axiscode, float scale);
+uint8_t ac64_downsample(AxisCode64* axiscode, float scale);

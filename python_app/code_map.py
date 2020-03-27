@@ -89,8 +89,8 @@ class ScaleQuery(ctypes.Structure):
 
 
 class ScaleMatch(ctypes.Structure):
-    _fields_ = [('location', Location), ('row_code', AxisCode32),
-                ('col_code', AxisCode32), ('scale', ctypes.c_float)]
+    _fields_ = [('location', Location), ('row_code', AxisCode64),
+                ('col_code', AxisCode64), ('scale', ctypes.c_float)]
 
 
 class OutlierFilter(ctypes.Structure):
@@ -160,7 +160,7 @@ class LocalizationContext(ctypes.Structure):
         self.thresholded_image_array = np.empty((64, 64),
                                                 dtype=np.ubyte,
                                                 order='C')
-        self.extracted_image_array = np.empty((32, 32),
+        self.extracted_image_array = np.empty((64, 64),
                                               dtype=np.ubyte,
                                               order='C')
         # set links to buffers
@@ -193,14 +193,12 @@ class LocalizationContext(ctypes.Structure):
             ctypes.byref(ImageMatrix(self.thresholded_image_array)),
             self.binary_image, self.binary_mask)
         # create extracted image
-        binary_image = BitMatrix32()
-        binary_mask = BitMatrix32()
-        libcodemap.bm32_from_axiscodes(binary_image, binary_mask,
+        libcodemap.bm64_from_axiscodes(self.binary_image, self.binary_mask,
                                        self.scale_match.row_code,
                                        self.scale_match.col_code)
-        libcodemap.bm32_to_img(
+        libcodemap.bm64_to_img(
             ctypes.byref(ImageMatrix(self.extracted_image_array)),
-            binary_image, binary_mask)
+            self.binary_image, self.binary_mask)
         # create correlation image
         self.corr_a, self.corr_b = self.corr_b, self.corr_a
         self.centered_correlation = np.roll(np.roll(self.corr_a.real, 16, 0),

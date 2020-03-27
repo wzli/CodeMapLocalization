@@ -102,9 +102,8 @@ class CodeMapGui:
         self.pipeline[res:(2 * res), (2 * res):(
             3 * res)] = self.loc_ctx.thresholded_image_array
         # bottom mid
-        self.pipeline[res:(2 * res), res:(2 * res)] = cv2.resize(
-            self.loc_ctx.extracted_image_array, (3 * res // 2, 3 * res // 2),
-            interpolation=cv2.INTER_NEAREST)[:res, :res]
+        self.pipeline[res:(2 * res), res:(
+            2 * res)] = self.loc_ctx.extracted_image_array
         # bottom left
         self.pipeline[res:(2 * res), :res] = cv2.resize(
             self.loc_ctx.centered_correlation, (res, res))

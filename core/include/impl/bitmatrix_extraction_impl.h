@@ -100,6 +100,31 @@ void TEMPLATE(bm, WIDTH, _extract_axiscodes)(TEMPLATE(AxisCode, WIDTH, ) * row_c
     row_code->mask >>= offset;
 }
 
+uint8_t TEMPLATE(ac, WIDTH, _downsample)(TEMPLATE(AxisCode, WIDTH, ) * axiscode, float scale) {
+    assert(scale > 0 && scale <= 1);
+    uint32_t bits[(WIDTH) / 32] = {axiscode->bits};
+    uint32_t mask[(WIDTH) / 32] = {axiscode->mask};
+    if ((WIDTH) > 32) {
+        bits[1] = (uint32_t)((uint64_t) axiscode->bits >> 32);
+        mask[1] = (uint32_t)((uint64_t) axiscode->mask >> 32);
+    }
+    uint32_t scaled_bits[3 * (WIDTH) / 32] = {0};
+    uint32_t scaled_mask[3 * (WIDTH) / 32] = {0};
+    uint8_t scaled_len = bv32_scale(scaled_bits, bits, 3 * (WIDTH), (WIDTH), scale * 3);
+    bv32_scale(scaled_mask, mask, 3 * (WIDTH), (WIDTH), scale * 3);
+    uint8_t offset;
+    estimate_bit_triplet_offset(&offset, scaled_bits, scaled_mask, 3 * (WIDTH));
+    uint8_t bit_errors = downsample_triplet_code(
+            bits, mask, (WIDTH), scaled_bits, scaled_mask, scaled_len, offset);
+    axiscode->bits = bits[0];
+    axiscode->mask = mask[0];
+    if ((WIDTH) > 32) {
+        axiscode->bits |= (uint64_t) bits[1] << 32;
+        axiscode->mask |= (uint64_t) mask[1] << 32;
+    }
+    return bit_errors;
+}
+
 #undef WIDTH
 #undef TEMPLATE_CAT3
 #undef TEMPLATE
