@@ -111,10 +111,69 @@ static int test_estimate_bit_triplet_offset() {
     return 0;
 }
 
+static int test_downsample_triplet_code() {
+    uint32_t dst_bits[2] = {0};
+    uint32_t dst_mask[2] = {0};
+    uint32_t src_bits[6] = {0, ~0, ~0, ~0, ~0, ~0};
+    uint32_t src_mask[6] = {0, 0, 0, ~0, ~0, ~0};
+    uint32_t bit_errors =
+            downsample_triplet_code(dst_bits, dst_mask, 2 * 32, src_bits, src_mask, 6 * 32, 0);
+    test_assert(bit_errors == 0);
+    test_assert(dst_bits[0] == 0);
+    test_assert(dst_bits[1] == ~0u);
+    test_assert(dst_mask[0] == 0);
+    test_assert(dst_mask[1] == ~0u);
+
+    bv32_clear_all(src_bits, 6 * 32);
+    src_bits[3] = 0xFAC688;
+    bit_errors = downsample_triplet_code(dst_bits, dst_mask, 64, src_bits, src_mask, 6 * 32, 0);
+    test_assert(bit_errors == 6);
+    test_assert(bv32_get_bit(dst_bits, 32 + 0) == 0);  // 000
+    test_assert(bv32_get_bit(dst_bits, 32 + 1) == 0);  // 001
+    test_assert(bv32_get_bit(dst_bits, 32 + 2) == 0);  // 010
+    test_assert(bv32_get_bit(dst_bits, 32 + 3) == 1);  // 011
+    test_assert(bv32_get_bit(dst_bits, 32 + 4) == 0);  // 100
+    test_assert(bv32_get_bit(dst_bits, 32 + 5) == 1);  // 101
+    test_assert(bv32_get_bit(dst_bits, 32 + 6) == 1);  // 110
+    test_assert(bv32_get_bit(dst_bits, 32 + 7) == 1);  // 111
+
+    bv32_clear_all(src_bits, 6 * 32);
+    bv32_clear_all(src_mask, 6 * 32);
+    src_bits[0] = 0x3FE00;
+    src_mask[0] = 0x22311;
+    bit_errors = downsample_triplet_code(dst_bits, dst_mask, 64, src_bits, src_mask, 6 * 32, 0);
+    test_assert(bit_errors == 0);
+    test_assert(bv32_get_bit(dst_bits, 0) == 0);
+    test_assert(bv32_get_bit(dst_bits, 1) == 0);
+    test_assert(bv32_get_bit(dst_bits, 2) == 0);
+    test_assert(bv32_get_bit(dst_bits, 3) == 1);
+    test_assert(bv32_get_bit(dst_bits, 4) == 1);
+    test_assert(bv32_get_bit(dst_bits, 5) == 1);
+
+    src_bits[0] = 0x1511;
+    src_mask[0] = 0x5D9B;
+    bit_errors = downsample_triplet_code(dst_bits, dst_mask, 64, src_bits, src_mask, 6 * 32, 0);
+
+    test_assert(bit_errors == 4);
+    test_assert(bv32_get_bit(dst_bits, 0) == 0);
+    test_assert(bv32_get_bit(dst_bits, 1) == 1);
+    test_assert(bv32_get_bit(dst_bits, 2) == 0);
+    test_assert(bv32_get_bit(dst_bits, 3) == 1);
+    test_assert(bv32_get_bit(dst_bits, 4) == 0);
+    test_assert(bv32_get_bit(dst_mask, 0) == 1);
+    test_assert(bv32_get_bit(dst_mask, 1) == 1);
+    test_assert(bv32_get_bit(dst_mask, 2) == 1);
+    test_assert(bv32_get_bit(dst_mask, 3) == 1);
+    test_assert(bv32_get_bit(dst_mask, 4) == 0);
+
+    return 0;
+}
+
 int test_code_extraction() {
     test_run(test_hyper_sharpen);
     test_run(test_code_extract_64);
     test_run(test_bit_matrix_from_axiscodes);
     test_run(test_estimate_bit_triplet_offset);
+    test_run(test_downsample_triplet_code);
     return 0;
 }

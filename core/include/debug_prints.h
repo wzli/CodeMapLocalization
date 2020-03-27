@@ -10,6 +10,7 @@ void write_localization_msg(LocalizationMsg* msg, const LocalizationContext* loc
 
 // debug prints for internal data structures
 void print_bits(uint64_t word, int8_t word_length);
+void print_bit_vector(const uint32_t* vector, uint32_t len);
 void print_bit_matrix(BitMatrix32 matrix);
 void print_image_matrix(ImageMatrix src);
 void print_axiscode(AxisCode32 axiscode);

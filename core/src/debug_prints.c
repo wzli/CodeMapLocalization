@@ -46,6 +46,13 @@ void print_bits(uint64_t word, int8_t word_length) {
     puts("");
 }
 
+void print_bit_vector(const uint32_t* vector, uint32_t len) {
+    for (uint32_t i = 0; i < len; ++i) {
+        printf("%u", bv32_get_bit(vector, i));
+    }
+    puts("");
+}
+
 void print_bit_matrix(BitMatrix32 matrix) {
     for (uint8_t row = 0; row < 32; ++row) {
         print_bits(matrix[row], 32);

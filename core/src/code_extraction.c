@@ -50,7 +50,7 @@ uint32_t downsample_triplet_code(uint32_t* dst_bits, uint32_t* dst_mask, uint32_
     uint32_t bit_errors = 0;
     bv32_clear_all(dst_bits, dst_len);
     bv32_clear_all(dst_mask, dst_len);
-    for (uint32_t i = 0; offset < src_len - 3 && i < dst_len; offset += 3, ++i) {
+    for (uint32_t i = 0; offset <= src_len - 3 && i < dst_len; offset += 3, ++i) {
         uint8_t mask_triplet = bv32_get_slice(src_mask, offset, 3);
         if (mask_triplet == 0 || mask_triplet == 5) {
             continue;
