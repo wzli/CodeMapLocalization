@@ -41,24 +41,40 @@ uint8_t estimate_bit_triplet_offset(
     return offset;
 }
 
-uint32_t downsample_triplet_code(uint32_t* bits, uint32_t* mask, uint32_t len, uint8_t offset) {
+uint32_t downsample_triplet_code(uint32_t* dst_bits, uint32_t* dst_mask, uint32_t dst_len,
+        const uint32_t* src_bits, const uint32_t* src_mask, uint32_t src_len, uint8_t offset) {
+    assert(dst_bits && dst_mask && dst_len > 0);
+    assert(src_bits && src_mask && src_len > 0);
+    assert(src_bits != dst_bits && src_mask != dst_mask);
     static const uint8_t count_bits_3[8] = {0, 1, 1, 2, 1, 2, 2, 3};
     uint32_t bit_errors = 0;
-    uint32_t i = 0;
-    for (; offset < len - 3; offset += 3, ++i) {
-        uint8_t bits_triplet = bv32_get_slice(bits, offset, 3);
-        uint8_t mask_triplet = bv32_get_slice(mask, offset, 3);
-        if (count_bits_3[mask_triplet] == 1) {
-            bv32_set_bit(mask, i);
-            if (bits_triplet & mask_triplet) {
-                bv32_set_bit(bits, i);
-            }
-        } else if (mask_triplet == 7) {
-            bv32_set_bit(mask, i);
-            if (2 * count_bits_3[bits_triplet] > 3) {
-                bv32_set_bit(bits, i);
-            }
-            bit_errors += !(bits_triplet == 0 || bits_triplet == 7);
+    bv32_clear_all(dst_bits, dst_len);
+    bv32_clear_all(dst_mask, dst_len);
+    for (uint32_t i = 0; offset < src_len - 3 && i < dst_len; offset += 3, ++i) {
+        uint8_t mask_triplet = bv32_get_slice(src_mask, offset, 3);
+        if (mask_triplet == 0 || mask_triplet == 5) {
+            continue;
+        }
+        bv32_set_bit(dst_mask, i);
+        uint8_t bits_triplet = bv32_get_slice(src_bits, offset, 3);
+        switch (count_bits_3[mask_triplet]) {
+            case 1:
+                if (bits_triplet & mask_triplet) {
+                    bv32_set_bit(dst_bits, i);
+                }
+                break;
+            case 2:
+                if ((bits_triplet >> 1) & 1) {
+                    bv32_set_bit(dst_bits, i);
+                }
+                bit_errors += (count_bits_3[bits_triplet & mask_triplet] == 1);
+                break;
+            case 3:
+                if (2 * count_bits_3[bits_triplet] > 3) {
+                    bv32_set_bit(dst_bits, i);
+                }
+                bit_errors += !(bits_triplet == 0 || bits_triplet == 7);
+                break;
         }
     }
     return bit_errors;
@@ -77,23 +93,6 @@ uint32_t downsample_axiscode_64(
     bv32_scale(scaled_mask, mask, 6 * 32, 2 * 32, scale * 3);
     uint32_t bit_errors;
     uint8_t offset = estimate_bit_triplet_offset(&bit_errors, scaled_bits, scaled_mask, 6 * 32);
-
-    bv32_clear_all(bits, 2 * 32);
-    bv32_clear_all(mask, 2 * 32);
-
-    static const uint8_t count_bits_3[8] = {0, 1, 1, 2, 1, 2, 2, 3};
-    for (uint8_t i = 0; offset < scaled_len - 3; offset += 3, ++i) {
-        uint8_t mask_triplet = bv32_get_slice(scaled_mask, offset, 3);
-        if (mask_triplet == 7) {
-            bv32_set_bit(mask, i);
-            uint8_t bit_triplet = bv32_get_slice(scaled_bits, offset, 3);
-            if (2 * count_bits_3[bit_triplet] > 3) {
-                bv32_set_bit(bits, i);
-            }
-            if (bit_triplet != 0 && bit_triplet != 7) {
-                bit_errors += 1;
-            }
-        }
-    }
-    return bit_errors;
+    return bit_errors + downsample_triplet_code(
+                                bits, mask, 2 * 32, scaled_bits, scaled_mask, scaled_len, offset);
 }
