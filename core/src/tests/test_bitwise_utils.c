@@ -75,6 +75,10 @@ static int test_invert_bits() {
     test_assert(invert_bits(0, 32) == ~0u);
     test_assert(invert_bits(0xf0f0f0f0, 32) == ~0xf0f0f0f0);
     test_assert(invert_bits(0xF0000000, 3) == 7);
+    // test 64 bit
+    test_assert(invert_bits(0ull, 64) == ~0ull);
+    test_assert(invert_bits(0xf0f0f0f0ull << 32, 64) == ~(0xf0f0f0f0ull << 32));
+    test_assert(invert_bits_64(0xF0000000ull, 3) == 7);
     return 0;
 }
 
@@ -83,6 +87,9 @@ static int test_reverse_bits() {
     test_assert(reverse_bits(1, 32) == (1u << 31));
     test_assert(reverse_bits(0xf0f0f0f0, 32) == 0x0f0f0f0f);
     test_assert(reverse_bits(0xF00000f0, 8) == 0xf);
+    // test 64 bit
+    test_assert(reverse_bits(1ull, 64) == (1ull << 63));
+    test_assert(reverse_bits(0xf0f0f0f0ull << 32, 64) == reverse_bits(0x0f0f0f0f0, 32));
     return 0;
 }
 

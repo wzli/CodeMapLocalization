@@ -61,15 +61,27 @@ void bm64_transpose(BitMatrix64 matrix);
 
 // bitwise operations
 
-static inline uint32_t mask_bits(uint8_t n) {
+#define mask_bits mask_bits_32
+static inline uint32_t mask_bits_32(uint8_t n) {
     return ~0u >> (32 - n);
 }
-
-static inline uint32_t invert_bits(uint32_t x, uint8_t n) {
-    return ~x & mask_bits(n);
+static inline uint64_t mask_bits_64(uint8_t n) {
+    return ~0ull >> (64 - n);
 }
 
-uint32_t reverse_bits(uint32_t x, uint8_t n);
+#define invert_bits(X, N) \
+    (sizeof(X) <= sizeof(uint32_t) ? invert_bits_32(X, N) : invert_bits_64(X, N))
+static inline uint32_t invert_bits_32(uint32_t x, uint8_t n) {
+    return ~x & mask_bits_32(n);
+}
+static inline uint64_t invert_bits_64(uint64_t x, uint8_t n) {
+    return ~x & mask_bits_64(n);
+}
+
+#define reverse_bits(X, N) \
+    (sizeof(X) <= sizeof(uint32_t) ? reverse_bits_32(X, N) : reverse_bits_64(X, N))
+uint32_t reverse_bits_32(uint32_t x, uint8_t n);
+uint64_t reverse_bits_64(uint64_t x, uint8_t n);
 
 #define count_trailing_zeros(X) ((X) ? perfect_log2((X) & -(X)) : sizeof(X) * 8)
 #define perfect_log2(X) (sizeof(X) <= sizeof(uint32_t) ? perfect_log2_32(X) : perfect_log2_64(X))
