@@ -81,33 +81,38 @@ class Location(ctypes.Structure):
     ]
 
 
-class ScaleQuery(ctypes.Structure):
-    _fields_ = [('row_code', AxisCode), ('col_code', AxisCode),
-                ('lower_bound', ctypes.c_float),
-                ('upper_bound', ctypes.c_float), ('step_size', ctypes.c_float)]
-
-
 class ScaleMatch(ctypes.Structure):
-    _fields_ = [('location', Location), ('row_code', AxisCode),
-                ('col_code', AxisCode), ('scale', ctypes.c_float)]
+    _fields_ = [
+        ('location', Location),
+        ('row_code', AxisCode),
+        ('col_code', AxisCode),
+        ('scale', ctypes.c_float),
+        ('row_scale_errors', ctypes.c_ubyte),
+        ('col_scale_errors', ctypes.c_ubyte),
+    ]
 
 
 class OutlierFilter(ctypes.Structure):
-    _fields_ = [('filtered_match', ScaleMatch),
-                ('distance_threshold', ctypes.c_ushort),
-                ('match_length_threshold', ctypes.c_ushort),
-                ('bit_error_ratio_threshold', ctypes.c_ubyte),
-                ('max_rejection_count', ctypes.c_ubyte),
-                ('rejection_count', ctypes.c_ubyte)]
+    _fields_ = [
+        ('filtered_match', ScaleMatch),
+        ('distance_threshold', ctypes.c_ushort),
+        ('match_length_threshold', ctypes.c_ushort),
+        ('bit_error_ratio_threshold', ctypes.c_ubyte),
+        ('max_rejection_count', ctypes.c_ubyte),
+        ('rejection_count', ctypes.c_ubyte),
+    ]
 
 
 # visual_odometry.h
 class Correlation(ctypes.Structure):
-    _fields_ = [('image', ImageMatrix), ('buffer', ImageMatrix),
-                ('translation', Vector2f),
-                ('squared_magnitude_threshold', ctypes.c_float),
-                ('squared_magnitude_max', ctypes.c_float),
-                ('squared_magnitude_sum', ctypes.c_float)]
+    _fields_ = [
+        ('image', ImageMatrix),
+        ('buffer', ImageMatrix),
+        ('translation', Vector2f),
+        ('squared_magnitude_threshold', ctypes.c_float),
+        ('squared_magnitude_max', ctypes.c_float),
+        ('squared_magnitude_sum', ctypes.c_float),
+    ]
 
 
 class VisualOdometry(ctypes.Structure):
@@ -131,15 +136,22 @@ class CorrelationArrays():
 
 
 class LocalizationContext(ctypes.Structure):
-    _fields_ = [('derotated_image', ImageMatrix),
-                ('sharpened_image', ImageMatrix),
-                ('binary_image', BitMatrix64), ('binary_mask', BitMatrix64),
-                ('scale_query', ScaleQuery), ('scale_match', ScaleMatch),
-                ('outlier_filter', OutlierFilter), ('odom', VisualOdometry),
-                ('rotation_scale', ctypes.c_float),
-                ('histogram', ctypes.c_uint * 256),
-                ('threshold', ctypes.c_ubyte * 2),
-                ('frame_count', ctypes.c_uint)]
+    _fields_ = [
+        ('derotated_image', ImageMatrix),
+        ('sharpened_image', ImageMatrix),
+        ('binary_image', BitMatrix64),
+        ('binary_mask', BitMatrix64),
+        ('row_code', AxisCode),
+        ('col_code', AxisCode),
+        ('scale_match', ScaleMatch),
+        ('outlier_filter', OutlierFilter),
+        ('odom', VisualOdometry),
+        ('rotation_scale', ctypes.c_float),
+        ('scale_decay_rate', ctypes.c_float),
+        ('histogram', ctypes.c_uint * 256),
+        ('threshold', ctypes.c_ubyte * 2),
+        ('frame_count', ctypes.c_uint),
+    ]
 
     def __init__(self):
         self.frame_count = 0
@@ -171,9 +183,7 @@ class LocalizationContext(ctypes.Structure):
         self.corr_b = self.correlation_buffer_array
         # setup params
         self.rotation_scale = 1.0
-        self.scale_query.lower_bound = 0.8
-        self.scale_query.upper_bound = 1.2
-        self.scale_query.step_size = 0.02
+        self.scale_decay_rate = 0.01
         self.outlier_filter.distance_threshold = 200
         self.outlier_filter.match_length_threshold = 21 - MLS_INDEX.code_length
         self.outlier_filter.bit_error_ratio_threshold = 5
@@ -186,8 +196,8 @@ class LocalizationContext(ctypes.Structure):
             ctypes.byref(self), ImageMatrix(frame)))
         # create thresholded image
         libcodemap.bm64_from_axiscodes(self.binary_image, self.binary_mask,
-                                       ctypes.byref(self.scale_query.row_code),
-                                       ctypes.byref(self.scale_query.col_code))
+                                       ctypes.byref(self.row_code),
+                                       ctypes.byref(self.col_code))
         libcodemap.bm64_to_img(
             ctypes.byref(ImageMatrix(self.thresholded_image_array)),
             self.binary_image, self.binary_mask)

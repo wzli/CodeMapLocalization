@@ -29,8 +29,7 @@ void scale_search_location(
         ScaleMatch* match, const AxisCode* row_code, const AxisCode* col_code, float decay_rate) {
     assert(match && row_code && col_code && decay_rate > 0 && decay_rate <= 1);
     ScaleMatch candidate;
-    for (candidate.scale = 1.0f; candidate.scale >= 1.0f / 3;
-            candidate.scale *= 1 - decay_rate) {
+    for (candidate.scale = 1.0f; candidate.scale >= 1.0f / 3; candidate.scale *= 1 - decay_rate) {
         // scale and down sample axis codes
         candidate.row_code = *row_code;
         candidate.col_code = *col_code;
