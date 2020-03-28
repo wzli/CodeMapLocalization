@@ -111,13 +111,15 @@ void TEMPLATE(ac, WIDTH, _scale_search_location)(
         AxisPosition row_pos = TEMPLATE(ac, WIDTH, _decode_position)(candidate.row_code);
         AxisPosition col_pos = TEMPLATE(ac, WIDTH, _decode_position)(candidate.col_code);
         candidate.location = deduce_location(row_pos, col_pos);
-        candidate.quality = 1.0f / ((candidate.scale * (WIDTH)) - MLS_INDEX.code_length);
+        float scaled_bits = candidate.scale * (WIDTH);
+        uint8_t scale_errors = MAX(candidate.row_scale_errors, candidate.col_scale_errors);
+        candidate.quality = scaled_bits / (scaled_bits + scale_errors);
+        candidate.quality /= (scaled_bits - MLS_INDEX.code_length - 1);
         candidate.quality *= candidate.quality * candidate.location.match_size;
         if (candidate.quality >= match->quality) {
             *match = candidate;
         }
     }
-    candidate.quality -= 1;
 }
 
 #undef WIDTH
