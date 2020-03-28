@@ -87,6 +87,7 @@ class ScaleMatch(ctypes.Structure):
         ('row_code', AxisCode),
         ('col_code', AxisCode),
         ('scale', ctypes.c_float),
+        ('quality', ctypes.c_float),
         ('row_scale_errors', ctypes.c_ubyte),
         ('col_scale_errors', ctypes.c_ubyte),
     ]

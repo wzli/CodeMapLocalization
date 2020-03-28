@@ -95,6 +95,31 @@ AxisPosition TEMPLATE(ac, WIDTH, _decode_position)(AxisCode axiscode) {
     return best_position;
 }
 
+void TEMPLATE(ac, WIDTH, _scale_search_location)(
+        ScaleMatch* match, const AxisCode* row_code, const AxisCode* col_code, float decay_rate) {
+    assert(match && row_code && col_code && decay_rate > 0 && decay_rate <= 1);
+    ScaleMatch candidate;
+    for (candidate.scale = 1.0f; candidate.scale >= 1.0f / 3; candidate.scale *= 1 - decay_rate) {
+        // scale and down sample axis codes
+        candidate.row_code = *row_code;
+        candidate.col_code = *col_code;
+        candidate.row_scale_errors =
+                TEMPLATE(ac, WIDTH, _downsample)(&candidate.row_code, candidate.scale);
+        candidate.col_scale_errors =
+                TEMPLATE(ac, WIDTH, _downsample)(&candidate.col_code, candidate.scale);
+        // decode posiiton
+        AxisPosition row_pos = TEMPLATE(ac, WIDTH, _decode_position)(candidate.row_code);
+        AxisPosition col_pos = TEMPLATE(ac, WIDTH, _decode_position)(candidate.col_code);
+        candidate.location = deduce_location(row_pos, col_pos);
+        candidate.quality = 1.0f / ((candidate.scale * (WIDTH)) - MLS_INDEX.code_length);
+        candidate.quality *= candidate.quality * candidate.location.match_size;
+        if (candidate.quality >= match->quality) {
+            *match = candidate;
+        }
+    }
+    candidate.quality -= 1;
+}
+
 #undef WIDTH
 #undef TEMPLATE_CAT3
 #undef TEMPLATE

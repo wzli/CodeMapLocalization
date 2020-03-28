@@ -11,6 +11,7 @@ void write_location_match_msg(LocationMatchMsg* msg, const ScaleMatch* match) {
                                  (float) match->row_code.n_errors / match->row_code.n_samples) *
                          0.5f;
     msg->scale = match->scale;
+    msg->quality = match->quality;
 }
 
 void write_odometry_msg(OdometryMsg* msg, const VisualOdometry* odom) {

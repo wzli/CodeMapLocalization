@@ -6,6 +6,7 @@
     X(uint16_t, y, )                   \
     X(uint16_t, match_size, )          \
     X(float, bit_err_ratio, )          \
+    X(float, quality, )                \
     X(float, scale, )
 MXGEN(struct, LocationMatchMsg)
 
