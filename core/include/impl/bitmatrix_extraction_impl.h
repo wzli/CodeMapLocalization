@@ -37,13 +37,13 @@ void TEMPLATE(bm, WIDTH, _to_img)(ImageMatrix* dst, const TEMPLATE(BitMatrix, WI
     }
 }
 
-void TEMPLATE(bm, WIDTH, _from_axiscodes)(TEMPLATE(BitMatrix, WIDTH, ) bits,
+void TEMPLATE(bm, WIDTH, _from_axiscodes)(TEMPLATE(BitMatrix, WIDTH, ) matrix,
         TEMPLATE(BitMatrix, WIDTH, ) mask, const AxisCode* row_code, const AxisCode* col_code) {
-    assert(bits && mask && row_code && col_code);
+    assert(matrix && mask && row_code && col_code);
     for (uint8_t i = 0; i < (WIDTH); ++i) {
-        bits[i] = ((TEMPLATE(col_code->bits.x, WIDTH, ) >> i) & 1)
-                          ? ~TEMPLATE(row_code->bits.x, WIDTH, )
-                          : TEMPLATE(row_code->bits.x, WIDTH, );
+        matrix[i] = ((TEMPLATE(col_code->bits.x, WIDTH, ) >> i) & 1)
+                            ? ~TEMPLATE(row_code->bits.x, WIDTH, )
+                            : TEMPLATE(row_code->bits.x, WIDTH, );
         mask[i] = ((TEMPLATE(col_code->mask.x, WIDTH, ) >> i) & 1)
                           ? TEMPLATE(row_code->mask.x, WIDTH, )
                           : 0;
