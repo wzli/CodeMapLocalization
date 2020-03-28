@@ -15,35 +15,37 @@ static int test_localization_loop_run() {
     ctx->rotation_scale = 1.0f;
     for (uint32_t src_row_pos = 1000; src_row_pos < 1000 + TEST_VECTOR_SIZE; ++src_row_pos)
         for (uint32_t src_col_pos = 1100; src_col_pos < 1100 + TEST_VECTOR_SIZE; ++src_col_pos) {
-            uint32_t src_row_code = bv32_get_slice(MLS_INDEX.sequence, src_row_pos, 32);
-            uint32_t src_col_code = bv32_get_slice(MLS_INDEX.sequence, src_col_pos, 32);
+            uint64_t src_row_code = bv32_get_slice_64(MLS_INDEX.sequence, src_row_pos, 64);
+            uint64_t src_col_code = bv32_get_slice_64(MLS_INDEX.sequence, src_col_pos, 64);
             // generate source image from known position
             // disable scale search, since it causes some false positives which fail the test
             ctx->scale_query = (ScaleQuery){
-                    {src_row_code, ~0ull, 0, 0}, {src_col_code, ~0ull, 0, 0}, 3, 1.0f, 3};
-            bm64_from_axiscodes(ctx->binary_image, ctx->binary_mask, ctx->scale_query.row_code,
-                    ctx->scale_query.col_code);
+                    {{src_row_code}, {~0ull}, 0, 0}, {{src_col_code}, {~0ull}, 0, 0}, 3, 1.0f, 3};
+            bm64_from_axiscodes(ctx->binary_image, ctx->binary_mask, &ctx->scale_query.row_code,
+                    &ctx->scale_query.col_code);
             bm64_to_img(&image, ctx->binary_image, ctx->binary_mask);
 
             // simulate real life pipe line
             localization_loop_run(ctx, image);
 
-            uint32_t compare_row_code = (ctx->scale_match.row_code.bits ^ src_row_code) &
-                                        ctx->scale_match.row_code.mask;
-            uint32_t compare_row_code1 = (ctx->scale_match.row_code.bits ^ src_row_code >> 1) &
-                                         ctx->scale_match.row_code.mask;
+            uint64_t compare_row_code = (ctx->scale_match.row_code.bits.x64 ^ src_row_code) &
+                                        ctx->scale_match.row_code.mask.x64;
+            uint64_t compare_row_code1 = (ctx->scale_match.row_code.bits.x64 ^ src_row_code >> 1) &
+                                         ctx->scale_match.row_code.mask.x64;
 
-            uint32_t compare_col_code = (ctx->scale_match.col_code.bits ^ src_col_code) &
-                                        ctx->scale_match.col_code.mask;
-            uint32_t compare_col_code1 = (ctx->scale_match.col_code.bits ^ src_col_code >> 1) &
-                                         ctx->scale_match.col_code.mask;
+            uint64_t compare_col_code = (ctx->scale_match.col_code.bits.x64 ^ src_col_code) &
+                                        ctx->scale_match.col_code.mask.x64;
+            uint64_t compare_col_code1 = (ctx->scale_match.col_code.bits.x64 ^ src_col_code >> 1) &
+                                         ctx->scale_match.col_code.mask.x64;
 
-            test_assert(
-                    compare_row_code == 0 || compare_row_code == ctx->scale_match.row_code.mask ||
-                    compare_row_code1 == 0 || compare_row_code1 == ctx->scale_match.row_code.mask);
-            test_assert(
-                    compare_col_code == 0 || compare_col_code == ctx->scale_match.col_code.mask ||
-                    compare_col_code1 == 0 || compare_col_code1 == ctx->scale_match.col_code.mask);
+            test_assert(compare_row_code == 0 ||
+                        compare_row_code == ctx->scale_match.row_code.mask.x64 ||
+                        compare_row_code1 == 0 ||
+                        compare_row_code1 == ctx->scale_match.row_code.mask.x64);
+            test_assert(compare_col_code == 0 ||
+                        compare_col_code == ctx->scale_match.col_code.mask.x64 ||
+                        compare_col_code1 == 0 ||
+                        compare_col_code1 == ctx->scale_match.col_code.mask.x64);
         }
     free(image.data);
     free(ctx->derotated_image.data);

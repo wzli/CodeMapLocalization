@@ -28,18 +28,18 @@ static int test_code_extract_64() {
         matrix_mask[i] = ~0ull;
         matrix[i] = src_row_code ^ -((uint64_t)(src_col_code >> i) & 1ull);
     }
-    AxisCode64 col_code = bm64_extract_column_code(0, matrix, matrix_mask, 5);
+    AxisCode col_code = bm64_extract_column_code(0, matrix, matrix_mask, 5);
     bm64_transpose(matrix);
     bm64_transpose(matrix_mask);
-    AxisCode64 row_code = bm64_extract_column_code(col_code.bits, matrix, matrix_mask, 5);
-    test_assert((row_code.bits == src_row_code && col_code.bits == src_col_code) ||
-                (row_code.bits == ~src_row_code && col_code.bits == ~src_col_code));
+    AxisCode row_code = bm64_extract_column_code(col_code.bits.x64, matrix, matrix_mask, 5);
+    test_assert((row_code.bits.x64 == src_row_code && col_code.bits.x64 == src_col_code) ||
+                (row_code.bits.x64 == ~src_row_code && col_code.bits.x64 == ~src_col_code));
     bm64_transpose(matrix);
     bm64_transpose(matrix_mask);
     bm64_extract_axiscodes(&row_code, &col_code, matrix, matrix_mask, 5);
-    test_assert((row_code.bits == src_row_code && col_code.bits == src_col_code) ||
-                (row_code.bits == ~src_row_code && col_code.bits == ~src_col_code));
-    bm64_from_axiscodes(matrix, matrix_mask, row_code, col_code);
+    test_assert((row_code.bits.x64 == src_row_code && col_code.bits.x64 == src_col_code) ||
+                (row_code.bits.x64 == ~src_row_code && col_code.bits.x64 == ~src_col_code));
+    bm64_from_axiscodes(matrix, matrix_mask, &row_code, &col_code);
     for (uint8_t i = 0; i < 64; ++i) {
         test_assert(matrix_mask[i] == ~0ull);
         test_assert(matrix[i] == src_row_code || matrix[i] == ~src_row_code);
@@ -60,9 +60,9 @@ static int test_bit_matrix_from_axiscodes() {
         matrix_mask[i] = ~0;
         matrix[i] = src_row_code ^ -((src_col_code >> i) & 1);
     }
-    AxisCode32 row_axiscode = {src_row_code, ~0, 0, 0};
-    AxisCode32 col_axiscode = {src_col_code, ~0, 0, 0};
-    bm32_from_axiscodes(generated_matrix, generated_matrix_mask, row_axiscode, col_axiscode);
+    AxisCode row_axiscode = {{.x32 = src_row_code}, {.x32 = ~0}, 0, 0};
+    AxisCode col_axiscode = {{.x32 = src_col_code}, {.x32 = ~0}, 0, 0};
+    bm32_from_axiscodes(generated_matrix, generated_matrix_mask, &row_axiscode, &col_axiscode);
     for (uint8_t i = 0; i < 32; ++i) {
         test_assert(matrix[i] == generated_matrix[i]);
         test_assert(matrix_mask[i] == generated_matrix_mask[i]);
@@ -166,10 +166,10 @@ static int test_downsample_triplet_code() {
 }
 
 static int test_downsample_axiscode() {
-    AxisCode64 axiscode = {0x71C71C71C71C71C7ull, ~0ull, 0, 0};
+    AxisCode axiscode = {{0x71C71C71C71C71C7ull}, {~0ull}, 0, 0};
     ac64_downsample(&axiscode, 1.0f / 3);
-    test_assert(axiscode.bits == 0x155555);
-    test_assert(axiscode.mask == (1 << 21) - 1);
+    test_assert(axiscode.bits.x64 == 0x155555);
+    test_assert(axiscode.mask.x64 == (1 << 21) - 1);
     return 0;
 }
 
