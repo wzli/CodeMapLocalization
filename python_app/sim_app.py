@@ -24,7 +24,7 @@ def create_window(name, size, pos=None):
 
 class CodeMapGui:
     CAMERA_RES = 64
-    MAX_ZOOM = 20
+    MAX_ZOOM = 100
 
     def __init__(self):
         # initial coordinates
@@ -45,8 +45,8 @@ class CodeMapGui:
         create_window('Navigate', (512, 512 + 50))
         cv2.createTrackbar('Rotation', 'Navigate', 0, 360,
                            self.rotation_callback)
-        cv2.createTrackbar('Zoom', 'Navigate', CodeMapGui.MAX_ZOOM,
-                           CodeMapGui.MAX_ZOOM * 2, self.zoom_callback)
+        cv2.createTrackbar('Zoom', 'Navigate', 0, CodeMapGui.MAX_ZOOM,
+                           self.zoom_callback)
         cv2.setMouseCallback('Navigate', self.navigate_mouse_callback)
         # create Pipeline window
         create_window('Pipeline', (3 * 256, 2 * 256 + 75))
@@ -177,7 +177,7 @@ class CodeMapGui:
         self.update_frame()
 
     def zoom_callback(self, val):
-        self.zoom = 1 + (val - CodeMapGui.MAX_ZOOM) / 100
+        self.zoom = 1 / (1 + val / 100)
         self.update_frame()
 
     def blur_callback(self, val):
@@ -200,7 +200,7 @@ class CodeMapGui:
 
     def increment_zoom(self, inc):
         zoom_track = cv2.getTrackbarPos('Zoom', 'Navigate')
-        zoom_track = np.clip(zoom_track + inc, 0, 2 * CodeMapGui.MAX_ZOOM)
+        zoom_track = np.clip(zoom_track + inc, 0, CodeMapGui.MAX_ZOOM)
         cv2.setTrackbarPos('Zoom', 'Navigate', zoom_track)
 
 
