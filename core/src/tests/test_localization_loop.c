@@ -3,7 +3,7 @@
 #include "mls_query.h"
 #include <stdlib.h>
 
-#define TEST_VECTOR_SIZE 10
+#define TEST_VECTOR_SIZE 20
 
 static int test_localization_loop_run() {
     LocalizationContext* ctx = calloc(1, sizeof(LocalizationContext));
