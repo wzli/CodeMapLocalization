@@ -5,7 +5,7 @@
 #define TEST_VECTOR_SIZE 20
 
 static int test_ac32_next_valid_segment() {
-    AxisCode test_code = {{0xFFFF00FF}, {0xFFFF00FF}, 0, 1};
+    AxisCode test_code = {{.x32 = 0xFFFF00FF}, {.x32 = 0xFFFF00FF}, 0, 1};
     uint8_t valid_segment_length;
     valid_segment_length = ac32_next_valid_segment(&test_code, 1);
     test_assert(test_code.bits.x32 == 0xFFFF00FF);
@@ -15,11 +15,11 @@ static int test_ac32_next_valid_segment() {
     test_assert(valid_segment_length == 16);
     test_assert(test_code.bits.x32 == 0x0000FFFF);
     test_assert(test_code.mask.x32 == 0x0000FFFF);
-    test_code = (AxisCode){{~0}, {~0}, 0, 1};
+    test_code = (AxisCode){{.x32 = ~0}, {.x32 = ~0}, 0, 1};
     test_assert(ac32_next_valid_segment(&test_code, 15) == 32);
     test_assert(test_code.bits.x32 == ~0u);
     test_assert(test_code.mask.x32 == ~0u);
-    test_code = (AxisCode){{0}, {0}, 0, 1};
+    test_code = (AxisCode){{.x32 = 0}, {.x32 = 0}, 0, 1};
     test_assert(ac32_next_valid_segment(&test_code, 15) == 0);
     test_assert(test_code.bits.x32 == 0);
     test_assert(test_code.mask.x32 == 0);
