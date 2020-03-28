@@ -31,11 +31,12 @@ bool localization_loop_run(LocalizationContext* ctx, const ImageMatrix image) {
     img_to_bm64(ctx->binary_image, ctx->binary_mask, ctx->sharpened_image, ctx->threshold[0],
             ctx->threshold[1]);
     // extract row and column codes
-    bm64_extract_axiscodes(&(ctx->scale_query.row_code), &(ctx->scale_query.col_code),
-            ctx->binary_image, ctx->binary_mask, 5);
+    bm64_extract_axiscodes(
+            &(ctx->row_code), &(ctx->col_code), ctx->binary_image, ctx->binary_mask, 5);
     // scale search and decode
     ctx->scale_match = (ScaleMatch){0};
-    scale_search_location(&(ctx->scale_match), &(ctx->scale_query));
+    scale_search_location(
+            &(ctx->scale_match), &(ctx->row_code), &(ctx->col_code), ctx->scale_decay_rate);
     // outlier rejection filter
     if (outlier_filter_location(&(ctx->outlier_filter), &(ctx->scale_match))) {
         // update odom

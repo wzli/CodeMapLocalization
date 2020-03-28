@@ -8,11 +8,13 @@ typedef struct {
     ImageMatrix sharpened_image;
     BitMatrix64 binary_image;
     BitMatrix64 binary_mask;
-    ScaleQuery scale_query;
+    AxisCode row_code;
+    AxisCode col_code;
     ScaleMatch scale_match;
     OutlierFilter outlier_filter;
     VisualOdometry odom;
     float rotation_scale;
+    float scale_decay_rate;
     uint32_t histogram[256];
     uint8_t threshold[2];
     uint32_t frame_count;

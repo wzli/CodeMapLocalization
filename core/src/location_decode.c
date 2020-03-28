@@ -25,21 +25,23 @@ Location deduce_location(AxisPosition row_position, AxisPosition col_position) {
     return loc;
 }
 
-void scale_search_location(ScaleMatch* match, const ScaleQuery* query) {
-    assert(match && query);
-    assert(query->lower_bound > 0 && query->upper_bound > 0 && query->step_size > 0);
-    for (float scale = query->lower_bound; scale <= query->upper_bound; scale += query->step_size) {
+void scale_search_location(
+        ScaleMatch* match, const AxisCode* row_code, const AxisCode* col_code, float decay_rate) {
+    assert(match && row_code && col_code && decay_rate > 0 && decay_rate <= 1);
+    ScaleMatch candidate;
+    for (candidate.scale = 1.0f; candidate.scale >= 1.0f / 3;
+            candidate.scale *= 1 - decay_rate) {
         // scale and down sample axis codes
-        AxisCode row_code = query->row_code;
-        AxisCode col_code = query->col_code;
-        ac64_downsample(&row_code, scale / 3);
-        ac64_downsample(&col_code, scale / 3);
+        candidate.row_code = *row_code;
+        candidate.col_code = *col_code;
+        candidate.row_scale_errors = ac64_downsample(&candidate.row_code, candidate.scale);
+        candidate.col_scale_errors = ac64_downsample(&candidate.col_code, candidate.scale);
         // decode posiiton
-        AxisPosition row_pos = ac64_decode_position(row_code);
-        AxisPosition col_pos = ac64_decode_position(col_code);
-        Location loc = deduce_location(row_pos, col_pos);
-        if (loc.match_size >= match->location.match_size) {
-            *match = (ScaleMatch){loc, row_code, col_code, scale};
+        AxisPosition row_pos = ac64_decode_position(candidate.row_code);
+        AxisPosition col_pos = ac64_decode_position(candidate.col_code);
+        candidate.location = deduce_location(row_pos, col_pos);
+        if (candidate.location.match_size >= match->location.match_size) {
+            *match = candidate;
         }
     }
 }

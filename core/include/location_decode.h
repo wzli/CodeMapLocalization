@@ -16,18 +16,12 @@ typedef struct {
 } Location;
 
 typedef struct {
-    AxisCode row_code;
-    AxisCode col_code;
-    float lower_bound;
-    float upper_bound;
-    float step_size;
-} ScaleQuery;
-
-typedef struct {
     Location location;
     AxisCode row_code;
     AxisCode col_code;
     float scale;
+    uint8_t row_scale_errors;
+    uint8_t col_scale_errors;
 } ScaleMatch;
 
 typedef struct {
@@ -47,6 +41,7 @@ AxisPosition ac64_decode_position(AxisCode axiscode);
 
 Location deduce_location(AxisPosition row_position, AxisPosition col_position);
 
-void scale_search_location(ScaleMatch* match, const ScaleQuery* query);
+void scale_search_location(
+        ScaleMatch* match, const AxisCode* row_code, const AxisCode* col_code, float decay_rate);
 
 bool outlier_filter_location(OutlierFilter* filter, const ScaleMatch* new_match);

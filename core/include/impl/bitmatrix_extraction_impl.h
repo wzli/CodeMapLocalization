@@ -113,9 +113,9 @@ uint8_t TEMPLATE(ac, WIDTH, _downsample)(AxisCode* axiscode, float scale) {
     }
     uint32_t scaled_bits[3 * (WIDTH) / 32];
     uint32_t scaled_mask[3 * (WIDTH) / 32];
+    uint8_t offset;
     uint8_t scaled_len = bv32_scale(scaled_bits, bits, 3 * (WIDTH), (WIDTH), scale * 3);
     bv32_scale(scaled_mask, mask, 3 * (WIDTH), (WIDTH), scale * 3);
-    uint8_t offset;
     estimate_bit_triplet_offset(&offset, scaled_bits, scaled_mask, 3 * (WIDTH));
     uint8_t bit_errors = downsample_triplet_code(
             bits, mask, (WIDTH), scaled_bits, scaled_mask, scaled_len, offset);
