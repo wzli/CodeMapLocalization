@@ -7,6 +7,9 @@ static int test_bv32_clear_all() {
     test_assert(v[0] == 0);
     test_assert(v[1] == 0);
     test_assert(v[2] == 0);
+    v[0] = 1;
+    bv32_clear_all(v, 1);
+    test_assert(v[0] == 0);
     return 0;
 }
 
@@ -34,39 +37,31 @@ static int test_bv32_scale() {
     bv32_scale(dst, src, 16, 16, 1);
     test_assert(dst[0] == src[0]);
 
-    bv32_clear_all(dst, 32 * 6);
     bv32_scale(dst, src, 8, 16, 1);
     test_assert(dst[0] == 0xF0);
 
-    bv32_clear_all(dst, 32 * 6);
     bv32_scale(dst, src, 16, 8, 1);
     test_assert(dst[0] == 0xF0);
 
-    bv32_clear_all(dst, 32 * 6);
     bv32_scale(dst, src, 32, 16, 2);
     test_assert(dst[0] == 0xFF00FF00);
 
-    bv32_clear_all(dst, 32 * 6);
     bv32_scale(dst, src, 64, 16, 4);
     test_assert(dst[0] == 0xFFFF0000);
     test_assert(dst[1] == 0xFFFF0000);
 
-    bv32_clear_all(dst, 32 * 6);
     bv32_scale(dst, src, 64, 16, 0.5f);
     test_assert(dst[0] == 0xCC);
     test_assert(dst[1] == 0);
 
-    bv32_clear_all(dst, 32 * 6);
     bv32_scale(dst, src, 64, 16, 0.5f);
     test_assert(dst[0] == 0xCC);
     test_assert(dst[1] == 0);
 
-    bv32_clear_all(dst, 32 * 6);
     bv32_scale(dst, src, 64, 16, 0.25f);
     test_assert(dst[0] == 0xA);
     test_assert(dst[1] == 0);
 
-    bv32_clear_all(dst, 32 * 6);
     bv32_scale(dst, src, 64, 16, 100);
     test_assert(dst[0] == 0);
     test_assert(dst[1] == 0);

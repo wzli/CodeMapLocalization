@@ -108,8 +108,8 @@ uint8_t TEMPLATE(ac, WIDTH, _downsample)(TEMPLATE(AxisCode, WIDTH, ) * axiscode,
         bits[1] = (uint32_t)((uint64_t) axiscode->bits >> 32);
         mask[1] = (uint32_t)((uint64_t) axiscode->mask >> 32);
     }
-    uint32_t scaled_bits[3 * (WIDTH) / 32] = {0};
-    uint32_t scaled_mask[3 * (WIDTH) / 32] = {0};
+    uint32_t scaled_bits[3 * (WIDTH) / 32];
+    uint32_t scaled_mask[3 * (WIDTH) / 32];
     uint8_t scaled_len = bv32_scale(scaled_bits, bits, 3 * (WIDTH), (WIDTH), scale * 3);
     bv32_scale(scaled_mask, mask, 3 * (WIDTH), (WIDTH), scale * 3);
     uint8_t offset;

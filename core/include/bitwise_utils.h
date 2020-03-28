@@ -20,8 +20,8 @@ static inline bool bv32_get_bit(const uint32_t* vector, uint32_t k) {
 }
 
 static inline void bv32_clear_all(uint32_t* vector, uint32_t len) {
-    for (uint32_t i = 0; i < (len >> 5); ++i) {
-        vector[i] = 0;
+    for (uint32_t i = 0; i < len; i += 32) {
+        vector[i >> 5] = 0;
     }
 }
 

@@ -28,6 +28,7 @@ uint32_t bv32_scale(
     uint32_t dst_idx = 0;
     float src_idx = 0;
     float src_inc = 1.0f / scale;
+    bv32_clear_all(dst, dst_len);
     while (dst_idx < dst_len && src_idx < src_len) {
         if (bv32_get_bit(src, (uint8_t) src_idx)) {
             bv32_set_bit(dst, dst_idx);
