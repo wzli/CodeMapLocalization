@@ -37,21 +37,24 @@ void TEMPLATE(bm, WIDTH, _to_img)(ImageMatrix* dst, const TEMPLATE(BitMatrix, WI
     }
 }
 
-void TEMPLATE(bm, WIDTH, _from_axiscodes)(TEMPLATE(BitMatrix, WIDTH, ) dst,
-        TEMPLATE(BitMatrix, WIDTH, ) mask, const TEMPLATE(AxisCode, WIDTH, ) row_code,
-        const TEMPLATE(AxisCode, WIDTH, ) col_code) {
+void TEMPLATE(bm, WIDTH, _from_axiscodes)(TEMPLATE(BitMatrix, WIDTH, ) matrix,
+        TEMPLATE(BitMatrix, WIDTH, ) mask, const AxisCode* row_code, const AxisCode* col_code) {
+    assert(matrix && mask && row_code && col_code);
     for (uint8_t i = 0; i < (WIDTH); ++i) {
-        dst[i] = ((col_code.bits >> i) & 1) ? ~row_code.bits : row_code.bits;
-        mask[i] = ((col_code.mask >> i) & 1) ? row_code.mask : 0;
+        matrix[i] = ((TEMPLATE(col_code->bits.x, WIDTH, ) >> i) & 1)
+                            ? ~TEMPLATE(row_code->bits.x, WIDTH, )
+                            : TEMPLATE(row_code->bits.x, WIDTH, );
+        mask[i] = ((TEMPLATE(col_code->mask.x, WIDTH, ) >> i) & 1)
+                          ? TEMPLATE(row_code->mask.x, WIDTH, )
+                          : 0;
     }
 }
 
-TEMPLATE(AxisCode, WIDTH, )
-TEMPLATE(bm, WIDTH, _extract_column_code)
-(TEMPLATE(uint, WIDTH, _t) row_estimate, const TEMPLATE(BitMatrix, WIDTH, ) matrix,
-        const TEMPLATE(BitMatrix, WIDTH, ) mask, uint8_t min_row_samples) {
+AxisCode TEMPLATE(bm, WIDTH, _extract_column_code)(TEMPLATE(uint, WIDTH, _t) row_estimate,
+        const TEMPLATE(BitMatrix, WIDTH, ) matrix, const TEMPLATE(BitMatrix, WIDTH, ) mask,
+        uint8_t min_row_samples) {
     assert(matrix && mask);
-    TEMPLATE(AxisCode, WIDTH, ) column_code = {0};
+    AxisCode column_code = {0};
     int8_t bit_votes[(WIDTH)] = {0};
     for (uint8_t i = 0; i < (WIDTH); ++i) {
         uint8_t mask_sum = count_bits(mask[i]);
@@ -62,14 +65,14 @@ TEMPLATE(bm, WIDTH, _extract_column_code)
         row_estimate &= ~mask[i];
         if (2 * row_diff > mask_sum) {
             row_estimate |= ~matrix[i] & mask[i];
-            column_code.bits |= (TEMPLATE(uint, WIDTH, _t)) 1 << i;
+            TEMPLATE(column_code.bits.x, WIDTH, ) |= (TEMPLATE(uint, WIDTH, _t)) 1 << i;
             column_code.n_errors += mask_sum - row_diff;
         } else {
             row_estimate |= matrix[i] & mask[i];
             column_code.n_errors += row_diff;
         }
         column_code.n_samples += mask_sum;
-        column_code.mask |= (TEMPLATE(uint, WIDTH, _t)) 1 << i;
+        TEMPLATE(column_code.mask.x, WIDTH, ) |= (TEMPLATE(uint, WIDTH, _t)) 1 << i;
         for (uint8_t j = count_trailing_zeros(mask[i]); j < (WIDTH); ++j) {
             if (!TEMPLATE(bm, WIDTH, _get_bit)(mask, i, j)) {
                 continue;
@@ -82,31 +85,31 @@ TEMPLATE(bm, WIDTH, _extract_column_code)
     return column_code;
 }
 
-void TEMPLATE(bm, WIDTH, _extract_axiscodes)(TEMPLATE(AxisCode, WIDTH, ) * row_code,
-        TEMPLATE(AxisCode, WIDTH, ) * col_code, TEMPLATE(BitMatrix, WIDTH, ) matrix,
-        TEMPLATE(BitMatrix, WIDTH, ) mask, uint8_t min_samples) {
+void TEMPLATE(bm, WIDTH, _extract_axiscodes)(AxisCode* row_code, AxisCode* col_code,
+        TEMPLATE(BitMatrix, WIDTH, ) matrix, TEMPLATE(BitMatrix, WIDTH, ) mask,
+        uint8_t min_samples) {
     assert(row_code && col_code);
     *col_code = TEMPLATE(bm, WIDTH, _extract_column_code)(
             matrix[(WIDTH) / 2], matrix, mask, min_samples);
     TEMPLATE(bm, WIDTH, _transpose)(matrix);
     TEMPLATE(bm, WIDTH, _transpose)(mask);
-    *row_code =
-            TEMPLATE(bm, WIDTH, _extract_column_code)(col_code->bits, matrix, mask, min_samples);
-    uint8_t offset = count_trailing_zeros(col_code->mask);
-    col_code->bits >>= offset;
-    col_code->mask >>= offset;
-    offset = count_trailing_zeros(row_code->mask);
-    row_code->bits >>= offset;
-    row_code->mask >>= offset;
+    *row_code = TEMPLATE(bm, WIDTH, _extract_column_code)(
+            TEMPLATE(col_code->bits.x, WIDTH, ), matrix, mask, min_samples);
+    uint8_t offset = count_trailing_zeros(TEMPLATE(col_code->mask.x, WIDTH, ));
+    TEMPLATE(col_code->bits.x, WIDTH, ) >>= offset;
+    TEMPLATE(col_code->mask.x, WIDTH, ) >>= offset;
+    offset = count_trailing_zeros(TEMPLATE(row_code->mask.x, WIDTH, ));
+    TEMPLATE(row_code->bits.x, WIDTH, ) >>= offset;
+    TEMPLATE(row_code->mask.x, WIDTH, ) >>= offset;
 }
 
-uint8_t TEMPLATE(ac, WIDTH, _downsample)(TEMPLATE(AxisCode, WIDTH, ) * axiscode, float scale) {
+uint8_t TEMPLATE(ac, WIDTH, _downsample)(AxisCode* axiscode, float scale) {
     assert(scale > 0 && scale <= 1);
-    uint32_t bits[(WIDTH) / 32] = {axiscode->bits};
-    uint32_t mask[(WIDTH) / 32] = {axiscode->mask};
+    uint32_t bits[(WIDTH) / 32] = {TEMPLATE(axiscode->bits.x, WIDTH, )};
+    uint32_t mask[(WIDTH) / 32] = {TEMPLATE(axiscode->mask.x, WIDTH, )};
     if ((WIDTH) > 32) {
-        bits[1] = (uint32_t)((uint64_t) axiscode->bits >> 32);
-        mask[1] = (uint32_t)((uint64_t) axiscode->mask >> 32);
+        bits[1] = (uint32_t)(axiscode->bits.x64 >> 32);
+        mask[1] = (uint32_t)(axiscode->mask.x64 >> 32);
     }
     uint32_t scaled_bits[3 * (WIDTH) / 32];
     uint32_t scaled_mask[3 * (WIDTH) / 32];
@@ -116,11 +119,11 @@ uint8_t TEMPLATE(ac, WIDTH, _downsample)(TEMPLATE(AxisCode, WIDTH, ) * axiscode,
     estimate_bit_triplet_offset(&offset, scaled_bits, scaled_mask, 3 * (WIDTH));
     uint8_t bit_errors = downsample_triplet_code(
             bits, mask, (WIDTH), scaled_bits, scaled_mask, scaled_len, offset);
-    axiscode->bits = bits[0];
-    axiscode->mask = mask[0];
+    TEMPLATE(axiscode->bits.x, WIDTH, ) = bits[0];
+    TEMPLATE(axiscode->mask.x, WIDTH, ) = mask[0];
     if ((WIDTH) > 32) {
-        axiscode->bits |= (uint64_t) bits[1] << 32;
-        axiscode->mask |= (uint64_t) mask[1] << 32;
+        axiscode->bits.x64 |= (uint64_t) bits[1] << 32;
+        axiscode->mask.x64 |= (uint64_t) mask[1] << 32;
     }
     return bit_errors;
 }

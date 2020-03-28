@@ -16,8 +16,8 @@ typedef struct {
 } Location;
 
 typedef struct {
-    AxisCode64 row_code;
-    AxisCode64 col_code;
+    AxisCode row_code;
+    AxisCode col_code;
     float lower_bound;
     float upper_bound;
     float step_size;
@@ -25,8 +25,8 @@ typedef struct {
 
 typedef struct {
     Location location;
-    AxisCode64 row_code;
-    AxisCode64 col_code;
+    AxisCode row_code;
+    AxisCode col_code;
     float scale;
 } ScaleMatch;
 
@@ -39,11 +39,11 @@ typedef struct {
     uint8_t rejection_count;
 } OutlierFilter;
 
-uint8_t ac32_next_valid_segment(AxisCode32* axiscode, uint8_t code_length);
-uint8_t ac64_next_valid_segment(AxisCode64* axiscode, uint8_t code_length);
+uint8_t ac32_next_valid_segment(AxisCode* axiscode, uint8_t code_length);
+uint8_t ac64_next_valid_segment(AxisCode* axiscode, uint8_t code_length);
 
-AxisPosition ac32_decode_position(AxisCode32 axiscode);
-AxisPosition ac64_decode_position(AxisCode64 axiscode);
+AxisPosition ac32_decode_position(AxisCode axiscode);
+AxisPosition ac64_decode_position(AxisCode axiscode);
 
 Location deduce_location(AxisPosition row_position, AxisPosition col_position);
 

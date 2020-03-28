@@ -45,19 +45,18 @@ MLS_INDEX = MlsIndex.in_dll(libcodemap, "MLS_INDEX")
 
 
 # code_extraction.h
-class AxisCode32(ctypes.Structure):
+class CodeBits(ctypes.Union):
     _fields_ = [
-        ('bits', ctypes.c_uint),
-        ('mask', ctypes.c_uint),
-        ('n_errors', ctypes.c_ushort),
-        ('n_samples', ctypes.c_ushort),
+        ('x64', ctypes.c_uint),
+        ('x32', ctypes.c_ulonglong),
+        ('data', ctypes.c_uint * 2),
     ]
 
 
-class AxisCode64(ctypes.Structure):
+class AxisCode(ctypes.Structure):
     _fields_ = [
-        ('bits', ctypes.c_ulonglong),
-        ('mask', ctypes.c_ulonglong),
+        ('bits', CodeBits),
+        ('mask', CodeBits),
         ('n_errors', ctypes.c_ushort),
         ('n_samples', ctypes.c_ushort),
     ]
@@ -83,14 +82,14 @@ class Location(ctypes.Structure):
 
 
 class ScaleQuery(ctypes.Structure):
-    _fields_ = [('row_code', AxisCode64), ('col_code', AxisCode64),
+    _fields_ = [('row_code', AxisCode), ('col_code', AxisCode),
                 ('lower_bound', ctypes.c_float),
                 ('upper_bound', ctypes.c_float), ('step_size', ctypes.c_float)]
 
 
 class ScaleMatch(ctypes.Structure):
-    _fields_ = [('location', Location), ('row_code', AxisCode64),
-                ('col_code', AxisCode64), ('scale', ctypes.c_float)]
+    _fields_ = [('location', Location), ('row_code', AxisCode),
+                ('col_code', AxisCode), ('scale', ctypes.c_float)]
 
 
 class OutlierFilter(ctypes.Structure):
@@ -187,15 +186,15 @@ class LocalizationContext(ctypes.Structure):
             ctypes.byref(self), ImageMatrix(frame)))
         # create thresholded image
         libcodemap.bm64_from_axiscodes(self.binary_image, self.binary_mask,
-                                       self.scale_query.row_code,
-                                       self.scale_query.col_code)
+                                       ctypes.byref(self.scale_query.row_code),
+                                       ctypes.byref(self.scale_query.col_code))
         libcodemap.bm64_to_img(
             ctypes.byref(ImageMatrix(self.thresholded_image_array)),
             self.binary_image, self.binary_mask)
         # create extracted image
         libcodemap.bm64_from_axiscodes(self.binary_image, self.binary_mask,
-                                       self.scale_match.row_code,
-                                       self.scale_match.col_code)
+                                       ctypes.byref(self.scale_match.row_code),
+                                       ctypes.byref(self.scale_match.col_code))
         libcodemap.bm64_to_img(
             ctypes.byref(ImageMatrix(self.extracted_image_array)),
             self.binary_image, self.binary_mask)

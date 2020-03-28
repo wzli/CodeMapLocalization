@@ -30,8 +30,8 @@ void scale_search_location(ScaleMatch* match, const ScaleQuery* query) {
     assert(query->lower_bound > 0 && query->upper_bound > 0 && query->step_size > 0);
     for (float scale = query->lower_bound; scale <= query->upper_bound; scale += query->step_size) {
         // scale and down sample axis codes
-        AxisCode64 row_code = query->row_code;
-        AxisCode64 col_code = query->col_code;
+        AxisCode row_code = query->row_code;
+        AxisCode col_code = query->col_code;
         ac64_downsample(&row_code, scale / 3);
         ac64_downsample(&col_code, scale / 3);
         // decode posiiton

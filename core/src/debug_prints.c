@@ -69,10 +69,10 @@ void print_image_matrix(ImageMatrix src) {
     puts("");
 }
 
-void print_axiscode(AxisCode32 axiscode) {
-    uint8_t leading_zeros = count_trailing_zeros(reverse_bits(axiscode.mask, 32));
+void print_axiscode(AxisCode axiscode) {
+    uint8_t leading_zeros = count_trailing_zeros(reverse_bits(axiscode.mask.x64, 64));
     printf("samples %d errors %d\n", axiscode.n_samples, axiscode.n_errors);
-    print_bits(axiscode.bits, 32 - leading_zeros);
+    print_bits(axiscode.bits.x64, 64 - leading_zeros);
 }
 
 void print_axis_position(AxisPosition position) {
