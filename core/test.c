@@ -84,17 +84,10 @@ int main(int argc, char** argv) {
         }
         top_left.y += FRAME_SIZE;
         IMG_PASTE(output_image, raw_image, top_left);
-// write decoded image to bottom left
-// TODO: fix later
-#if 0
-        AXISCODE_COPY(loc_ctx.scale_query.row_code, loc_ctx.scale_match.row_code);
-        AXISCODE_COPY(loc_ctx.scale_query.col_code, loc_ctx.scale_match.col_code);
-        loc_ctx.scale_query.row_code = scale_axiscode64(loc_ctx.scale_query.row_code, 3);
-        loc_ctx.scale_query.col_code = scale_axiscode64(loc_ctx.scale_query.col_code, 3);
-        bm64_from_axiscodes(loc_ctx.binary_image, loc_ctx.binary_mask, loc_ctx.scale_query.row_code,
-                loc_ctx.scale_query.col_code);
+        // write decoded image to bottom left
+        bm64_from_axiscodes(loc_ctx.binary_image, loc_ctx.binary_mask,
+                &loc_ctx.scale_match.row_code, &loc_ctx.scale_match.col_code);
         bm64_to_img(&raw_image, loc_ctx.binary_image, loc_ctx.binary_mask);
-#endif
         top_left.x -= FRAME_SIZE;
         IMG_PASTE(output_image, raw_image, top_left);
         // write pgm

@@ -93,7 +93,7 @@ void bm64_save_to_pgm(BitMatrix64 bit_matrix, BitMatrix64 bit_mask, const char* 
 }
 
 void print_location_match(const ScaleMatch* match) {
-    char buf[128];
+    char buf[256];
     LocationMatchMsg msg;
     write_location_match_msg(&msg, match);
     LocationMatchMsg_to_json(&msg, buf);
