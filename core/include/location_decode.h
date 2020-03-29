@@ -21,8 +21,7 @@ typedef struct {
     AxisCode col_code;
     float scale;
     float quality;
-    uint8_t row_scale_errors;
-    uint8_t col_scale_errors;
+    uint16_t bit_errors;
 } ScaleMatch;
 
 typedef struct {

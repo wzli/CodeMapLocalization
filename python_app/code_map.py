@@ -88,8 +88,7 @@ class ScaleMatch(ctypes.Structure):
         ('col_code', AxisCode),
         ('scale', ctypes.c_float),
         ('quality', ctypes.c_float),
-        ('row_scale_errors', ctypes.c_ubyte),
-        ('col_scale_errors', ctypes.c_ubyte),
+        ('bit_errors', ctypes.c_ushort),
     ]
 
 
@@ -184,7 +183,7 @@ class LocalizationContext(ctypes.Structure):
         self.corr_b = self.correlation_buffer_array
         # setup params
         self.rotation_scale = 1.0
-        self.scale_decay_rate = 0.01
+        self.scale_decay_rate = 0.02
         self.outlier_filter.distance_threshold = 200
         self.outlier_filter.match_length_threshold = 21 - MLS_INDEX.code_length
         self.outlier_filter.bit_error_ratio_threshold = 5

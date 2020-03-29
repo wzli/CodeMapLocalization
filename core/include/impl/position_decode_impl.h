@@ -98,26 +98,42 @@ AxisPosition T(ac, WIDTH, _decode_position)(AxisCode axiscode) {
 void T(ac, WIDTH, _scale_search_location)(
         ScaleMatch* match, const AxisCode* row_code, const AxisCode* col_code, float decay_rate) {
     assert(match && row_code && col_code && decay_rate > 0 && decay_rate <= 1);
-    ScaleMatch candidate;
-    for (candidate.scale = 1.0f; candidate.scale >= 1.0f / 3; candidate.scale *= 1 - decay_rate) {
-        // scale and down sample axis codes
-        candidate.row_code = *row_code;
-        candidate.col_code = *col_code;
-        candidate.row_scale_errors =
-                T(ac, WIDTH, _downsample)(&candidate.row_code, candidate.scale);
-        candidate.col_scale_errors =
-                T(ac, WIDTH, _downsample)(&candidate.col_code, candidate.scale);
+    ScaleMatch sample;
+    uint32_t sample_count = 0;
+    uint32_t error_sum = 0;
+    T(uint, WIDTH, _t) prev_row_code = 0;
+    T(uint, WIDTH, _t) prev_col_code = 0;
+    AxisPosition row_pos;
+    AxisPosition col_pos;
+    for (sample.scale = 1.0f; sample.scale >= 1.0f / 3; sample.scale *= 1 - decay_rate) {
+        // scale and downsample axis codes
+        sample.row_code = *row_code;
+        sample.col_code = *col_code;
+        uint8_t row_scale_errors = T(ac, WIDTH, _downsample)(&sample.row_code, sample.scale);
+        uint8_t col_scale_errors = T(ac, WIDTH, _downsample)(&sample.col_code, sample.scale);
+        sample.bit_errors = row_scale_errors + col_scale_errors;
+        // only proceed if scale error is better than average
+        error_sum += sample.bit_errors;
+        if (sample.bit_errors * (++sample_count) > error_sum) {
+            continue;
+        }
         // decode posiiton
-        AxisPosition row_pos = T(ac, WIDTH, _decode_position)(candidate.row_code);
-        AxisPosition col_pos = T(ac, WIDTH, _decode_position)(candidate.col_code);
-        candidate.location = deduce_location(row_pos, col_pos);
-        float scaled_bits = candidate.scale * (WIDTH);
-        uint8_t scale_errors = MAX(candidate.row_scale_errors, candidate.col_scale_errors);
-        candidate.quality = scaled_bits / (scaled_bits + scale_errors);
-        candidate.quality /= (scaled_bits - MLS_INDEX.code_length - 1);
-        candidate.quality *= candidate.quality * candidate.location.match_size;
-        if (candidate.quality >= match->quality) {
-            *match = candidate;
+        if (prev_row_code != T(sample.row_code.bits.x, WIDTH, )) {
+            row_pos = T(ac, WIDTH, _decode_position)(sample.row_code);
+            prev_row_code = T(sample.row_code.bits.x, WIDTH, );
+        }
+        if (prev_col_code != T(sample.col_code.bits.x, WIDTH, )) {
+            col_pos = T(ac, WIDTH, _decode_position)(sample.col_code);
+            prev_col_code = T(sample.col_code.bits.x, WIDTH, );
+        }
+        // calculate location and match quality
+        sample.location = deduce_location(row_pos, col_pos);
+        float scaled_bits = sample.scale * (WIDTH);
+        sample.quality = (scaled_bits - sample.bit_errors) / scaled_bits;
+        sample.quality /= (scaled_bits - MLS_INDEX.code_length - 1);
+        sample.quality *= sample.quality * sample.location.match_size;
+        if (sample.quality >= match->quality) {
+            *match = sample;
         }
     }
 }

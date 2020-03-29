@@ -8,7 +8,7 @@ uint16_t mlsq_position_from_code(const MlsIndex query_index, uint32_t code) {
     int32_t start = 0;
     int32_t end = query_index.sequence_length - query_index.code_length;
     while (start <= end) {
-        uint16_t mid = (start + end) / 2;
+        uint16_t mid = (start + end) >> 1;
         uint16_t mid_position = query_index.sorted_code_positions[mid];
         uint32_t mid_code =
                 bv32_get_slice(query_index.sequence, mid_position, query_index.code_length);

@@ -7,11 +7,12 @@ void write_location_match_msg(LocationMatchMsg* msg, const ScaleMatch* match) {
     msg->x = match->location.x;
     msg->y = match->location.y;
     msg->match_size = match->location.match_size;
-    msg->bit_err_ratio = ((float) match->col_code.n_errors / match->col_code.n_samples +
+    msg->downsample_errors = match->bit_errors;
+    msg->xor_err_ratio = ((float) match->col_code.n_errors / match->col_code.n_samples +
                                  (float) match->row_code.n_errors / match->row_code.n_samples) *
                          0.5f;
-    msg->scale = match->scale;
     msg->quality = match->quality;
+    msg->scale = match->scale;
 }
 
 void write_odometry_msg(OdometryMsg* msg, const VisualOdometry* odom) {
