@@ -169,19 +169,11 @@ class LocalizationContext(ctypes.Structure):
         self.correlation_buffer_array = np.empty((32, 32),
                                                  dtype=np.csingle,
                                                  order='C')
-        self.thresholded_image_array = np.empty((64, 64),
-                                                dtype=np.ubyte,
-                                                order='C')
-        self.extracted_image_array = np.empty((64, 64),
-                                              dtype=np.ubyte,
-                                              order='C')
         # set links to buffers
         self.derotated_image.__init__(self.derotated_image_array)
         self.sharpened_image.__init__(self.sharpened_image_array)
         self.odom.correlation.image.__init__(self.correlation_image_array)
         self.odom.correlation.buffer.__init__(self.correlation_buffer_array)
-        self.corr_a = self.correlation_image_array
-        self.corr_b = self.correlation_buffer_array
         # setup params
         self.rotation_scale = 1.0
         self.scale_decay_rate = 0.02
@@ -196,26 +188,12 @@ class LocalizationContext(ctypes.Structure):
         # run loop
         location_updated = (1 == libcodemap.localization_loop_run(
             ctypes.byref(self), ImageMatrix(frame)))
-        # create thresholded image
-        libcodemap.bm64_from_axiscodes(self.binary_image, self.binary_mask,
-                                       ctypes.byref(self.row_code),
-                                       ctypes.byref(self.col_code))
-        libcodemap.bm64_to_img(
-            ctypes.byref(ImageMatrix(self.thresholded_image_array)),
-            self.binary_image, self.binary_mask)
-        # create extracted image
-        libcodemap.bm64_from_axiscodes(self.binary_image, self.binary_mask,
-                                       ctypes.byref(self.scale_match.row_code),
-                                       ctypes.byref(self.scale_match.col_code))
-        libcodemap.bm64_to_img(
-            ctypes.byref(ImageMatrix(self.extracted_image_array)),
-            self.binary_image, self.binary_mask)
-        # create correlation image
-        self.corr_a, self.corr_b = self.corr_b, self.corr_a
-        self.centered_correlation = np.roll(np.roll(self.corr_a.real, 16, 0),
-                                            16, 1)
-        self.centered_correlation *= 255
-        self.centered_correlation /= self.odom.correlation.squared_magnitude_max
+        self.pipeline_montage = np.empty((64 * 2, 64 * 3),
+                                         dtype=np.ubyte,
+                                         order='C')
+        libcodemap.generate_pipeline_montage(
+            ctypes.byref(ImageMatrix(self.pipeline_montage)),
+            ImageMatrix(frame), ctypes.byref(self))
         return location_updated
 
     def print(self):

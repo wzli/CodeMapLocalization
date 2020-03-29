@@ -89,24 +89,6 @@ class CodeMapGui:
         self.camera = cv2.convertScaleAbs(self.camera)
         # run localization algorithm
         self.loc_ctx.run(self.camera)
-        # create pipeline image
-        self.pipeline = np.zeros((res * 2, res * 3), dtype=np.ubyte) + 127
-        # top left
-        self.pipeline[:res, :res] = self.camera
-        # top mid
-        self.pipeline[:res, res:(2 * res)] = self.loc_ctx.derotated_image_array
-        # top right
-        self.pipeline[:res - 2, (2 * res):(3 * res) -
-                      2] = self.loc_ctx.sharpened_image_array
-        # bottom right
-        self.pipeline[res:(2 * res), (2 * res):(
-            3 * res)] = self.loc_ctx.thresholded_image_array
-        # bottom mid
-        self.pipeline[res:(2 * res), res:(
-            2 * res)] = self.loc_ctx.extracted_image_array
-        # bottom left
-        self.pipeline[res:(2 * res), :res] = cv2.resize(
-            self.loc_ctx.centered_correlation, (res, res))
         # debug prints
         radians = np.radians(self.rotation)
         if radians > np.pi:
@@ -121,7 +103,7 @@ class CodeMapGui:
         cv2.imshow('CodeMap', self.code_map)
         while (self.key_callback(cv2.waitKey(50))):
             cv2.imshow('Navigate', self.navigate)
-            cv2.imshow('Pipeline', self.pipeline)
+            cv2.imshow('Pipeline', self.loc_ctx.pipeline_montage)
         cv2.destroyAllWindows()
 
     def key_callback(self, key):
