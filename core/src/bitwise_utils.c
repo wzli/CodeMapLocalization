@@ -4,22 +4,21 @@
 // bit vector operations
 
 uint32_t bv32_get_slice_32(const uint32_t* vector, uint32_t k, uint8_t n) {
-    assert(n > 0 && n <= 32);
-    uint32_t index = k >> 5;
+    assert(n <= 32);
     uint8_t offset = k & 0x1F;
-    uint32_t code = vector[index] >> offset;
+    k >>= 5;
+    uint32_t code = vector[k] >> offset;
     if (offset + n > 32) {
-        code |= vector[index + 1] << (32 - offset);
+        code |= vector[k + 1] << (32 - offset);
     }
     return code & mask_bits(n);
 }
 
 uint64_t bv32_get_slice_64(const uint32_t* vector, uint32_t k, uint8_t n) {
-    if (n <= 32) {
-        return bv32_get_slice_32(vector, k, n);
-    }
-    return (uint64_t) bv32_get_slice_32(vector, k, 32) |
-           ((uint64_t) bv32_get_slice_32(vector, k + 32, n - 32) << 32);
+    assert(n <= 64);
+    return n <= 32 ? bv32_get_slice_32(vector, k, n)
+                   : (uint64_t) bv32_get_slice_32(vector, k, 32) |
+                             ((uint64_t) bv32_get_slice_32(vector, k + 32, n - 32) << 32);
 }
 
 uint32_t bv32_scale(
