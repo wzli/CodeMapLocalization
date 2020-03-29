@@ -19,3 +19,5 @@ void print_location(const Location* location);
 void print_location_match(const ScaleMatch* match);
 void print_odometry(const VisualOdometry* odom);
 void bm64_save_to_pgm(BitMatrix64 bit_matrix, BitMatrix64 bit_mask, const char* file_name);
+void generate_pipeline_montage(
+        ImageMatrix* dst, const ImageMatrix raw, const LocalizationContext* loc_ctx);

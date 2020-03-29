@@ -29,7 +29,7 @@ int main(int argc, char** argv) {
     // allocate context
     LocalizationContext loc_ctx = {0};
     ImageMatrix raw_image = MALLOC_IMAGE(FRAME_SIZE);
-    ImageMatrix output_image = MALLOC_IMAGE(2 * FRAME_SIZE);
+    ImageMatrix output_image = MALLOC_IMAGE(3 * FRAME_SIZE);
     loc_ctx.derotated_image = MALLOC_IMAGE(FRAME_SIZE);
     loc_ctx.sharpened_image = MALLOC_IMAGE(FRAME_SIZE);
     loc_ctx.odom.correlation.image = MALLOC_IMAGE_COMPLEX(FRAME_SIZE / 2);
@@ -61,37 +61,8 @@ int main(int argc, char** argv) {
         write_localization_msg(&loc_msg, &loc_ctx);
         LocalizationMsg_to_csv_entry(&loc_msg, text_buf);
         puts(text_buf);
-        // write raw image to top left
-        ImagePoint top_left = {0, 0};
-        IMG_PASTE(output_image, raw_image, top_left);
-        // write sharpened image to top right
-        top_left.x += FRAME_SIZE;
-        IMG_PASTE(output_image, loc_ctx.sharpened_image, top_left);
-        // write correlation image to bottom right
-        FOR_EACH_PIXEL(raw_image) {
-            // normalize to 255
-            PIXEL(raw_image, row, col) =
-                    255 * PIXEL(loc_ctx.odom.correlation.image, row / 2, col / 2).xy[0] /
-                    loc_ctx.odom.correlation.squared_magnitude_max;
-        }
-        // roll to center
-        for (int16_t row = 0; row < FRAME_SIZE / 2; ++row) {
-            for (int16_t col = 0; col < FRAME_SIZE / 2; ++col) {
-                SWAP(PIXEL(raw_image, row, col),
-                        PIXEL(raw_image, row + FRAME_SIZE / 2, col + FRAME_SIZE / 2));
-                SWAP(PIXEL(raw_image, row + FRAME_SIZE / 2, col),
-                        PIXEL(raw_image, row, col + FRAME_SIZE / 2));
-            }
-        }
-        top_left.y += FRAME_SIZE;
-        IMG_PASTE(output_image, raw_image, top_left);
-        // write decoded image to bottom left
-        bm64_from_axiscodes(loc_ctx.binary_image, loc_ctx.binary_mask,
-                &loc_ctx.scale_match.row_code, &loc_ctx.scale_match.col_code);
-        bm64_to_img(&raw_image, loc_ctx.binary_image, loc_ctx.binary_mask);
-        top_left.x -= FRAME_SIZE;
-        IMG_PASTE(output_image, raw_image, top_left);
-        // write pgm
+        // write pipeline montage pgm
+        generate_pipeline_montage(&output_image, raw_image, &loc_ctx);
         char file_name[32];
         sprintf(file_name, "%05d.pgm", loc_ctx.frame_count);
         img_save_to_pgm(output_image, file_name);

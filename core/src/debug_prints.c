@@ -110,3 +110,57 @@ void print_odometry(const VisualOdometry* odom) {
     printf("Odom Estimate\t");
     puts(buf);
 }
+
+void generate_pipeline_montage(
+        ImageMatrix* dst, const ImageMatrix raw, const LocalizationContext* loc_ctx) {
+    assert(dst && ctx);
+    assert(raw.size.x == 64 && raw.size.y == 64);
+    // declare buffer area
+    uint64_t* matrix = (uint64_t*) dst->data;
+    uint64_t* mask = matrix + 64;
+    ImageMatrix tmp_img = {(uint8_t*) (mask + 64), raw.size};
+    IMG_SET_SIZE(*dst, raw.size.x * 3, raw.size.y * 2);
+    // write correlation image to bottom left
+    FOR_EACH_PIXEL(tmp_img) {
+        // normalize to 255
+        PIXEL(tmp_img, row, col) = 255 *
+                                   PIXEL(loc_ctx->odom.correlation.image, row / 2, col / 2).xy[0] /
+                                   loc_ctx->odom.correlation.squared_magnitude_max;
+    }
+    // roll to center
+    for (int16_t row = 0; row < tmp_img.size.y / 2; ++row) {
+        for (int16_t col = 0; col < tmp_img.size.x / 2; ++col) {
+            SWAP(PIXEL(tmp_img, row, col),
+                    PIXEL(tmp_img, row + tmp_img.size.y / 2, col + tmp_img.size.x / 2));
+            SWAP(PIXEL(tmp_img, row + tmp_img.size.y / 2, col),
+                    PIXEL(tmp_img, row, col + tmp_img.size.x / 2));
+        }
+    }
+    ImagePoint top_left = {0, raw.size.y};
+    IMG_PASTE(*dst, tmp_img, top_left);
+    // write decoded image to bottom middle
+    bm64_from_axiscodes(
+            matrix, mask, &loc_ctx->scale_match.row_code, &loc_ctx->scale_match.col_code);
+    bm64_to_img(&tmp_img, matrix, mask);
+    top_left.x += raw.size.x;
+    IMG_PASTE(*dst, tmp_img, top_left);
+    // write extracted image to bottom right
+    bm64_from_axiscodes(matrix, mask, &loc_ctx->row_code, &loc_ctx->col_code);
+    bm64_to_img(&tmp_img, matrix, mask);
+    top_left.x += raw.size.x;
+    IMG_PASTE(*dst, tmp_img, top_left);
+    // fill out top as gray
+    dst->size.y >>= 1;
+    IMG_FILL(*dst, 127);
+    dst->size.y <<= 1;
+    // write raw image to top left
+    top_left.x = 0;
+    top_left.y = 0;
+    IMG_PASTE(*dst, raw, top_left);
+    // write derotated image to top middle
+    top_left.x += raw.size.x;
+    IMG_PASTE(*dst, loc_ctx->derotated_image, top_left);
+    // write sharpened image to top right
+    top_left.x += raw.size.x;
+    IMG_PASTE(*dst, loc_ctx->sharpened_image, top_left);
+}
