@@ -111,6 +111,14 @@ void print_odometry(const VisualOdometry* odom) {
     puts(buf);
 }
 
+void print_localization(const LocalizationContext* loc_ctx) {
+    char buf[512];
+    LocalizationMsg msg;
+    write_localization_msg(&msg, loc_ctx);
+    LocalizationMsg_to_json(&msg, buf);
+    puts(buf);
+}
+
 void generate_pipeline_montage(
         ImageMatrix* dst, const ImageMatrix raw, const LocalizationContext* loc_ctx) {
     assert(dst && ctx);

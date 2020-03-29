@@ -199,3 +199,4 @@ class LocalizationContext(ctypes.Structure):
     def print(self):
         libcodemap.print_odometry(ctypes.byref(self.odom))
         libcodemap.print_location_match(ctypes.byref(self.scale_match))
+        #libcodemap.print_localization(ctypes.byref(self))
