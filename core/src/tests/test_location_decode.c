@@ -92,8 +92,8 @@ static int test_location_decode_reversed_blocks() {
             test_assert(col_pos.reversed == 1);
             test_assert(row_pos.span == 33 - MLS_INDEX.code_length);
             test_assert(col_pos.span == 33 - MLS_INDEX.code_length);
-            test_assert(src_row_pos + (row_pos.span + 1) / 2 == row_pos.center);
-            test_assert(src_col_pos + (col_pos.span + 1) / 2 == col_pos.center);
+            test_assert(src_row_pos + row_pos.span / 2 == row_pos.center);
+            test_assert(src_col_pos + col_pos.span / 2 == col_pos.center);
         }
     return 0;
 }

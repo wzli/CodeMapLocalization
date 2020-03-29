@@ -87,7 +87,7 @@ AxisPosition T(ac, WIDTH, _decode_position)(AxisCode axiscode) {
         T(axiscode.mask.x, WIDTH, ) >>= position.span;
     }
     best_position.center +=
-            best_position.reversed ? 1 - best_position.span / 2 : best_position.span / 2;
+            best_position.reversed ? (1 - best_position.span) / 2 : best_position.span / 2;
     if (axiscode.n_errors * 4 > axiscode.n_samples) {
         best_position.span = 0;
     }

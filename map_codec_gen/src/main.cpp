@@ -1,4 +1,5 @@
 extern "C" {
+#include "bitwise_utils.h"
 #include "mls_query.h"
 }
 #include "code_map.hpp"
@@ -120,7 +121,7 @@ int main(int argc, char** argv) {
         word |= new_bit << (word_length - 1);
         int position = i - word_length + 1;
         if (position >= 0) {
-            if (word != mlsq_code_from_position(sequence.get(), word_length, position)) {
+            if (word != bv32_get_slice(sequence.get(), position, word_length)) {
                 std::cout << "Internal Error: position lookup doesn't match expected word"
                           << std::endl;
                 return INTERNAL_ERROR_POSITION_LOOKUP_MISMATCH;
