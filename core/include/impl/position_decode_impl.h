@@ -5,13 +5,13 @@
 #include "location_decode.h"
 
 #define TEMPLATE_CAT3(A, B, C) A##B##C
-#define TEMPLATE(A, B, C) TEMPLATE_CAT3(A, B, C)
+#define T(A, B, C) TEMPLATE_CAT3(A, B, C)
 
-uint8_t TEMPLATE(ac, WIDTH, _next_valid_segment)(AxisCode* axiscode, uint8_t code_length) {
+uint8_t T(ac, WIDTH, _next_valid_segment)(AxisCode* axiscode, uint8_t code_length) {
     assert(axiscode);
     assert(code_length <= (WIDTH));
-    TEMPLATE(uint, WIDTH, _t)* bits = &TEMPLATE(axiscode->bits.x, WIDTH, );
-    TEMPLATE(uint, WIDTH, _t)* mask = &TEMPLATE(axiscode->mask.x, WIDTH, );
+    T(uint, WIDTH, _t)* bits = &T(axiscode->bits.x, WIDTH, );
+    T(uint, WIDTH, _t)* mask = &T(axiscode->mask.x, WIDTH, );
     uint8_t valid_segment_length = count_trailing_zeros(~*mask);
     while (*mask && valid_segment_length < code_length) {
         *mask >>= valid_segment_length;
@@ -24,15 +24,14 @@ uint8_t TEMPLATE(ac, WIDTH, _next_valid_segment)(AxisCode* axiscode, uint8_t cod
     return valid_segment_length;
 }
 
-AxisPosition TEMPLATE(ac, WIDTH, _decode_position)(AxisCode axiscode) {
+AxisPosition T(ac, WIDTH, _decode_position)(AxisCode axiscode) {
     AxisPosition best_position = {0};
-    TEMPLATE(uint, WIDTH, _t)* bits = &TEMPLATE(axiscode.bits.x, WIDTH, );
+    T(uint, WIDTH, _t)* bits = &T(axiscode.bits.x, WIDTH, );
     const uint32_t code_mask = mask_bits(MLS_INDEX.code_length);
     for (uint8_t valid_segment_length =
-                    TEMPLATE(ac, WIDTH, _next_valid_segment)(&axiscode, MLS_INDEX.code_length);
-            valid_segment_length > 0;
-            valid_segment_length =
-                    TEMPLATE(ac, WIDTH, _next_valid_segment)(&axiscode, MLS_INDEX.code_length)) {
+                    T(ac, WIDTH, _next_valid_segment)(&axiscode, MLS_INDEX.code_length);
+            valid_segment_length > 0; valid_segment_length = T(ac, WIDTH, _next_valid_segment)(
+                                              &axiscode, MLS_INDEX.code_length)) {
         uint32_t code = *bits & code_mask;
         AxisPosition position = {0};
         position.center = mlsq_position_from_code(MLS_INDEX, code);
@@ -64,13 +63,13 @@ AxisPosition TEMPLATE(ac, WIDTH, _decode_position)(AxisCode axiscode) {
             if (lookup_index + valid_segment_length >= MLS_INDEX.sequence_length) {
                 valid_segment_length = MLS_INDEX.sequence_length - lookup_index - 1;
             }
-            TEMPLATE(uint, WIDTH, _t)
-            expected_code = TEMPLATE(bv32_get_slice_, WIDTH, )(
+            T(uint, WIDTH, _t)
+            expected_code = T(bv32_get_slice_, WIDTH, )(
                     MLS_INDEX.sequence, lookup_index, valid_segment_length);
-            TEMPLATE(uint, WIDTH, _t)
+            T(uint, WIDTH, _t)
             extended_code = position.inverted
                                     ? invert_bits(*bits, valid_segment_length)
-                                    : *bits & TEMPLATE(mask_bits_, WIDTH, )(valid_segment_length);
+                                    : *bits & T(mask_bits_, WIDTH, )(valid_segment_length);
             if (position.reversed) {
                 expected_code = reverse_bits(expected_code, valid_segment_length);
             }
@@ -85,7 +84,7 @@ AxisPosition TEMPLATE(ac, WIDTH, _decode_position)(AxisCode axiscode) {
         }
         position.span += !position.span;
         *bits >>= position.span;
-        TEMPLATE(axiscode.mask.x, WIDTH, ) >>= position.span;
+        T(axiscode.mask.x, WIDTH, ) >>= position.span;
     }
     best_position.center +=
             best_position.reversed ? 1 - best_position.span / 2 : best_position.span / 2;
@@ -95,7 +94,7 @@ AxisPosition TEMPLATE(ac, WIDTH, _decode_position)(AxisCode axiscode) {
     return best_position;
 }
 
-void TEMPLATE(ac, WIDTH, _scale_search_location)(
+void T(ac, WIDTH, _scale_search_location)(
         ScaleMatch* match, const AxisCode* row_code, const AxisCode* col_code, float decay_rate) {
     assert(match && row_code && col_code && decay_rate > 0 && decay_rate <= 1);
     ScaleMatch candidate;
@@ -104,12 +103,12 @@ void TEMPLATE(ac, WIDTH, _scale_search_location)(
         candidate.row_code = *row_code;
         candidate.col_code = *col_code;
         candidate.row_scale_errors =
-                TEMPLATE(ac, WIDTH, _downsample)(&candidate.row_code, candidate.scale);
+                T(ac, WIDTH, _downsample)(&candidate.row_code, candidate.scale);
         candidate.col_scale_errors =
-                TEMPLATE(ac, WIDTH, _downsample)(&candidate.col_code, candidate.scale);
+                T(ac, WIDTH, _downsample)(&candidate.col_code, candidate.scale);
         // decode posiiton
-        AxisPosition row_pos = TEMPLATE(ac, WIDTH, _decode_position)(candidate.row_code);
-        AxisPosition col_pos = TEMPLATE(ac, WIDTH, _decode_position)(candidate.col_code);
+        AxisPosition row_pos = T(ac, WIDTH, _decode_position)(candidate.row_code);
+        AxisPosition col_pos = T(ac, WIDTH, _decode_position)(candidate.col_code);
         candidate.location = deduce_location(row_pos, col_pos);
         float scaled_bits = candidate.scale * (WIDTH);
         uint8_t scale_errors = MAX(candidate.row_scale_errors, candidate.col_scale_errors);
@@ -124,4 +123,4 @@ void TEMPLATE(ac, WIDTH, _scale_search_location)(
 
 #undef WIDTH
 #undef TEMPLATE_CAT3
-#undef TEMPLATE
+#undef T
