@@ -180,7 +180,7 @@ class LocalizationContext(ctypes.Structure):
         self.outlier_filter.quality_threshold = 0.05
         self.outlier_filter.distance_threshold = 200
         self.outlier_filter.match_length_threshold = 21 - MLS_INDEX.code_length
-        self.outlier_filter.xor_error_ratio_threshold = 5
+        self.outlier_filter.xor_error_ratio_threshold = 4
         self.outlier_filter.max_rejection_count = 10
         self.odom.correlation.squared_magnitude_threshold = 0.01
 
@@ -199,4 +199,5 @@ class LocalizationContext(ctypes.Structure):
     def print(self):
         libcodemap.print_odometry(ctypes.byref(self.odom))
         libcodemap.print_location_match(ctypes.byref(self.scale_match))
+        libcodemap.print_correlation(ctypes.byref(self.odom.correlation))
         #libcodemap.print_localization(ctypes.byref(self))

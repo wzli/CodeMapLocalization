@@ -111,6 +111,15 @@ void print_odometry(const VisualOdometry* odom) {
     puts(buf);
 }
 
+void print_correlation(const Correlation* corr) {
+    char buf[128];
+    CorrelationMsg msg;
+    write_correlation_msg(&msg, corr);
+    CorrelationMsg_to_json(&msg, buf);
+    printf("Correlation\t");
+    puts(buf);
+}
+
 void print_localization(const LocalizationContext* loc_ctx) {
     char buf[512];
     LocalizationMsg msg;

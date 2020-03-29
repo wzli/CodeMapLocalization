@@ -42,7 +42,7 @@ int main(int argc, char** argv) {
     loc_ctx.outlier_filter.quality_threshold = 0.05f;
     loc_ctx.outlier_filter.distance_threshold = 200;
     loc_ctx.outlier_filter.match_length_threshold = 21 - MLS_INDEX.code_length;
-    loc_ctx.outlier_filter.xor_error_ratio_threshold = 5;
+    loc_ctx.outlier_filter.xor_error_ratio_threshold = 4;
     loc_ctx.outlier_filter.max_rejection_count = 10;
     loc_ctx.odom.correlation.squared_magnitude_threshold = 0.01f;
 
