@@ -30,12 +30,15 @@ bool outlier_filter_location(OutlierFilter* ctx, const ScaleMatch* new_match) {
             new_match->location.y == ctx->filtered_match.location.y) {
         return true;
     }
+    if (new_match->quality < ctx->quality_threshold) {
+        return false;
+    }
     if (new_match->location.match_size < SQR(ctx->match_length_threshold)) {
         return false;
     }
-    if ((new_match->row_code.n_errors * ctx->bit_error_ratio_threshold >
+    if ((new_match->row_code.n_errors * ctx->xor_error_ratio_threshold >
                 new_match->row_code.n_samples) ||
-            (new_match->col_code.n_errors * ctx->bit_error_ratio_threshold >
+            (new_match->col_code.n_errors * ctx->xor_error_ratio_threshold >
                     new_match->col_code.n_samples)) {
         return false;
     }

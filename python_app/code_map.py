@@ -95,9 +95,10 @@ class ScaleMatch(ctypes.Structure):
 class OutlierFilter(ctypes.Structure):
     _fields_ = [
         ('filtered_match', ScaleMatch),
+        ('quality_threshold', ctypes.c_float),
         ('distance_threshold', ctypes.c_ushort),
         ('match_length_threshold', ctypes.c_ushort),
-        ('bit_error_ratio_threshold', ctypes.c_ubyte),
+        ('xor_error_ratio_threshold', ctypes.c_ubyte),
         ('max_rejection_count', ctypes.c_ubyte),
         ('rejection_count', ctypes.c_ubyte),
     ]
@@ -184,9 +185,10 @@ class LocalizationContext(ctypes.Structure):
         # setup params
         self.rotation_scale = 1.0
         self.scale_decay_rate = 0.02
+        self.outlier_filter.quality_threshold = 0.05
         self.outlier_filter.distance_threshold = 200
         self.outlier_filter.match_length_threshold = 21 - MLS_INDEX.code_length
-        self.outlier_filter.bit_error_ratio_threshold = 5
+        self.outlier_filter.xor_error_ratio_threshold = 5
         self.outlier_filter.max_rejection_count = 10
         self.odom.correlation.squared_magnitude_threshold = 0.01
 

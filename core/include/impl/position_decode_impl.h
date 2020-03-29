@@ -89,9 +89,6 @@ AxisPosition T(ac, WIDTH, _decode_position)(AxisCode axiscode) {
     }
     best_position.center +=
             best_position.reversed ? (1 - best_position.span) / 2 : best_position.span / 2;
-    if (axiscode.n_errors * 4 > axiscode.n_samples) {
-        best_position.span = 0;
-    }
     return best_position;
 }
 
@@ -136,6 +133,8 @@ void T(ac, WIDTH, _scale_search_location)(
             *match = sample;
         }
     }
+    match->quality *= (1.0f - (float) row_code->n_errors / row_code->n_samples);
+    match->quality *= (1.0f - (float) col_code->n_errors / col_code->n_samples);
 }
 
 #undef WIDTH
