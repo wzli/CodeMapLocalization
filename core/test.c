@@ -38,7 +38,7 @@ int main(int argc, char** argv) {
     LocalizationMsg loc_msg = {0};
     // setup configs
     loc_ctx.rotation_scale = 1.0f;
-    loc_ctx.scale_decay_rate = 0.01f;
+    loc_ctx.scale_decay_rate = 0.02f;
     loc_ctx.outlier_filter.distance_threshold = 200;
     loc_ctx.outlier_filter.match_length_threshold = 21 - MLS_INDEX.code_length;
     loc_ctx.outlier_filter.bit_error_ratio_threshold = 5;

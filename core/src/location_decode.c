@@ -1,5 +1,4 @@
 #include "location_decode.h"
-#include "mls_query.h"
 #include <assert.h>
 
 #define WIDTH 32

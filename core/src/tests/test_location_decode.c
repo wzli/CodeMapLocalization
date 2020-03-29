@@ -17,6 +17,8 @@ static int test_ac32_next_valid_segment() {
     test_assert(test_code.mask.x32 == 0x0000FFFF);
     test_code = (AxisCode){{.x32 = ~0}, {.x32 = ~0}, 0, 1};
     test_assert(ac32_next_valid_segment(&test_code, 15) == 32);
+    test_assert(ac32_next_valid_segment(&test_code, 32) == 32);
+    test_assert(ac32_next_valid_segment(&test_code, 33) == 0);
     test_assert(test_code.bits.x32 == ~0u);
     test_assert(test_code.mask.x32 == ~0u);
     test_code = (AxisCode){{.x32 = 0}, {.x32 = 0}, 0, 1};
@@ -39,6 +41,8 @@ static int test_ac64_next_valid_segment() {
     test_assert(test_code.mask.x64 == 0x0000FFFF);
     test_code = (AxisCode){{~0ull}, {~0ull}, 0, 1};
     test_assert(ac64_next_valid_segment(&test_code, 15) == 64);
+    test_assert(ac64_next_valid_segment(&test_code, 64) == 64);
+    test_assert(ac64_next_valid_segment(&test_code, 65) == 0);
     test_assert(test_code.bits.x64 == ~0ull);
     test_assert(test_code.mask.x64 == ~0ull);
     test_code = (AxisCode){{0}, {0}, 0, 1};

@@ -3,15 +3,18 @@
 #endif
 
 #include "location_decode.h"
+#include "mls_query.h"
 
 #define TEMPLATE_CAT3(A, B, C) A##B##C
 #define T(A, B, C) TEMPLATE_CAT3(A, B, C)
 
 uint8_t T(ac, WIDTH, _next_valid_segment)(AxisCode* axiscode, uint8_t code_length) {
+    if (code_length > (WIDTH)) {
+        return 0;
+    }
     assert(axiscode);
-    assert(code_length <= (WIDTH));
-    T(uint, WIDTH, _t)* bits = &T(axiscode->bits.x, WIDTH, );
-    T(uint, WIDTH, _t)* mask = &T(axiscode->mask.x, WIDTH, );
+    T(uint, WIDTH, _t)* const bits = &T(axiscode->bits.x, WIDTH, );
+    T(uint, WIDTH, _t)* const mask = &T(axiscode->mask.x, WIDTH, );
     uint8_t valid_segment_length = count_trailing_zeros(~*mask);
     while (*mask && valid_segment_length < code_length) {
         *mask >>= valid_segment_length;
@@ -26,12 +29,11 @@ uint8_t T(ac, WIDTH, _next_valid_segment)(AxisCode* axiscode, uint8_t code_lengt
 
 AxisPosition T(ac, WIDTH, _decode_position)(AxisCode axiscode) {
     AxisPosition best_position = {0};
-    T(uint, WIDTH, _t)* bits = &T(axiscode.bits.x, WIDTH, );
+    T(uint, WIDTH, _t)* const bits = &T(axiscode.bits.x, WIDTH, );
     const uint32_t code_mask = mask_bits(MLS_INDEX.code_length);
-    for (uint8_t valid_segment_length =
-                    T(ac, WIDTH, _next_valid_segment)(&axiscode, MLS_INDEX.code_length);
-            valid_segment_length > 0; valid_segment_length = T(ac, WIDTH, _next_valid_segment)(
-                                              &axiscode, MLS_INDEX.code_length)) {
+    uint8_t valid_segment_length =
+            T(ac, WIDTH, _next_valid_segment)(&axiscode, MLS_INDEX.code_length);
+    while (valid_segment_length > 0) {
         uint32_t code = *bits & code_mask;
         AxisPosition position = {0};
         position.center = mlsq_position_from_code(MLS_INDEX, code);
@@ -79,12 +81,11 @@ AxisPosition T(ac, WIDTH, _decode_position)(AxisCode axiscode) {
         if (position.span > best_position.span) {
             best_position = position;
         }
-        if (position.span >= (WIDTH)) {
-            break;
-        }
-        position.span += !position.span;
-        *bits >>= position.span;
-        T(axiscode.mask.x, WIDTH, ) >>= position.span;
+        uint8_t shift = position.span > 0 ? position.span + MLS_INDEX.code_length - 1 : 1;
+        *bits >>= shift;
+        T(axiscode.mask.x, WIDTH, ) >>= shift;
+        valid_segment_length = T(ac, WIDTH, _next_valid_segment)(
+                &axiscode, MLS_INDEX.code_length + best_position.span);
     }
     best_position.center +=
             best_position.reversed ? (1 - best_position.span) / 2 : best_position.span / 2;
