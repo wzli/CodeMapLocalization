@@ -28,6 +28,7 @@ set(srcs
 
 set(includes
   include
+  include/impl
   include/micro_image_utils
   include/micro_image_utils/tests
 )

@@ -130,7 +130,7 @@ void print_localization(const LocalizationContext* loc_ctx) {
 
 void generate_pipeline_montage(
         ImageMatrix* dst, const ImageMatrix raw, const LocalizationContext* loc_ctx) {
-    assert(dst && ctx);
+    assert(dst && loc_ctx);
     assert(raw.size.x == 64 && raw.size.y == 64);
     // declare buffer area
     uint64_t* matrix = (uint64_t*) dst->data;

@@ -48,7 +48,7 @@ static LocalizationContext loc_ctx;
 /* helper functions */
 
 static inline ImageMatrix fb_to_img(camera_fb_t fb) {
-    return (ImageMatrix){fb.buf, {{fb.width, fb.height}}};
+    return (ImageMatrix){fb.buf, {fb.width, fb.height}};
 }
 
 static inline camera_fb_t* camera_fb_swap(camera_fb_t* fb) {
@@ -84,17 +84,17 @@ static void queue_fb_return(uint8_t queue_index) {
 
 /* run */
 static void main_loop(void* pvParameters) {
-    ESP_LOGI(TAG, "using MLS_INDEX_ID %llx", MLS_ID);
+    ESP_LOGI(TAG, "using MLS_ID %llx sequence_length %d code_length %d", MLS_ID,
+            MLS_INDEX.sequence_length, MLS_INDEX.code_length);
     // configure location context params
     loc_ctx.rotation_scale = 1.0f;
-    loc_ctx.scale_query.lower_bound = 0.8f;
-    loc_ctx.scale_query.upper_bound = 1.2f;
-    loc_ctx.scale_query.step_size = 0.02f;
+    loc_ctx.scale_decay_rate = 0.02f;
+    loc_ctx.outlier_filter.quality_threshold = 0.05f;
     loc_ctx.outlier_filter.distance_threshold = 200;
     loc_ctx.outlier_filter.match_length_threshold = 21 - MLS_INDEX.code_length;
-    loc_ctx.outlier_filter.bit_error_ratio_threshold = 5;
+    loc_ctx.outlier_filter.xor_error_ratio_threshold = 4;
     loc_ctx.outlier_filter.max_rejection_count = 10;
-    loc_ctx.odom.correlation.squared_magnitude_threshold = 0.01;
+    loc_ctx.odom.correlation.squared_magnitude_threshold = 0.01f;
     loc_ctx.odom.correlation.image.data = correlation_buffers[0];
     loc_ctx.odom.correlation.buffer.data = correlation_buffers[1];
     // initialize queues
@@ -129,19 +129,15 @@ static void main_loop(void* pvParameters) {
         IMG_SET_SIZE(images[1], 62, 62);
 
         // write decoded image
-        AXISCODE_COPY(loc_ctx.scale_query.row_code, loc_ctx.scale_match.row_code);
-        AXISCODE_COPY(loc_ctx.scale_query.col_code, loc_ctx.scale_match.col_code);
-        loc_ctx.scale_query.row_code = scale_axiscode64(loc_ctx.scale_query.row_code, 3);
-        loc_ctx.scale_query.col_code = scale_axiscode64(loc_ctx.scale_query.col_code, 3);
-        bm64_from_axiscodes(loc_ctx.binary_image, loc_ctx.binary_mask, loc_ctx.scale_query.row_code,
-                loc_ctx.scale_query.col_code);
+        bm64_from_axiscodes(
+                loc_ctx.binary_image, loc_ctx.binary_mask, &loc_ctx.row_code, &loc_ctx.col_code);
         bm64_to_img(&images[2], loc_ctx.binary_image, loc_ctx.binary_mask);
 
         // write correlation image
         IMG_SET_SIZE(images[3], 64, 64);
         IMG_FILL(images[3], 0);
-        PIXEL(images[3], (int) loc_ctx.odom.correlation.translation.y + 32,
-                (int) loc_ctx.odom.correlation.translation.x + 32) = 255;
+        PIXEL(images[3], (int) loc_ctx.odom.correlation.translation.xy[1] + 32,
+                (int) loc_ctx.odom.correlation.translation.xy[0] + 32) = 255;
 
         // return frame buffers
         for (uint8_t i = 0; i <= N_DOUBLE_BUFFERS; ++i) {
