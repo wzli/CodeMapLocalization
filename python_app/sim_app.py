@@ -24,13 +24,13 @@ def create_window(name, size, pos=None):
 
 class CodeMapGui:
     CAMERA_RES = 64
-    MAX_ZOOM = 100
+    MAX_SCALE = 1 / np.sqrt(2)
+    MIN_SCALE = (cm.MLS_INDEX.code_length + 2) / 64
 
     def __init__(self):
         # initial coordinates
         self.pos = np.array([0, 0])
         self.rotation = 0
-        self.zoom = 1
         self.blur = 0
         self.tunnel = np.ones((CodeMapGui.CAMERA_RES, CodeMapGui.CAMERA_RES))
         self.noise = 0
@@ -45,8 +45,8 @@ class CodeMapGui:
         create_window('Navigate', (512, 512 + 50))
         cv2.createTrackbar('Rotation', 'Navigate', 0, 360,
                            self.rotation_callback)
-        cv2.createTrackbar('Zoom', 'Navigate', 0, CodeMapGui.MAX_ZOOM,
-                           self.zoom_callback)
+        cv2.createTrackbar('Zoom', 'Navigate', 30, 100, self.zoom_callback)
+        self.zoom_callback(30)
         cv2.setMouseCallback('Navigate', self.navigate_mouse_callback)
         # create Pipeline window
         create_window('Pipeline', (3 * 256, 2 * 256 + 75))
@@ -66,14 +66,14 @@ class CodeMapGui:
                                       res, self.pos[0]:self.pos[0] + res]
         # rotate and zoom from navigate view to get camera view
         rot_mat = cv2.getRotationMatrix2D((0, 0), -self.rotation,
-                                          2 + res / (6 * self.zoom))
-        self.camera = rotate_image(self.navigate, self.rotation, 3 * self.zoom)
+                                          2 + res / (2 * self.zoom))
+        self.camera = rotate_image(self.navigate, self.rotation, self.zoom)
         # draw box around camera view
         self.navigate = cv2.cvtColor(self.navigate, cv2.COLOR_GRAY2RGB)
         corners = np.array([[-1, -1], [-1, 1], [1, 1], [1, -1]])
         for i, corner in enumerate(corners):
             corners[i] = np.int0(rot_mat[:, :2].dot(corner)) + (res // 2)
-        cv2.drawContours(self.navigate, [corners], 0, (0, 255, 0), 2)
+        cv2.drawContours(self.navigate, [corners], 0, (0, 255, 0), 1)
         # convert to float to apply camera distortions
         self.camera = np.float32(self.camera)
         # apply blur
@@ -159,7 +159,9 @@ class CodeMapGui:
         self.update_frame()
 
     def zoom_callback(self, val):
-        self.zoom = 1 / (1 + val / 89)
+        scale = CodeMapGui.MIN_SCALE + (val / 100) * (CodeMapGui.MAX_SCALE -
+                                                      CodeMapGui.MIN_SCALE)
+        self.zoom = 1 / scale
         self.update_frame()
 
     def blur_callback(self, val):
@@ -182,7 +184,7 @@ class CodeMapGui:
 
     def increment_zoom(self, inc):
         zoom_track = cv2.getTrackbarPos('Zoom', 'Navigate')
-        zoom_track = np.clip(zoom_track + inc, 0, CodeMapGui.MAX_ZOOM)
+        zoom_track = np.clip(zoom_track + inc, 0, 100)
         cv2.setTrackbarPos('Zoom', 'Navigate', zoom_track)
 
 

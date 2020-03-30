@@ -102,7 +102,8 @@ void T(ac, WIDTH, _scale_search_location)(
     T(uint, WIDTH, _t) prev_col_code = 0;
     AxisPosition row_pos;
     AxisPosition col_pos;
-    for (sample.scale = M_SQRT1_2_F; sample.scale >= 1.0f / 3; sample.scale *= 1 - decay_rate) {
+    const float min_scale = (MLS_INDEX.code_length + 2.0f) / (WIDTH);
+    for (sample.scale = M_SQRT1_2_F; sample.scale >= min_scale; sample.scale *= 1 - decay_rate) {
         // scale and downsample axis codes
         sample.row_code = *row_code;
         sample.col_code = *col_code;
