@@ -5,33 +5,6 @@
 typedef uint32_t BitMatrix32[32];
 typedef uint64_t BitMatrix64[64];
 
-// bit vector operations
-
-static inline void bv32_set_bit(uint32_t* vector, uint32_t k) {
-    vector[k >> 5] |= 1 << (k & 0x1F);
-}
-
-static inline void bv32_clear_bit(uint32_t* vector, uint32_t k) {
-    vector[k >> 5] &= ~(1 << (k & 0x1F));
-}
-
-static inline bool bv32_get_bit(const uint32_t* vector, uint32_t k) {
-    return (vector[k >> 5] >> (k & 0x1F)) & 1;
-}
-
-static inline void bv32_clear_all(uint32_t* vector, uint32_t len) {
-    for (uint32_t i = 0; i < len; i += 32) {
-        vector[i >> 5] = 0;
-    }
-}
-
-#define bv32_get_slice bv32_get_slice_32
-uint32_t bv32_get_slice_32(const uint32_t* vector, uint32_t k, uint8_t n);
-uint64_t bv32_get_slice_64(const uint32_t* vector, uint32_t k, uint8_t n);
-
-uint32_t bv32_scale(
-        uint32_t* dst, const uint32_t* src, uint32_t dst_len, uint32_t src_len, float scale);
-
 // bit matrix operations
 
 static inline bool bm32_get_bit(const BitMatrix32 matrix, uint8_t row, uint8_t col) {
@@ -95,3 +68,41 @@ uint8_t count_bits_32(uint32_t x);
 static inline uint8_t count_bits_64(uint64_t x) {
     return count_bits_32(x) + count_bits_32(x >> 32);
 }
+// bit vector operations
+
+static inline void bv32_set_bit(uint32_t* vector, uint32_t k) {
+    vector[k >> 5] |= 1 << (k & 0x1F);
+}
+
+static inline void bv32_clear_bit(uint32_t* vector, uint32_t k) {
+    vector[k >> 5] &= ~(1 << (k & 0x1F));
+}
+
+static inline bool bv32_get_bit(const uint32_t* vector, uint32_t k) {
+    return (vector[k >> 5] >> (k & 0x1F)) & 1;
+}
+
+static inline void bv32_clear_all(uint32_t* vector, uint32_t len) {
+    for (uint32_t i = 0; i < len; i += 32) {
+        vector[i >> 5] = 0;
+    }
+}
+
+#define bv32_get_slice bv32_get_slice_32
+static inline uint32_t bv32_get_slice_32(const uint32_t* vector, uint32_t k, uint8_t n) {
+    uint8_t offset = k & 0x1F;
+    k >>= 5;
+    uint32_t code = vector[k] >> offset;
+    if (offset + n > 32) {
+        code |= vector[k + 1] << (32 - offset);
+    }
+    return code & mask_bits(n);
+}
+static inline uint64_t bv32_get_slice_64(const uint32_t* vector, uint32_t k, uint8_t n) {
+    return n <= 32 ? bv32_get_slice_32(vector, k, n)
+                   : (uint64_t) bv32_get_slice_32(vector, k, 32) |
+                             ((uint64_t) bv32_get_slice_32(vector, k + 32, n - 32) << 32);
+}
+
+uint32_t bv32_scale(
+        uint32_t* dst, const uint32_t* src, uint32_t dst_len, uint32_t src_len, float scale);

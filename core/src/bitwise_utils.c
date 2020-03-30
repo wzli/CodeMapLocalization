@@ -1,43 +1,6 @@
 #include "bitwise_utils.h"
 #include <assert.h>
 
-// bit vector operations
-
-uint32_t bv32_get_slice_32(const uint32_t* vector, uint32_t k, uint8_t n) {
-    assert(n <= 32);
-    uint8_t offset = k & 0x1F;
-    k >>= 5;
-    uint32_t code = vector[k] >> offset;
-    if (offset + n > 32) {
-        code |= vector[k + 1] << (32 - offset);
-    }
-    return code & mask_bits(n);
-}
-
-uint64_t bv32_get_slice_64(const uint32_t* vector, uint32_t k, uint8_t n) {
-    assert(n <= 64);
-    return n <= 32 ? bv32_get_slice_32(vector, k, n)
-                   : (uint64_t) bv32_get_slice_32(vector, k, 32) |
-                             ((uint64_t) bv32_get_slice_32(vector, k + 32, n - 32) << 32);
-}
-
-uint32_t bv32_scale(
-        uint32_t* dst, const uint32_t* src, uint32_t dst_len, uint32_t src_len, float scale) {
-    assert(dst && src && dst != src && dst_len > 0 && src_len > 0 && scale > 0);
-    uint32_t dst_idx = 0;
-    float src_idx = 0;
-    float src_inc = 1.0f / scale;
-    bv32_clear_all(dst, dst_len);
-    while (dst_idx < dst_len && src_idx < src_len) {
-        if (bv32_get_bit(src, (uint8_t) src_idx)) {
-            bv32_set_bit(dst, dst_idx);
-        }
-        ++dst_idx;
-        src_idx += src_inc;
-    }
-    return dst_idx;
-}
-
 // bunch of bit twiddling hacks
 // see https://graphics.stanford.edu/~seander/bithacks.html
 
@@ -105,4 +68,23 @@ uint8_t count_bits_32(uint32_t x) {
     x = x - ((x >> 1) & 0x55555555);
     x = (x & 0x33333333) + ((x >> 2) & 0x33333333);
     return (((x + (x >> 4)) & 0x0F0F0F0F) * 0x01010101) >> 24;
+}
+
+// bit vector operations
+
+uint32_t bv32_scale(
+        uint32_t* dst, const uint32_t* src, uint32_t dst_len, uint32_t src_len, float scale) {
+    assert(dst && src && dst != src && dst_len > 0 && src_len > 0 && scale > 0);
+    uint32_t dst_idx = 0;
+    float src_idx = 0;
+    float src_inc = 1.0f / scale;
+    bv32_clear_all(dst, dst_len);
+    while (dst_idx < dst_len && src_idx < src_len) {
+        if (bv32_get_bit(src, (uint8_t) src_idx)) {
+            bv32_set_bit(dst, dst_idx);
+        }
+        ++dst_idx;
+        src_idx += src_inc;
+    }
+    return dst_idx;
 }
