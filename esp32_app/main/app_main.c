@@ -108,7 +108,7 @@ static void main_loop(void* pvParameters) {
     // main loop
     int64_t start_time = esp_timer_get_time();
     uint16_t led_duty_control = 0;
-    for (uint32_t frame_count = 0;; ++frame_count) {
+    for (;;) {
         ImageMatrix images[N_DOUBLE_BUFFERS + 1];
         // fetch frame buffers
         for (uint8_t i = 0; i <= N_DOUBLE_BUFFERS; ++i) {
@@ -128,6 +128,7 @@ static void main_loop(void* pvParameters) {
         // write sharpened image
         IMG_SET_SIZE(images[1], 62, 62);
 
+        #if 0
         // write decoded image
         bm64_from_axiscodes(
                 loc_ctx.binary_image, loc_ctx.binary_mask, &loc_ctx.row_code, &loc_ctx.col_code);
@@ -138,6 +139,7 @@ static void main_loop(void* pvParameters) {
         IMG_FILL(images[3], 0);
         PIXEL(images[3], (int) loc_ctx.odom.correlation.translation.xy[1] + 32,
                 (int) loc_ctx.odom.correlation.translation.xy[0] + 32) = 255;
+        #endif
 
         // return frame buffers
         for (uint8_t i = 0; i <= N_DOUBLE_BUFFERS; ++i) {
@@ -161,10 +163,11 @@ static void main_loop(void* pvParameters) {
         int64_t end_time = esp_timer_get_time();
         Vector2f odom_rot = loc_ctx.odom.quadrant_rotation;
         odom_rot.z *= QUADRANT_LOOKUP[loc_ctx.odom.quadrant_count & 3].z;
+
         if (updated) {
             ESP_LOGI(TAG,
                     "frames %u recorded %u loop time %lluus thresh %u (x %d y %d r %f m %d) \n",
-                    frame_count, record_frame_count, end_time - start_time,
+                    loc_ctx.frame_count, record_frame_count, end_time - start_time,
                     (loc_ctx.threshold[0] + loc_ctx.threshold[1]) / 2,
                     loc_ctx.outlier_filter.filtered_match.location.x,
                     loc_ctx.outlier_filter.filtered_match.location.y,
