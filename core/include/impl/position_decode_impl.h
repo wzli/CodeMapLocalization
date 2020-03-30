@@ -27,7 +27,7 @@ uint8_t T(ac, WIDTH, _next_valid_segment)(AxisCode* axiscode, uint8_t code_lengt
     return valid_segment_length;
 }
 
-AxisPosition T(ac, WIDTH, _decode_position)(AxisCode axiscode) {
+AxisPosition T(ac, WIDTH, _decode_position)(AxisCode axiscode, uint8_t stride) {
     AxisPosition best_position = {0};
     T(uint, WIDTH, _t)* const bits = &T(axiscode.bits.x, WIDTH, );
     const uint32_t code_mask = mask_bits(MLS_INDEX.code_length);
@@ -81,7 +81,7 @@ AxisPosition T(ac, WIDTH, _decode_position)(AxisCode axiscode) {
         if (position.span > best_position.span) {
             best_position = position;
         }
-        uint8_t shift = position.span > 0 ? position.span + MLS_INDEX.code_length - 1 : 1;
+        uint8_t shift = position.span > 0 ? position.span + MLS_INDEX.code_length - 1 : stride;
         *bits >>= shift;
         T(axiscode.mask.x, WIDTH, ) >>= shift;
         valid_segment_length = T(ac, WIDTH, _next_valid_segment)(
@@ -117,11 +117,11 @@ void T(ac, WIDTH, _scale_search_location)(
         }
         // decode posiiton
         if (prev_row_code != T(sample.row_code.bits.x, WIDTH, )) {
-            row_pos = T(ac, WIDTH, _decode_position)(sample.row_code);
+            row_pos = T(ac, WIDTH, _decode_position)(sample.row_code, 1);
             prev_row_code = T(sample.row_code.bits.x, WIDTH, );
         }
         if (prev_col_code != T(sample.col_code.bits.x, WIDTH, )) {
-            col_pos = T(ac, WIDTH, _decode_position)(sample.col_code);
+            col_pos = T(ac, WIDTH, _decode_position)(sample.col_code, 1);
             prev_col_code = T(sample.col_code.bits.x, WIDTH, );
         }
         // calculate location and match quality

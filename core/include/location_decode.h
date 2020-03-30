@@ -37,8 +37,8 @@ typedef struct {
 uint8_t ac32_next_valid_segment(AxisCode* axiscode, uint8_t code_length);
 uint8_t ac64_next_valid_segment(AxisCode* axiscode, uint8_t code_length);
 
-AxisPosition ac32_decode_position(AxisCode axiscode);
-AxisPosition ac64_decode_position(AxisCode axiscode);
+AxisPosition ac32_decode_position(AxisCode axiscode, uint8_t stride);
+AxisPosition ac64_decode_position(AxisCode axiscode, uint8_t stride);
 
 void ac32_scale_search_location(
         ScaleMatch* match, const AxisCode* row_code, const AxisCode* col_code, float decay_rate);
