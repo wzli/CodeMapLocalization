@@ -159,7 +159,7 @@ class CodeMapGui:
         self.update_frame()
 
     def zoom_callback(self, val):
-        self.zoom = 1 / (1 + val / 100)
+        self.zoom = 1 / (1 + val / 89)
         self.update_frame()
 
     def blur_callback(self, val):
