@@ -66,7 +66,7 @@ class CodeMapGui:
                                       res, self.pos[0]:self.pos[0] + res]
         # rotate and zoom from navigate view to get camera view
         rot_mat = cv2.getRotationMatrix2D((0, 0), -self.rotation,
-                                          2 + res / (2 * self.zoom))
+                                          1 + res / (2 * self.zoom))
         self.camera = rotate_image(self.navigate, self.rotation, self.zoom)
         # draw box around camera view
         self.navigate = cv2.cvtColor(self.navigate, cv2.COLOR_GRAY2RGB)
