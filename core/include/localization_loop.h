@@ -16,8 +16,8 @@ typedef struct {
     float rotation_scale;
     float scale_decay_rate;
     uint32_t histogram[256];
-    uint8_t threshold[2];
     uint32_t frame_count;
+    uint8_t otsu_threshold;
 } LocalizationContext;
 
 bool localization_loop_run(LocalizationContext* ctx, const ImageMatrix image);

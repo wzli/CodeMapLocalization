@@ -27,7 +27,7 @@ MXGEN(struct, CorrelationMsg)
 
 #define TYPEDEF_LocalizationMsg(X, _) \
     X(uint32_t, frame, )              \
-    X(uint8_t, thresh, [2])           \
+    X(uint8_t, thresh, )              \
     X(LocationMatchMsg, loc, )        \
     X(OdometryMsg, odom, )            \
     X(CorrelationMsg, corr, )

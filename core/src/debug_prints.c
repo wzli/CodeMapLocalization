@@ -34,8 +34,7 @@ void write_correlation_msg(CorrelationMsg* msg, const Correlation* corr) {
 void write_localization_msg(LocalizationMsg* msg, const LocalizationContext* loc_ctx) {
     assert(msg && loc_ctx);
     msg->frame = loc_ctx->frame_count;
-    msg->thresh[0] = loc_ctx->threshold[0];
-    msg->thresh[1] = loc_ctx->threshold[1];
+    msg->thresh = loc_ctx->otsu_threshold;
     write_location_match_msg(&msg->loc, &loc_ctx->scale_match);
     write_odometry_msg(&msg->odom, &loc_ctx->odom);
     write_correlation_msg(&msg->corr, &loc_ctx->odom.correlation);

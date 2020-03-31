@@ -150,8 +150,8 @@ class LocalizationContext(ctypes.Structure):
         ('rotation_scale', ctypes.c_float),
         ('scale_decay_rate', ctypes.c_float),
         ('histogram', ctypes.c_uint * 256),
-        ('threshold', ctypes.c_ubyte * 2),
         ('frame_count', ctypes.c_uint),
+        ('otsu_threshold', ctypes.c_ubyte),
     ]
 
     def __init__(self):
@@ -179,7 +179,7 @@ class LocalizationContext(ctypes.Structure):
         self.scale_decay_rate = 0.02
         self.outlier_filter.quality_threshold = 0.05
         self.outlier_filter.distance_threshold = 200
-        self.outlier_filter.match_length_threshold = 21 - MLS_INDEX.code_length
+        self.outlier_filter.match_length_threshold = 3
         self.outlier_filter.xor_error_ratio_threshold = 4
         self.outlier_filter.max_rejection_count = 10
         self.odom.correlation.squared_magnitude_threshold = 0.01

@@ -7,10 +7,10 @@ bool localization_loop_run(LocalizationContext* ctx, const ImageMatrix image) {
     ++ctx->frame_count;
     // find threshold of original image
     img_histogram(ctx->histogram, image);
-    ctx->threshold[0] = img_compute_otsu_threshold(ctx->histogram);
+    ctx->otsu_threshold = img_compute_otsu_threshold(ctx->histogram);
     // estimate rotation of original image and derotate it
     Vector2f quadrant_rotation =
-            img_derotate(ctx->derotated_image, image, ctx->rotation_scale, ctx->threshold[0]);
+            img_derotate(ctx->derotated_image, image, ctx->rotation_scale, ctx->otsu_threshold);
     // run visual odometry
     odom_update(&ctx->odom, ctx->derotated_image, quadrant_rotation,
             ctx->outlier_filter.filtered_match.scale);
@@ -19,17 +19,10 @@ bool localization_loop_run(LocalizationContext* ctx, const ImageMatrix image) {
     ImagePoint image_center = {ctx->sharpened_image.size.x / 2, ctx->sharpened_image.size.y / 2};
     Vector2f vertex = {{2 + image_center.x, 2 + image_center.y}};
     vertex.z *= quadrant_rotation.z * ctx->rotation_scale;
-    img_draw_regular_polygon(ctx->sharpened_image, image_center, vertex, 4, ctx->threshold[0], 5);
-    // find threshold of filtered image
-    img_histogram(ctx->histogram, ctx->sharpened_image);
-    ctx->histogram[ctx->threshold[0]] = 0;
-    ctx->threshold[1] = img_compute_otsu_threshold(ctx->histogram);
-    if (ctx->threshold[1] < ctx->threshold[0]) {
-        SWAP(ctx->threshold[1], ctx->threshold[0]);
-    }
+    img_draw_regular_polygon(ctx->sharpened_image, image_center, vertex, 4, ctx->otsu_threshold, 5);
     // binarize to bit matrix
-    img_to_bm64(ctx->binary_image, ctx->binary_mask, ctx->sharpened_image, ctx->threshold[0],
-            ctx->threshold[1]);
+    img_to_bm64(ctx->binary_image, ctx->binary_mask, ctx->sharpened_image, ctx->otsu_threshold,
+            ctx->otsu_threshold);
     // extract row and column codes
     bm64_extract_axiscodes(
             &(ctx->row_code), &(ctx->col_code), ctx->binary_image, ctx->binary_mask, 5);
