@@ -37,7 +37,7 @@ int main(int argc, char** argv) {
     char* text_buf = malloc(512);
     LocalizationMsg loc_msg = {0};
     // setup configs
-    loc_ctx.scale_decay_rate = 0.02f;
+    loc_ctx.scale_step = 0.015f;
     loc_ctx.outlier_filter.quality_threshold = 0.05f;
     loc_ctx.outlier_filter.distance_threshold = 200;
     loc_ctx.outlier_filter.match_length_threshold = 3;

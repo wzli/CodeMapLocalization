@@ -13,7 +13,7 @@ typedef struct {
     ScaleMatch scale_match;
     OutlierFilter outlier_filter;
     VisualOdometry odom;
-    float scale_decay_rate;
+    float scale_step;
     uint32_t histogram[256];
     uint32_t frame_count;
     uint8_t otsu_threshold;

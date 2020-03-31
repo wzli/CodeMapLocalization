@@ -147,7 +147,7 @@ class LocalizationContext(ctypes.Structure):
         ('scale_match', ScaleMatch),
         ('outlier_filter', OutlierFilter),
         ('odom', VisualOdometry),
-        ('scale_decay_rate', ctypes.c_float),
+        ('scale_step', ctypes.c_float),
         ('histogram', ctypes.c_uint * 256),
         ('frame_count', ctypes.c_uint),
         ('otsu_threshold', ctypes.c_ubyte),
@@ -174,7 +174,7 @@ class LocalizationContext(ctypes.Structure):
         self.odom.correlation.image.__init__(self.correlation_image_array)
         self.odom.correlation.buffer.__init__(self.correlation_buffer_array)
         # setup params
-        self.scale_decay_rate = 0.02
+        self.scale_step = 0.015
         self.outlier_filter.quality_threshold = 0.05
         self.outlier_filter.distance_threshold = 200
         self.outlier_filter.match_length_threshold = 3

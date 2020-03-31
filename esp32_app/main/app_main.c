@@ -9,6 +9,7 @@
 
 #include "tests.h"
 #include "localization_loop.h"
+#include "debug_prints.h"
 
 // * defines */
 #define STATIC_FRAME_BUFFER(SIZE) \
@@ -87,11 +88,10 @@ static void main_loop(void* pvParameters) {
     ESP_LOGI(TAG, "using MLS_ID %llx sequence_length %d code_length %d", MLS_ID,
             MLS_INDEX.sequence_length, MLS_INDEX.code_length);
     // configure location context params
-    loc_ctx.rotation_scale = 1.0f;
-    loc_ctx.scale_decay_rate = 0.02f;
+    loc_ctx.scale_step = 0.015f;
     loc_ctx.outlier_filter.quality_threshold = 0.05f;
     loc_ctx.outlier_filter.distance_threshold = 200;
-    loc_ctx.outlier_filter.match_length_threshold = 21 - MLS_INDEX.code_length;
+    loc_ctx.outlier_filter.match_length_threshold = 3;
     loc_ctx.outlier_filter.xor_error_ratio_threshold = 4;
     loc_ctx.outlier_filter.max_rejection_count = 10;
     loc_ctx.odom.correlation.squared_magnitude_threshold = 0.01f;
@@ -119,19 +119,21 @@ static void main_loop(void* pvParameters) {
             xQueueSendToBack(record_frame_queue, &claimed_buffers[0], 0);
         }
         // assign buffers to localization context
-        loc_ctx.derotated_image = images[2];
-        loc_ctx.sharpened_image = images[1];
+        loc_ctx.derotated_image = images[1];
+        loc_ctx.sharpened_image = images[2];
 
         // run localization logic
+        int64_t loc_start_time = esp_timer_get_time();
         bool updated = localization_loop_run(&loc_ctx, images[0]);
+        int64_t loc_end_time = esp_timer_get_time();
 
         // write sharpened image
-        IMG_SET_SIZE(images[1], 62, 62);
+        IMG_SET_SIZE(images[2], 62, 62);
 
-        #if 0
+#if 0
         // write decoded image
         bm64_from_axiscodes(
-                loc_ctx.binary_image, loc_ctx.binary_mask, &loc_ctx.row_code, &loc_ctx.col_code);
+                loc_ctx.binary_image, loc_ctx.binary_mask, &loc_ctx.scale_match.row_code, &loc_ctx.scale_match.col_code);
         bm64_to_img(&images[2], loc_ctx.binary_image, loc_ctx.binary_mask);
 
         // write correlation image
@@ -139,7 +141,7 @@ static void main_loop(void* pvParameters) {
         IMG_FILL(images[3], 0);
         PIXEL(images[3], (int) loc_ctx.odom.correlation.translation.xy[1] + 32,
                 (int) loc_ctx.odom.correlation.translation.xy[0] + 32) = 255;
-        #endif
+#endif
 
         // return frame buffers
         for (uint8_t i = 0; i <= N_DOUBLE_BUFFERS; ++i) {
@@ -152,27 +154,22 @@ static void main_loop(void* pvParameters) {
 
 #if CONFIG_LED_ILLUMINATOR_ENABLED
         // control LED based on desired threshold
-        if (led_duty_control < ((1 << 12) - 1) && loc_ctx.threshold[0] < led_duty - 8) {
+        if (led_duty_control < ((1 << 12) - 1) && loc_ctx.otsu_threshold < led_duty - 8) {
             set_led_duty((++led_duty_control) >> 4);
-        } else if (led_duty_control > 0 && loc_ctx.threshold[0] > led_duty + 8) {
+        } else if (led_duty_control > 0 && loc_ctx.otsu_threshold > led_duty + 8) {
             set_led_duty((--led_duty_control) >> 4);
         }
 #endif
 
         // end loop
         int64_t end_time = esp_timer_get_time();
-        Vector2f odom_rot = loc_ctx.odom.quadrant_rotation;
-        odom_rot.z *= QUADRANT_LOOKUP[loc_ctx.odom.quadrant_count & 3].z;
-
         if (updated) {
-            ESP_LOGI(TAG,
-                    "frames %u recorded %u loop time %lluus thresh %u (x %d y %d r %f m %d) \n",
-                    loc_ctx.frame_count, record_frame_count, end_time - start_time,
-                    (loc_ctx.threshold[0] + loc_ctx.threshold[1]) / 2,
-                    loc_ctx.outlier_filter.filtered_match.location.x,
-                    loc_ctx.outlier_filter.filtered_match.location.y,
-                    (double) (180 * cargf(odom_rot.z) / M_PI_F),
-                    loc_ctx.scale_match.location.match_size);
+            char buf[256];
+            LocationMatchMsg msg;
+            write_location_match_msg(&msg, &loc_ctx.scale_match);
+            LocationMatchMsg_to_csv_entry(&msg, buf);
+            ESP_LOGI(TAG, "%u %lluus %lluus %s", loc_ctx.frame_count, end_time - start_time,
+                    loc_end_time - loc_start_time, buf);
         }
         start_time = end_time;
     }

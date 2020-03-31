@@ -24,7 +24,7 @@ def create_window(name, size, pos=None):
 
 class CodeMapGui:
     CAMERA_RES = 64
-    MAX_SCALE = 1 / np.sqrt(2)
+    MAX_SCALE = 0.7
     MIN_SCALE = (cm.MLS_INDEX.code_length + 2) / 64
 
     def __init__(self):

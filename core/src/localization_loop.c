@@ -28,7 +28,7 @@ bool localization_loop_run(LocalizationContext* ctx, const ImageMatrix image) {
     // scale search and decode
     ctx->scale_match = (ScaleMatch){0};
     ac64_scale_search_location(
-            &(ctx->scale_match), &(ctx->row_code), &(ctx->col_code), ctx->scale_decay_rate);
+            &(ctx->scale_match), &(ctx->row_code), &(ctx->col_code), ctx->scale_step);
     // outlier rejection filter
     if (outlier_filter_location(&(ctx->outlier_filter), &(ctx->scale_match))) {
         // update odom

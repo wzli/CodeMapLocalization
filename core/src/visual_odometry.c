@@ -100,8 +100,7 @@ void odom_update(VisualOdometry* odom, ImageMatrix image, Vector2f rotation, flo
     int8_t quadrant_increment = odom_track_rotation(odom, rotation);
     // rotate filter out quadrant changes
     if (quadrant_increment != 0) {
-        Vector2f fill = {0};
-        IMG_FILL(odom->correlation.buffer, fill);
+        IMG_FILL(odom->correlation.buffer, (Vector2f){0});
     }
     img_estimate_translation(&(odom->correlation), image);
     odom->position.z +=
@@ -161,7 +160,6 @@ void img_estimate_translation(Correlation* correlation, const ImageMatrix frame)
     }
     // return early if correlation is empty
     if (correlation->squared_magnitude_max == 0) {
-        correlation->translation.z = 0;
         return;
     }
     if (correlation->squared_magnitude_max <

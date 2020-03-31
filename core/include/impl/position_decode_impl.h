@@ -94,8 +94,8 @@ AxisPosition T(ac, WIDTH, _decode_position)(AxisCode axiscode, uint8_t stride) {
 }
 
 void T(ac, WIDTH, _scale_search_location)(
-        ScaleMatch* match, const AxisCode* row_code, const AxisCode* col_code, float decay_rate) {
-    assert(match && row_code && col_code && decay_rate > 0 && decay_rate <= 1);
+        ScaleMatch* match, const AxisCode* row_code, const AxisCode* col_code, float scale_step) {
+    assert(match && row_code && col_code && scale_step > 0 && scale_step <= 1);
     ScaleMatch sample;
     uint32_t sample_count = 0;
     uint32_t error_sum = 0;
@@ -104,7 +104,7 @@ void T(ac, WIDTH, _scale_search_location)(
     AxisPosition row_pos;
     AxisPosition col_pos;
     const float min_scale = (MLS_INDEX.code_length + 2.0f) / (WIDTH);
-    for (sample.scale = M_SQRT1_2_F; sample.scale >= min_scale; sample.scale *= 1 - decay_rate) {
+    for (sample.scale = 0.7f; sample.scale >= min_scale; sample.scale -= scale_step) {
         // scale and downsample axis codes
         sample.row_code = *row_code;
         sample.col_code = *col_code;
@@ -117,9 +117,10 @@ void T(ac, WIDTH, _scale_search_location)(
             continue;
         }
         // decode posiiton
-        float scaled_bits = sample.scale * (WIDTH);
+        float scaled_bits = sample.scale * (WIDTH - 4);
         uint8_t max_span = scaled_bits - MLS_INDEX.code_length;
-        uint8_t decode_stride = 1 + (max_span >> 2);
+        uint8_t decode_stride = max_span / 2;
+        decode_stride = MAX(decode_stride, 2);
         if (prev_row_code != T(sample.row_code.bits.x, WIDTH, )) {
             row_pos = T(ac, WIDTH, _decode_position)(sample.row_code, decode_stride);
             prev_row_code = T(sample.row_code.bits.x, WIDTH, );
