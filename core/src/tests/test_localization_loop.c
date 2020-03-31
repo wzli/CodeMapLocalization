@@ -12,7 +12,6 @@ static int test_localization_loop_run() {
     ctx->sharpened_image = ctx->derotated_image;
     ctx->odom.correlation.image.data = calloc(32 * 32, sizeof(Vector2f));
     ctx->odom.correlation.buffer.data = calloc(32 * 32, sizeof(Vector2f));
-    ctx->rotation_scale = 1.0f;
     ctx->scale_decay_rate = 0.02f;
     for (uint32_t src_row_pos = 1000; src_row_pos < 1000 + TEST_VECTOR_SIZE; ++src_row_pos)
         for (uint32_t src_col_pos = 1100; src_col_pos < 1100 + TEST_VECTOR_SIZE; ++src_col_pos) {

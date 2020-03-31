@@ -13,7 +13,6 @@ typedef struct {
     ScaleMatch scale_match;
     OutlierFilter outlier_filter;
     VisualOdometry odom;
-    float rotation_scale;
     float scale_decay_rate;
     uint32_t histogram[256];
     uint32_t frame_count;
@@ -22,4 +21,4 @@ typedef struct {
 
 bool localization_loop_run(LocalizationContext* ctx, const ImageMatrix image);
 
-Vector2f img_derotate(ImageMatrix dst, const ImageMatrix src, float scale, uint8_t bg_fill);
+Vector2f img_derotate(ImageMatrix dst, const ImageMatrix src, uint8_t bg_fill);
