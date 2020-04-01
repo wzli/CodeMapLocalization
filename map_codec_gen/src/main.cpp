@@ -8,6 +8,7 @@ extern "C" {
 #include <fstream>
 #include <iostream>
 #include <bitset>
+#include <unistd.h>
 
 enum Error {
     SUCCESS = 0,
@@ -23,17 +24,51 @@ enum Error {
     INTERNAL_ERROR_MISSING_CODE_POSITION_ENTRY,
 };
 
+static constexpr char HELP_STRING[] =
+        "Usage: map_codec_gen [-w width_limit] [-h height_limit] dmls_yaml";
+
 int main(int argc, char** argv) {
     if (argc < 2) {
-        std::cout << "provide path dmls yaml file as argument" << std::endl;
+        puts(HELP_STRING);
         return ERROR_INVALID_ARGUMENT;
+    }
+
+    int opt;
+    int width = 0;
+    int height = 0;
+    while ((opt = getopt(argc, argv, ":w:h:")) != -1) {
+        switch (opt) {
+            case 'w':
+                width = atoi(optarg);
+                if (width == 0) {
+                    puts("Invalid width argument");
+                    return ERROR_INVALID_ARGUMENT;
+                }
+                break;
+            case 'h':
+                height = atoi(optarg);
+                if (height == 0) {
+                    puts("Invalid height argument");
+                    return ERROR_INVALID_ARGUMENT;
+                }
+                break;
+            case '?':  // unknown option...
+                puts(HELP_STRING);
+                std::cerr << "Unknown option: '" << static_cast<char>(optopt) << "'" << std::endl;
+                return ERROR_INVALID_ARGUMENT;
+            case ':':  // unknown option...
+                puts(HELP_STRING);
+                std::cerr << "Option: '" << static_cast<char>(optopt) << "' requires argument"
+                          << std::endl;
+                return ERROR_INVALID_ARGUMENT;
+        }
     }
 
     std::string s;
     std::ifstream file(argv[1]);
 
     if (!file.is_open()) {
-        std::cout << "Unable to open the dmls yaml file" << std::endl;
+        puts("Unable to open the dmls yaml file");
         return ERROR_OPENING_FILE;
     }
 
