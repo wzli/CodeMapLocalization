@@ -237,7 +237,7 @@ int main(int argc, char** argv) {
     for (uint32_t x = 0; x < x_codes.size(); ++x) {
         for (uint32_t y = 0; y < y_codes.size(); ++y) {
             char name[64];
-            sprintf(name, "code_map_%u_%u.pbm", x, y);
+            sprintf(name, "code_map_%u_%u.pbm", x * width, y * height);
             CodeMap::save_pbm(name, x_codes[x], y_codes[y]);
         }
     }
