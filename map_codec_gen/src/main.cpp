@@ -220,7 +220,7 @@ int main(int argc, char** argv) {
     mlsq_index_file.close();
     std::cout << "LookupTable file succesfully generated" << std::endl;
 
-    CodeMap::save_pbm("code_map.pbm", s);
+    CodeMap::save_pbm("code_map.pbm", s, s);
     std::cout << "CodeMap file succesfully generated" << std::endl;
 
     return SUCCESS;
