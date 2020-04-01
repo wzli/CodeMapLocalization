@@ -65,7 +65,7 @@ int main(int argc, char** argv) {
     }
 
     std::string s;
-    std::ifstream file(argv[1]);
+    std::ifstream file(argv[optind]);
 
     if (!file.is_open()) {
         puts("Unable to open the dmls yaml file");
@@ -220,7 +220,30 @@ int main(int argc, char** argv) {
     mlsq_index_file.close();
     std::cout << "LookupTable file succesfully generated" << std::endl;
 
-    CodeMap::save_pbm("code_map.pbm", s, s);
+    std::vector<std::string> x_codes, y_codes;
+    if (width > 0) {
+        x_codes.reserve(s.size() / width + 1);
+        for (uint32_t i = 0; i < s.size(); i += width) {
+            x_codes.emplace_back(s.substr(i, width));
+        }
+    } else {
+        x_codes.emplace_back(s);
+    }
+    if (height > 0) {
+        y_codes.reserve(s.size() / height + 1);
+        for (uint32_t i = 0; i < s.size(); i += height) {
+            y_codes.emplace_back(s.substr(i, height));
+        }
+    } else {
+        y_codes.emplace_back(s);
+    }
+    for (uint32_t x = 0; x < x_codes.size(); ++x) {
+        for (uint32_t y = 0; y < y_codes.size(); ++y) {
+            char name[64];
+            sprintf(name, "code_map_%u_%u.pbm", x, y);
+            CodeMap::save_pbm(name, x_codes[x], y_codes[y]);
+        }
+    }
     std::cout << "CodeMap file succesfully generated" << std::endl;
 
     return SUCCESS;
