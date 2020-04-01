@@ -37,7 +37,7 @@ class CodeMapGui:
         # initialize localization context
         self.loc_ctx = cm.LocalizationContext()
         # load code map
-        self.code_map = cv2.imread('code_map.pbm', cv2.IMREAD_GRAYSCALE)
+        self.code_map = cv2.imread('code_map_0_0.pbm', cv2.IMREAD_GRAYSCALE)
         # create code map window
         create_window('CodeMap', (512, 512))
         cv2.setMouseCallback('CodeMap', self.code_map_mouse_callback)

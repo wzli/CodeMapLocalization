@@ -103,7 +103,7 @@ int main(int argc, char** argv) {
         std::cout << "WARNING: sequence hash doesn't match, actual is 0x" << std::hex
                   << std::hash<std::string>{}(s) << std::endl;
     }
-    std::cout << "Generating Map Codec ..." << std::endl;
+    puts("Generating Map Codec ...");
 
     const size_t positions_length = s.size() - word_length + 1;
     const uint16_t sequence_chunks = (s.size() / 32) + ((s.size() % 32) > 0);
@@ -131,7 +131,7 @@ int main(int argc, char** argv) {
         if (position >= 0) {
             uint32_t rword = reverse_bits(word, word_length);
             if (word == rword || test_lookup[word] != MLSQ_NOT_FOUND) {
-                std::cout << "Error: sequence doesn't satisfy dmls constraints" << std::endl;
+                puts("Error: sequence doesn't satisfy dmls constraints");
                 return ERROR_DMLS_CONSTRAINS_UNSATISFIED;
             }
             if (word == invert_bits(rword, word_length)) {
@@ -148,8 +148,7 @@ int main(int argc, char** argv) {
     for (uint32_t i = 0, word = 0; i < s.size(); ++i) {
         uint32_t new_bit = s[i] - '0';
         if (new_bit != bv32_get_bit(sequence.get(), i)) {
-            std::cout << "Internal Error: sequence bit array doesn't match source string"
-                      << std::endl;
+            puts("Internal Error: sequence bit array doesn't match source string");
             return INTERNAL_ERROR_SEQUENCE_VECTOR_MISMATCH;
         }
         word >>= 1;
@@ -157,8 +156,7 @@ int main(int argc, char** argv) {
         int position = i - word_length + 1;
         if (position >= 0) {
             if (word != bv32_get_slice(sequence.get(), position, word_length)) {
-                std::cout << "Internal Error: position lookup doesn't match expected word"
-                          << std::endl;
+                puts("Internal Error: position lookup doesn't match expected word");
                 return INTERNAL_ERROR_POSITION_LOOKUP_MISMATCH;
             }
         }
@@ -167,8 +165,7 @@ int main(int argc, char** argv) {
     MlsIndex query_index = {sequence.get(), sorted_positions.get(), static_cast<uint16_t>(s.size()),
             static_cast<uint8_t>(word_length)};
     if (mlsq_sort_code_positions(query_index) != positions_length) {
-        std::cout << "Internal Error: sorted positions length doesn't match expected length"
-                  << std::endl;
+        puts("Internal Error: sorted positions length doesn't match expected length");
         return INTERNAL_ERROR_SORTED_POSITIONS_LENGTH_MISMATCH;
     }
     uint32_t match_count = 0;
@@ -184,13 +181,13 @@ int main(int argc, char** argv) {
         match_count += position != MLSQ_NOT_FOUND;
     }
     if (match_count != positions_length) {
-        std::cout << "Internal Error: Not all code to position lookups were found" << std::endl;
+        puts("Internal Error: Not all code to position lookups were found");
         return INTERNAL_ERROR_MISSING_CODE_POSITION_ENTRY;
     }
 
     std::ofstream mlsq_index_file("mls_index.c");
     if (!mlsq_index_file.is_open()) {
-        std::cout << "Unable to write MLS index file" << std::endl;
+        puts("Unable to write MLS index file");
         return ERROR_WRITING_FILE;
     }
     mlsq_index_file << "#include \"mls_query.h\"\n";
@@ -218,8 +215,8 @@ int main(int argc, char** argv) {
     mlsq_index_file << "    " << std::dec << s.size() << ",\n";
     mlsq_index_file << "    " << std::dec << word_length << ",\n};\n";
     mlsq_index_file.close();
-    std::cout << "LookupTable file succesfully generated" << std::endl;
-
+    puts("LookupTable file succesfully generated");
+    puts("Generating Code Map ...");
     std::vector<std::string> x_codes, y_codes;
     if (width > 0) {
         x_codes.reserve(s.size() / width + 1);
@@ -244,7 +241,6 @@ int main(int argc, char** argv) {
             CodeMap::save_pbm(name, x_codes[x], y_codes[y]);
         }
     }
-    std::cout << "CodeMap file succesfully generated" << std::endl;
-
+    puts("CodeMap file succesfully generated");
     return SUCCESS;
 }
