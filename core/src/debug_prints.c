@@ -8,9 +8,10 @@ void write_location_match_msg(LocationMatchMsg* msg, const ScaleMatch* match) {
     msg->y = match->location.y;
     msg->match_size = match->location.match_size;
     msg->downsample_errors = match->bit_errors;
-    msg->xor_err_ratio = ((float) match->col_code.n_errors / match->col_code.n_samples +
-                                 (float) match->row_code.n_errors / match->row_code.n_samples) *
-                         0.5f;
+    msg->xor_err_ratio =
+            ((float) match->col_code.n_errors / (match->col_code.n_samples + 1) +
+                    (float) match->row_code.n_errors / (match->row_code.n_samples + 1)) *
+            0.5f;
     msg->quality = match->quality;
     msg->scale = match->scale;
 }

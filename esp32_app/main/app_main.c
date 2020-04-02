@@ -34,6 +34,7 @@ void app_record_main();
 
 /* static data */
 static const char* TAG = "main_loop";
+static QueueHandle_t side_loop_tick;
 
 static camera_fb_t double_buffers[][2] = {
         STATIC_DOUBLE_BUFFER(64),
@@ -88,8 +89,6 @@ static void queue_fb_return(uint8_t queue_index) {
 
 /* run */
 static void main_loop(void* pvParameters) {
-    ESP_LOGI(TAG, "using MLS_ID %llx sequence_length %d code_length %d", MLS_ID,
-            MLS_INDEX.sequence_length, MLS_INDEX.code_length);
     // configure location context params
     loc_ctx.scale_step = 0.015f;
     loc_ctx.outlier_filter.quality_threshold = 0.05f;
@@ -108,18 +107,15 @@ static void main_loop(void* pvParameters) {
         }
         assert(!uxQueueSpacesAvailable(frame_queues[i]));
     }
-    // print csv header
-    LocalizationMsg_to_csv_header(0, text_buf);
-    printf("timestamp,%s", text_buf);
     // main loop
-    int64_t start_time = esp_timer_get_time();
-    uint16_t led_duty_control = 0;
     for (;;) {
         ImageMatrix images[N_DOUBLE_BUFFERS + 1];
         // fetch frame buffers
         for (uint8_t i = 0; i <= N_DOUBLE_BUFFERS; ++i) {
             images[i] = queue_fb_get(i);
         }
+        // record time when new buffer is received
+        int64_t frame_time = esp_timer_get_time();
         // queue raw image for recording
         if (record_frame_queue) {
             xQueueSendToBack(record_frame_queue, &claimed_buffers[0], 0);
@@ -129,25 +125,10 @@ static void main_loop(void* pvParameters) {
         loc_ctx.sharpened_image = images[2];
 
         // run localization logic
-        int64_t loc_start_time = esp_timer_get_time();
         bool updated = localization_loop_run(&loc_ctx, images[0]);
-        int64_t loc_end_time = esp_timer_get_time();
 
         // write sharpened image
         IMG_SET_SIZE(images[2], 62, 62);
-
-#if 0
-        // write decoded image
-        bm64_from_axiscodes(
-                loc_ctx.binary_image, loc_ctx.binary_mask, &loc_ctx.scale_match.row_code, &loc_ctx.scale_match.col_code);
-        bm64_to_img(&images[2], loc_ctx.binary_image, loc_ctx.binary_mask);
-
-        // write correlation image
-        IMG_SET_SIZE(images[3], 64, 64);
-        IMG_FILL(images[3], 0);
-        PIXEL(images[3], (int) loc_ctx.odom.correlation.translation.xy[1] + 32,
-                (int) loc_ctx.odom.correlation.translation.xy[0] + 32) = 255;
-#endif
 
         // return frame buffers
         for (uint8_t i = 0; i <= N_DOUBLE_BUFFERS; ++i) {
@@ -157,6 +138,24 @@ static void main_loop(void* pvParameters) {
             claimed_buffers[i]->len = IMG_PIXEL_COUNT(images[i]);
             queue_fb_return(i);
         }
+        // tick side loop
+        xQueueSendToBack(side_loop_tick, &frame_time, 0);
+    }
+}
+
+static void side_loop(void* pvParameters) {
+    uint64_t timestamp = 0;
+    uint16_t led_duty_control = 0;
+    // print csv header
+    LocalizationMsg_to_csv_header(0, text_buf);
+    printf("timestamp,%s", text_buf);
+    while (true) {
+        xQueueReceive(side_loop_tick, &timestamp, portMAX_DELAY);
+        // print csv entry
+        LocalizationMsg msg;
+        write_localization_msg(&msg, &loc_ctx);
+        LocalizationMsg_to_csv_entry(&msg, text_buf);
+        printf("%llu,%s\n", timestamp, text_buf);
 
 #if CONFIG_LED_ILLUMINATOR_ENABLED
         // control LED based on desired threshold
@@ -166,24 +165,6 @@ static void main_loop(void* pvParameters) {
             set_led_duty((--led_duty_control) >> 4);
         }
 #endif
-
-        // end loop
-        int64_t end_time = esp_timer_get_time();
-        if (updated) {
-#if 0
-            LocationMatchMsg msg;
-            write_location_match_msg(&msg, &loc_ctx.scale_match);
-            LocationMatchMsg_to_csv_entry(&msg, text_buf);
-            ESP_LOGI(TAG, "%u %lluus %lluus %s", loc_ctx.frame_count, end_time - start_time,
-                    loc_end_time - loc_start_time, text_buf);
-#else
-            LocalizationMsg msg;
-            write_localization_msg(&msg, &loc_ctx);
-            LocalizationMsg_to_csv_entry(&msg, text_buf);
-            printf("%llu,%s\n", start_time, text_buf);
-#endif
-        }
-        start_time = end_time;
     }
 }
 
@@ -193,13 +174,22 @@ void app_main() {
         ESP_LOGE(TAG, "Not able to initialize FFT.");
         assert(0);
     }
+
+    // print MLS version
+    ESP_LOGI(TAG, "Using MLS_ID %llx sequence_length %d code_length %d", MLS_ID,
+            MLS_INDEX.sequence_length, MLS_INDEX.code_length);
+
     // run unit tests
     assert(!run_all_tests());
+
     // init tasks
-    // camera has to start first otherwise it crashes
-    app_camera_main();
+    app_camera_main();  // camera has to start first otherwise it crashes
     app_record_main();
     app_wifi_main();
     app_httpd_main();
-    xTaskCreatePinnedToCore(main_loop, "main_loop", 4096, NULL, 9, NULL, 1);
+
+    // start main and side loops
+    side_loop_tick = xQueueCreate(1, sizeof(uint64_t));
+    xTaskCreatePinnedToCore(side_loop, "side_loop", 2048, NULL, 9, NULL, 0);
+    xTaskCreatePinnedToCore(main_loop, "main_loop", 2048, NULL, 9, NULL, 1);
 }
