@@ -200,6 +200,6 @@ void app_main() {
 
     // start main and side loops
     side_loop_tick = xQueueCreate(1, sizeof(uint64_t));
-    xTaskCreatePinnedToCore(side_loop, "side_loop", 2048, NULL, 9, NULL, 0);
+    xTaskCreatePinnedToCore(side_loop, "side_loop", 2048, NULL, 8, NULL, tskNO_AFFINITY);
     xTaskCreatePinnedToCore(main_loop, "main_loop", 1024, NULL, 9, NULL, 1);
 }
