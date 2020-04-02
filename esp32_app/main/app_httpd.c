@@ -6,7 +6,10 @@
 #include "esp_log.h"
 #include "freertos/queue.h"
 
+#include "debug_prints.h"
+
 /* global variables */
+extern LocalizationContext loc_ctx;
 
 #define N_FRAME_QUEUES 4
 QueueHandle_t frame_queues[N_FRAME_QUEUES] = {};
@@ -173,6 +176,15 @@ static esp_err_t cam_params_handler(httpd_req_t* req) {
     return httpd_resp_send(req, text_buf, strlen(text_buf));
 }
 
+static esp_err_t location_handler(httpd_req_t* req) {
+    LocalizationMsg msg;
+    write_localization_msg(&msg, &loc_ctx);
+    int len = LocalizationMsg_to_json(&msg, text_buf);
+    httpd_resp_set_type(req, "application/json");
+    httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*");
+    return httpd_resp_send(req, text_buf, len);
+}
+
 static esp_err_t set_led_intensity_handler(httpd_req_t* req) {
     int val;
     if (ESP_OK != parse_request_param(req, "val", &val)) {
@@ -213,6 +225,7 @@ void app_httpd_main() {
             {"/capture", HTTP_GET, capture_handler, NULL},
             {"/set_led_intensity", HTTP_GET, set_led_intensity_handler, NULL},
             {"/cam_params", HTTP_GET, cam_params_handler, NULL},
+            {"/location", HTTP_GET, location_handler, NULL},
             // uris for setting camera params
             {"/set_contrast", HTTP_GET, set_cam_param_handler, s->set_contrast},
             {"/set_aec", HTTP_GET, set_cam_param_handler, s->set_exposure_ctrl},
