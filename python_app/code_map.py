@@ -122,7 +122,7 @@ class VisualOdometry(ctypes.Structure):
         ('position', Vector2f),
         ('quadrant_rotation', Vector2f),
         ('quadrant_count', ctypes.c_int),
-        ('step_count', ctypes.c_uint),
+        ('drift_count', ctypes.c_uint),
     ]
 
 

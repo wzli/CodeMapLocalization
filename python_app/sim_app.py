@@ -27,7 +27,7 @@ class CodeMapGui:
     MAX_SCALE = 0.7
     MIN_SCALE = (cm.MLS_INDEX.code_length + 2) / 64
 
-    def __init__(self):
+    def __init__(self, code_map_file):
         # initial coordinates
         self.pos = np.array([0, 0])
         self.rotation = 0
@@ -37,7 +37,9 @@ class CodeMapGui:
         # initialize localization context
         self.loc_ctx = cm.LocalizationContext()
         # load code map
-        self.code_map = cv2.imread('code_map_0_0.pbm', cv2.IMREAD_GRAYSCALE)
+        self.code_map = cv2.imread(code_map_file, cv2.IMREAD_GRAYSCALE)
+        if self.code_map is None:
+            raise IOError("Could not open code map file " + code_map_file)
         # create code map window
         create_window('CodeMap', (512, 512))
         cv2.setMouseCallback('CodeMap', self.code_map_mouse_callback)
@@ -189,5 +191,5 @@ class CodeMapGui:
 
 
 # create control window
-code_map_gui = CodeMapGui()
+code_map_gui = CodeMapGui('code_map_0_0.pbm')
 code_map_gui.run()

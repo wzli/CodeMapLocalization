@@ -8,7 +8,7 @@ void write_location_match_msg(LocationMatchMsg* msg, const ScaleMatch* match) {
     msg->y = match->location.y;
     msg->match_size = match->location.match_size;
     msg->downsample_errors = match->bit_errors;
-    msg->xor_err_ratio =
+    msg->xor_error_ratio =
             ((float) match->col_code.n_errors / (match->col_code.n_samples + 1) +
                     (float) match->row_code.n_errors / (match->row_code.n_samples + 1)) *
             0.5f;
@@ -20,25 +20,26 @@ void write_odometry_msg(OdometryMsg* msg, const VisualOdometry* odom) {
     assert(msg && odom);
     msg->x = odom->position.xy[0];
     msg->y = odom->position.xy[1];
-    msg->rot = cargf(odom->quadrant_rotation.z * QUADRANT_LOOKUP[odom->quadrant_count & 3].z);
-    msg->quadrants = odom->quadrant_count;
-    msg->steps = odom->step_count;
+    msg->rotation = cargf(odom->quadrant_rotation.z * QUADRANT_LOOKUP[odom->quadrant_count & 3].z);
+    msg->quadrant_count = odom->quadrant_count;
+    msg->drift_count = odom->drift_count;
 }
 
 void write_correlation_msg(CorrelationMsg* msg, const Correlation* corr) {
     assert(msg && corr);
     msg->x = corr->translation.xy[0];
     msg->y = corr->translation.xy[1];
-    msg->err_ratio = 1.0f - (corr->squared_magnitude_max / (corr->squared_magnitude_sum + 0.0001f));
+    msg->error_ratio =
+            1.0f - (corr->squared_magnitude_max / (corr->squared_magnitude_sum + 0.0001f));
 }
 
 void write_localization_msg(LocalizationMsg* msg, const LocalizationContext* loc_ctx) {
     assert(msg && loc_ctx);
     msg->frame = loc_ctx->frame_count;
-    msg->thresh = loc_ctx->otsu_threshold;
-    write_location_match_msg(&msg->loc, &loc_ctx->scale_match);
-    write_odometry_msg(&msg->odom, &loc_ctx->odom);
-    write_correlation_msg(&msg->corr, &loc_ctx->odom.correlation);
+    write_odometry_msg(&msg->odometry, &loc_ctx->odom);
+    write_correlation_msg(&msg->correlation, &loc_ctx->odom.correlation);
+    write_location_match_msg(&msg->location, &loc_ctx->scale_match);
+    msg->threshold = loc_ctx->otsu_threshold;
 }
 
 void print_bits(uint64_t word, int8_t word_length) {

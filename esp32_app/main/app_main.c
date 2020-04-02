@@ -125,7 +125,7 @@ static void main_loop(void* pvParameters) {
         loc_ctx.sharpened_image = images[2];
 
         // run localization logic
-        bool updated = localization_loop_run(&loc_ctx, images[0]);
+        localization_loop_run(&loc_ctx, images[0]);
 
         // write sharpened image
         IMG_SET_SIZE(images[2], 62, 62);
