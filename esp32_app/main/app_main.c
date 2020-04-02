@@ -45,6 +45,8 @@ static camera_fb_t* claimed_buffers[N_DOUBLE_BUFFERS + 1];
 
 static Vector2f correlation_buffers[2][32 * 32];
 
+static char text_buf[512];
+
 LocalizationContext loc_ctx;
 
 /* helper functions */
@@ -106,6 +108,9 @@ static void main_loop(void* pvParameters) {
         }
         assert(!uxQueueSpacesAvailable(frame_queues[i]));
     }
+    // print csv header
+    LocalizationMsg_to_csv_header(0, text_buf);
+    printf("timestamp,%s", text_buf);
     // main loop
     int64_t start_time = esp_timer_get_time();
     uint16_t led_duty_control = 0;
@@ -165,12 +170,18 @@ static void main_loop(void* pvParameters) {
         // end loop
         int64_t end_time = esp_timer_get_time();
         if (updated) {
-            char buf[256];
+#if 0
             LocationMatchMsg msg;
             write_location_match_msg(&msg, &loc_ctx.scale_match);
-            LocationMatchMsg_to_csv_entry(&msg, buf);
+            LocationMatchMsg_to_csv_entry(&msg, text_buf);
             ESP_LOGI(TAG, "%u %lluus %lluus %s", loc_ctx.frame_count, end_time - start_time,
-                    loc_end_time - loc_start_time, buf);
+                    loc_end_time - loc_start_time, text_buf);
+#else
+            LocalizationMsg msg;
+            write_localization_msg(&msg, &loc_ctx);
+            LocalizationMsg_to_csv_entry(&msg, text_buf);
+            printf("%llu,%s\n", start_time, text_buf);
+#endif
         }
         start_time = end_time;
     }

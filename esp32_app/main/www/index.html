@@ -330,7 +330,7 @@
             #location_status {
                 white-space: pre-wrap;
                 padding-right: 20px;
-                min-width: 200px;
+                min-width: 250px;
             }
 </style>
     </head>
@@ -594,7 +594,7 @@ document.addEventListener('DOMContentLoaded', function (event) {
         .then(function (body) {
             location_status.innerHTML = JSON.stringify(body, null, 2)
         })
-  }, 200)
+  }, 100)
 
   // Attach actions to buttons
   streamButton0.onclick = () => {
