@@ -326,6 +326,12 @@
             .hidden {
                 display: none
             }
+
+            #location_status {
+                white-space: pre-wrap;
+                padding-right: 20px;
+                min-width: 200px;
+            }
 </style>
     </head>
     <body>
@@ -446,6 +452,7 @@
                         </section>
                     </nav>
                 </div>
+                <Code id="location_status">No Data Received</Code>
                 <Table>
                     <tr>
                         <td>
@@ -538,19 +545,6 @@ document.addEventListener('DOMContentLoaded', function (event) {
       })
   }
 
-  // read initial values
-  fetch(`${baseHost}/cam_params`)
-    .then(function (response) {
-      return response.json()
-    })
-    .then(function (state) {
-      document
-        .querySelectorAll('.default-action')
-        .forEach(el => {
-          updateValue(el, state[el.id])
-        })
-    })
-
   // Gain
   const agc = document.getElementById('agc')
   const agcGain = document.getElementById('agc_gain-group')
@@ -575,6 +569,32 @@ document.addEventListener('DOMContentLoaded', function (event) {
   const update_view1 = () => { view1.src = `${baseHost}/capture?stream=1&_cb=${Date.now()}` }
   const update_view2 = () => { view2.src = `${baseHost}/capture?stream=2&_cb=${Date.now()}` }
   const update_view3 = () => { view3.src = `${baseHost}/capture?stream=3&_cb=${Date.now()}` }
+
+  const location_status = document.getElementById('location_status')
+
+  // read initial values
+  fetch(`${baseHost}/cam_params`)
+    .then(function (response) {
+      return response.json()
+    })
+    .then(function (state) {
+      document
+        .querySelectorAll('.default-action')
+        .forEach(el => {
+          updateValue(el, state[el.id])
+        })
+    })
+
+  // poll for location status
+  window.setInterval(function () {
+      fetch(`${baseHost}/location`)
+        .then(function (response) {
+          return response.json()
+        })
+        .then(function (body) {
+            location_status.innerHTML = JSON.stringify(body, null, 2)
+        })
+  }, 200)
 
   // Attach actions to buttons
   streamButton0.onclick = () => {
