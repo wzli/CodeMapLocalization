@@ -5,7 +5,7 @@ import serial
 
 class CsvRxStream:
     BAUD_RATE = 115200
-    CSV_HEADERS = 'timestamp,/frame,/thresh,/loc/x,/loc/y,/loc/match_size,/loc/downsample_errors,/loc/xor_err_ratio,/loc/quality,/loc/scale,/odom/x,/odom/y,/odom/rot,/odom/quadrants,/odom/steps,/corr/x,/corr/y,/corr/err_ratio,'.split(
+    CSV_HEADERS = 'timestamp,/frame,/odometry/x,/odometry/y,/odometry/rotation,/odometry/quadrant_count,/odometry/drift_count,/correlation/x,/correlation/y,/correlation/error_ratio,/location/x,/location/y,/location/match_size,/location/downsample_errors,/location/xor_error_ratio,/location/quality,/location/scale,/threshold,'.split(
         ',')
 
     def __init__(self, serial_device, log_file=None):

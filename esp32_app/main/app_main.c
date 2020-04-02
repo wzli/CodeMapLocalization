@@ -43,6 +43,7 @@ static camera_fb_t double_buffers[][2] = {
 };
 
 static camera_fb_t* claimed_buffers[N_DOUBLE_BUFFERS + 1];
+static ImageMatrix images[N_DOUBLE_BUFFERS + 1];
 
 static Vector2f correlation_buffers[2][32 * 32];
 
@@ -109,7 +110,6 @@ static void main_loop(void* pvParameters) {
     }
     // main loop
     for (;;) {
-        ImageMatrix images[N_DOUBLE_BUFFERS + 1];
         // fetch frame buffers
         for (uint8_t i = 0; i <= N_DOUBLE_BUFFERS; ++i) {
             images[i] = queue_fb_get(i);
@@ -121,14 +121,13 @@ static void main_loop(void* pvParameters) {
             xQueueSendToBack(record_frame_queue, &claimed_buffers[0], 0);
         }
         // assign buffers to localization context
+        IMG_SET_SIZE(images[1], 64, 64);
         loc_ctx.derotated_image = images[1];
-        loc_ctx.sharpened_image = images[2];
+        loc_ctx.sharpened_image = images[1];
 
         // run localization logic
         localization_loop_run(&loc_ctx, images[0]);
-
-        // write sharpened image
-        IMG_SET_SIZE(images[2], 62, 62);
+        IMG_SET_SIZE(images[1], 62, 62);
 
         // return frame buffers
         for (uint8_t i = 0; i <= N_DOUBLE_BUFFERS; ++i) {
@@ -150,12 +149,23 @@ static void side_loop(void* pvParameters) {
     LocalizationMsg_to_csv_header(0, text_buf);
     printf("timestamp,%s", text_buf);
     while (true) {
+        // wait for tick
         xQueueReceive(side_loop_tick, &timestamp, portMAX_DELAY);
         // print csv entry
         LocalizationMsg msg;
         write_localization_msg(&msg, &loc_ctx);
         LocalizationMsg_to_csv_entry(&msg, text_buf);
         printf("%llu,%s\n", timestamp, text_buf);
+
+        // write decoded image to buffer
+        bm64_from_axiscodes(loc_ctx.binary_image, loc_ctx.binary_mask,
+                &loc_ctx.scale_match.row_code, &loc_ctx.scale_match.col_code);
+        bm64_to_img(&images[2], loc_ctx.binary_image, loc_ctx.binary_mask);
+
+        // write extracted image to buffer
+        bm64_from_axiscodes(
+                loc_ctx.binary_image, loc_ctx.binary_mask, &loc_ctx.row_code, &loc_ctx.col_code);
+        bm64_to_img(&images[3], loc_ctx.binary_image, loc_ctx.binary_mask);
 
 #if CONFIG_LED_ILLUMINATOR_ENABLED
         // control LED based on desired threshold
@@ -191,5 +201,5 @@ void app_main() {
     // start main and side loops
     side_loop_tick = xQueueCreate(1, sizeof(uint64_t));
     xTaskCreatePinnedToCore(side_loop, "side_loop", 2048, NULL, 9, NULL, 0);
-    xTaskCreatePinnedToCore(main_loop, "main_loop", 2048, NULL, 9, NULL, 1);
+    xTaskCreatePinnedToCore(main_loop, "main_loop", 1024, NULL, 9, NULL, 1);
 }
