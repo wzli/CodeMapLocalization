@@ -179,6 +179,7 @@ static esp_err_t cam_params_handler(httpd_req_t* req) {
 static esp_err_t location_handler(httpd_req_t* req) {
     LocalizationMsg msg;
     write_localization_msg(&msg, &loc_ctx);
+    write_location_match_msg(&msg.loc, &loc_ctx.outlier_filter.filtered_match);
     int len = LocalizationMsg_to_json(&msg, text_buf);
     httpd_resp_set_type(req, "application/json");
     httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*");
