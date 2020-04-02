@@ -44,7 +44,8 @@ static camera_fb_t double_buffers[][2] = {
 static camera_fb_t* claimed_buffers[N_DOUBLE_BUFFERS + 1];
 
 static Vector2f correlation_buffers[2][32 * 32];
-static LocalizationContext loc_ctx;
+
+LocalizationContext loc_ctx;
 
 /* helper functions */
 
