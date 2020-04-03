@@ -23,7 +23,10 @@ class CsvRxStream:
         if len(line_tokens) != len(CsvRxStream.CSV_HEADERS):
             return None
         for i, token in enumerate(line_tokens[:-1]):
-            self.latest_entry[CsvRxStream.CSV_HEADERS[i]] = float(token)
+            try:
+                self.latest_entry[CsvRxStream.CSV_HEADERS[i]] = float(token)
+            except ValueError as e:
+                print(e)
         if self.log_file:
             self.log_file.write(line_string)
         return self.latest_entry
