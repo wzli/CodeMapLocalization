@@ -80,14 +80,6 @@ config LED_ILLUMINATOR_ENABLED
     help
     Enable an LED Flash or IR Illuminator
 
-config LED_LEDC_PIN
-    depends on LED_ILLUMINATOR_ENABLED
-    int "LED Illuminator GPIO Pin"
-    range 0 33
-    default 4
-    help
-    Set a pin to illuminate an onboard LED or IR Illuminator when streaming or taking snapshots.
-
 config LED_MAX_INTENSITY
     depends on LED_ILLUMINATOR_ENABLED
     int "LED Maximum Intensity (0-255)"
@@ -95,6 +87,29 @@ config LED_MAX_INTENSITY
     default 255
     help
     Limit the maximum intensity of the LED while streaming to prevent overheating (0-255).
+
+config LED_DEFAULT_INTENSITY
+    depends on LED_ILLUMINATOR_ENABLED
+    int "LED Default Intensity (0-255)"
+    range 0 255
+    default 0
+    help
+    Initial value of LED intensity.
+
+config LED_AUTO_INTENSITY
+    depends on LED_ILLUMINATOR_ENABLED
+    bool "LED Auto Intensity"
+    default n
+    help
+    Control LED output based on image threshold
+
+config LED_LEDC_PIN
+    depends on LED_ILLUMINATOR_ENABLED
+    int "LED Illuminator GPIO Pin"
+    range 0 33
+    default 4
+    help
+    Set a pin to illuminate an onboard LED or IR Illuminator when streaming or taking snapshots.
 
 choice LED_LEDC_SPEED_MODE
     depends on LED_ILLUMINATOR_ENABLED

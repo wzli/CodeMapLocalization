@@ -3,12 +3,8 @@
 #include "esp_dsp.h"
 #include "esp_log.h"
 #include "esp_timer.h"
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-#include "freertos/queue.h"
-
-#include "tests.h"
 #include "global.h"
+#include "tests.h"
 
 /* defines */
 #define STATIC_FRAME_BUFFER(SIZE) \
@@ -93,6 +89,8 @@ static void main_loop(void* pvParameters) {
         }
         assert(!uxQueueSpacesAvailable(frame_queues[i]));
     }
+    // map led feedback to image threshold
+    led_feedback = (int*) &loc_ctx.otsu_threshold;
     // main loop
     for (;;) {
         // fetch frame buffers
@@ -123,33 +121,6 @@ static void main_loop(void* pvParameters) {
         if (csv_log_task) {
             xTaskNotify(csv_log_task, frame_time >> 10, eSetValueWithOverwrite);
         }
-    }
-}
-
-static void side_loop(void* pvParameters) {
-    uint16_t led_duty_control = 0;
-    // print csv header
-    while (true) {
-#if 0
-        // write decoded image to buffer
-        bm64_from_axiscodes(loc_ctx.binary_image, loc_ctx.binary_mask,
-                &loc_ctx.scale_match.row_code, &loc_ctx.scale_match.col_code);
-        bm64_to_img(&images[2], loc_ctx.binary_image, loc_ctx.binary_mask);
-
-        // write extracted image to buffer
-        bm64_from_axiscodes(
-                loc_ctx.binary_image, loc_ctx.binary_mask, &loc_ctx.row_code, &loc_ctx.col_code);
-        bm64_to_img(&images[3], loc_ctx.binary_image, loc_ctx.binary_mask);
-#endif
-
-#if CONFIG_LED_ILLUMINATOR_ENABLED
-        // control LED based on desired threshold
-        if (led_duty_control < ((1 << 12) - 1) && loc_ctx.otsu_threshold < led_duty - 8) {
-            set_led_duty((++led_duty_control) >> 4);
-        } else if (led_duty_control > 0 && loc_ctx.otsu_threshold > led_duty + 8) {
-            set_led_duty((--led_duty_control) >> 4);
-        }
-#endif
     }
 }
 

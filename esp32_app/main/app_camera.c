@@ -24,25 +24,62 @@
 #include "esp_camera.h"
 #include "camera_pins.h"
 #include "sdkconfig.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
 
+const int* led_feedback;
 static const char* TAG = "camera";
 
-void app_camera_main() {
-#if CONFIG_CAMERA_MODEL_ESP_EYE
-    /* IO13, IO14 is designed for JTAG by default,
-     * to use it as generalized input,
-     * firstly declair it as pullup input */
-    gpio_config_t conf;
-    conf.mode = GPIO_MODE_INPUT;
-    conf.pull_up_en = GPIO_PULLUP_ENABLE;
-    conf.pull_down_en = GPIO_PULLDOWN_DISABLE;
-    conf.intr_type = GPIO_INTR_DISABLE;
-    conf.pin_bit_mask = 1LL << 13;
-    gpio_config(&conf);
-    conf.pin_bit_mask = 1LL << 14;
-    gpio_config(&conf);
+#ifdef CONFIG_LED_ILLUMINATOR_ENABLED
+void set_led_duty(int duty) {
+    if (duty > CONFIG_LED_MAX_INTENSITY) {
+        duty = CONFIG_LED_MAX_INTENSITY;
+    }
+#ifdef CONFIG_LED_LEDC_LOW_SPEED_MODE
+    ledc_set_duty(LEDC_LOW_SPEED_MODE, CONFIG_LED_LEDC_CHANNEL, duty);
+    ledc_update_duty(LEDC_LOW_SPEED_MODE, CONFIG_LED_LEDC_CHANNEL);
+#else
+    ledc_set_duty(LEDC_HIGH_SPEED_MODE, CONFIG_LED_LEDC_CHANNEL, duty);
+    ledc_update_duty(LEDC_HIGH_SPEED_MODE, CONFIG_LED_LEDC_CHANNEL);
+#endif
+}
 #endif
 
+#ifdef CONFIG_LED_AUTO_INTENSITY
+int led_setpoint = CONFIG_LED_DEFAULT_INTENSITY;
+
+static void led_control_loop(void* pvParameters) {
+    int led_duty = CONFIG_LED_DEFAULT_INTENSITY;
+    float feedback_average = led_duty;
+    if (!led_feedback) {
+        led_feedback = &led_duty;
+    }
+    while (true) {
+        // run at 10 Hz
+        vTaskDelay(10);
+        // average feedback for 1s
+        feedback_average *= 0.9f;
+        feedback_average += *led_feedback * 0.1f;
+        // control LED based on desired threshold
+        if (led_duty < CONFIG_LED_MAX_INTENSITY && feedback_average < led_setpoint) {
+            set_led_duty(++led_duty);
+        } else if (led_duty > 0 && feedback_average > led_setpoint) {
+            set_led_duty(--led_duty);
+        }
+    }
+}
+#endif
+
+void set_flash_led(int level) {
+    ESP_LOGI(TAG, "Set LED intensity to %d", level);
+#ifdef CONFIG_LED_AUTO_INTENSITY
+    led_setpoint = level;
+#else
+    set_led_duty(level);
+#endif
+}
+
+static void flash_led_init() {
 #ifdef CONFIG_LED_ILLUMINATOR_ENABLED
     gpio_set_direction(CONFIG_LED_LEDC_PIN, GPIO_MODE_OUTPUT);
     ledc_timer_config_t ledc_timer = {
@@ -77,6 +114,27 @@ void app_camera_main() {
         default:
             break;
     }
+    set_led_duty(CONFIG_LED_DEFAULT_INTENSITY);
+#ifdef CONFIG_LED_AUTO_INTENSITY
+    xTaskCreatePinnedToCore(led_control_loop, "led_control", 1024, NULL, 2, NULL, 0);
+#endif
+#endif
+}
+
+static void camera_init() {
+#if CONFIG_CAMERA_MODEL_ESP_EYE
+    /* IO13, IO14 is designed for JTAG by default,
+     * to use it as generalized input,
+     * firstly declair it as pullup input */
+    gpio_config_t conf;
+    conf.mode = GPIO_MODE_INPUT;
+    conf.pull_up_en = GPIO_PULLUP_ENABLE;
+    conf.pull_down_en = GPIO_PULLDOWN_DISABLE;
+    conf.intr_type = GPIO_INTR_DISABLE;
+    conf.pin_bit_mask = 1LL << 13;
+    gpio_config(&conf);
+    conf.pin_bit_mask = 1LL << 14;
+    gpio_config(&conf);
 #endif
 
     camera_config_t config;
@@ -124,17 +182,7 @@ void app_camera_main() {
     s->set_contrast(s, 2);
 }
 
-void set_led_duty(int duty) {
-#ifdef CONFIG_LED_ILLUMINATOR_ENABLED
-#ifdef CONFIG_LED_LEDC_LOW_SPEED_MODE
-#define CONFIG_LED_LEDC_SPEED_MODE LEDC_LOW_SPEED_MODE
-#else
-#define CONFIG_LED_LEDC_SPEED_MODE LEDC_HIGH_SPEED_MODE
-#endif
-    if (duty > CONFIG_LED_MAX_INTENSITY) {
-        duty = CONFIG_LED_MAX_INTENSITY;
-    }
-    ledc_set_duty(CONFIG_LED_LEDC_SPEED_MODE, CONFIG_LED_LEDC_CHANNEL, duty);
-    ledc_update_duty(CONFIG_LED_LEDC_SPEED_MODE, CONFIG_LED_LEDC_CHANNEL);
-#endif
+void app_camera_main() {
+    flash_led_init();
+    camera_init();
 }
