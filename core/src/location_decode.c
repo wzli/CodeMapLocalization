@@ -26,10 +26,6 @@ Location deduce_location(AxisPosition row_position, AxisPosition col_position) {
 
 bool outlier_filter_location(OutlierFilter* ctx, const ScaleMatch* new_match) {
     assert(ctx && new_match);
-    if (new_match->location.x == ctx->filtered_match.location.x &&
-            new_match->location.y == ctx->filtered_match.location.y) {
-        return true;
-    }
     if (new_match->quality < ctx->quality_threshold) {
         return false;
     }
@@ -41,6 +37,10 @@ bool outlier_filter_location(OutlierFilter* ctx, const ScaleMatch* new_match) {
             (new_match->col_code.n_errors * ctx->xor_error_ratio_threshold >
                     new_match->col_code.n_samples)) {
         return false;
+    }
+    if (new_match->location.x == ctx->filtered_match.location.x &&
+            new_match->location.y == ctx->filtered_match.location.y) {
+        return true;
     }
     int32_t dx = new_match->location.x - ctx->filtered_match.location.x;
     int32_t dy = new_match->location.y - ctx->filtered_match.location.y;
