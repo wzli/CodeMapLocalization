@@ -155,7 +155,7 @@ static void side_loop(void* pvParameters) {
         LocalizationMsg msg;
         write_localization_msg(&msg, &loc_ctx);
         LocalizationMsg_to_csv_entry(&msg, text_buf);
-        printf("%llu,%s\n", timestamp, text_buf);
+        printf("%u,%s\n", (uint32_t) timestamp, text_buf);
 
         // write decoded image to buffer
         bm64_from_axiscodes(loc_ctx.binary_image, loc_ctx.binary_mask,
