@@ -17,8 +17,6 @@
 #define STATIC_DOUBLE_BUFFER(SIZE) \
     { STATIC_FRAME_BUFFER(SIZE), STATIC_FRAME_BUFFER(SIZE) }
 
-#define N_DOUBLE_BUFFERS (sizeof(double_buffers) / sizeof(double_buffers[0]))
-
 /* global data */
 LocalizationContext loc_ctx;
 
@@ -27,12 +25,12 @@ static const char* TAG = "main_loop";
 
 static camera_fb_t double_buffers[][2] = {
         STATIC_DOUBLE_BUFFER(64),
-        STATIC_DOUBLE_BUFFER(64),
+        STATIC_DOUBLE_BUFFER(62),
         STATIC_DOUBLE_BUFFER(64),
 };
 
-static camera_fb_t* claimed_buffers[N_DOUBLE_BUFFERS + 1];
-static ImageMatrix images[N_DOUBLE_BUFFERS + 1];
+static camera_fb_t* claimed_buffers[N_FRAME_QUEUES];
+static ImageMatrix images[N_FRAME_QUEUES];
 
 static Vector2f correlation_buffers[2][32 * 32];
 
@@ -40,6 +38,11 @@ static Vector2f correlation_buffers[2][32 * 32];
 
 static inline ImageMatrix fb_to_img(camera_fb_t fb) {
     return (ImageMatrix){fb.buf, {fb.width, fb.height}};
+}
+
+static inline camera_fb_t img_to_fb(ImageMatrix img) {
+    return (camera_fb_t){
+            img.data, img.size.x * img.size.y, img.size.x, img.size.y, PIXFORMAT_GRAYSCALE};
 }
 
 static inline camera_fb_t* camera_fb_swap(camera_fb_t* fb) {
@@ -53,19 +56,16 @@ static inline camera_fb_t* camera_fb_swap(camera_fb_t* fb) {
     return fb;
 }
 
-static ImageMatrix queue_fb_get(uint8_t queue_index) {
-    assert(queue_index <= N_DOUBLE_BUFFERS);
+static camera_fb_t* queue_fb_get(uint8_t queue_index) {
+    assert(queue_index < N_FRAME_QUEUES);
     assert(!claimed_buffers[queue_index]);
     xQueueReceive(frame_queues[queue_index], &claimed_buffers[queue_index], 0);
     assert(claimed_buffers[queue_index]);
-    if (queue_index == 0) {
-        claimed_buffers[0] = camera_fb_swap(claimed_buffers[0]);
-    }
-    return fb_to_img(*claimed_buffers[queue_index]);
+    return claimed_buffers[queue_index];
 }
 
 static void queue_fb_return(uint8_t queue_index) {
-    assert(queue_index <= N_DOUBLE_BUFFERS);
+    assert(queue_index < N_FRAME_QUEUES);
     assert(claimed_buffers[queue_index]);
     if (pdTRUE == xQueueSendToBack(frame_queues[queue_index], &claimed_buffers[queue_index], 0)) {
         claimed_buffers[queue_index] = NULL;
@@ -86,7 +86,7 @@ static void main_loop(void* pvParameters) {
     loc_ctx.odom.correlation.image.data = correlation_buffers[0];
     loc_ctx.odom.correlation.buffer.data = correlation_buffers[1];
     // initialize queues
-    for (int i = 0; i <= N_DOUBLE_BUFFERS; ++i) {
+    for (int i = 0; i < N_FRAME_QUEUES; ++i) {
         for (int j = 0; j < 2; ++j) {
             camera_fb_t* fb_ptr = i ? &double_buffers[i - 1][j] : esp_camera_fb_get();
             xQueueSendToBack(frame_queues[i], &fb_ptr, 0);
@@ -96,30 +96,27 @@ static void main_loop(void* pvParameters) {
     // main loop
     for (;;) {
         // fetch frame buffers
-        for (uint8_t i = 0; i <= N_DOUBLE_BUFFERS; ++i) {
-            images[i] = queue_fb_get(i);
+        for (uint8_t i = 0; i < N_FRAME_QUEUES; ++i) {
+            images[i] = fb_to_img(*queue_fb_get(i));
         }
-        // record time when new buffer is received
+        // get raw image from camera
+        claimed_buffers[0] = camera_fb_swap(claimed_buffers[0]);
+        images[0].data = claimed_buffers[0]->buf;
+        // record time when new image is received
         int64_t frame_time = esp_timer_get_time();
         // start recording raw image
         if (record_task) {
             xTaskNotify(record_task, (uint32_t) claimed_buffers[0], eSetValueWithOverwrite);
         }
         // assign buffers to localization context
-        IMG_SET_SIZE(images[1], 64, 64);
         loc_ctx.derotated_image = images[1];
-        loc_ctx.sharpened_image = images[1];
-
+        loc_ctx.sharpened_image = images[2];
         // run localization logic
         localization_loop_run(&loc_ctx, images[0]);
-        IMG_SET_SIZE(images[1], 62, 62);
-
         // return frame buffers
-        for (uint8_t i = 0; i <= N_DOUBLE_BUFFERS; ++i) {
+        for (uint8_t i = 0; i < N_FRAME_QUEUES; ++i) {
             assert(claimed_buffers[i]);
-            claimed_buffers[i]->width = images[i].size.x;
-            claimed_buffers[i]->height = images[i].size.y;
-            claimed_buffers[i]->len = IMG_PIXEL_COUNT(images[i]);
+            *claimed_buffers[i] = img_to_fb(images[i]);
             queue_fb_return(i);
         }
         // record csv log
@@ -176,6 +173,6 @@ void app_main() {
     app_wifi_main();
     app_httpd_main();
 
-    // start main loops
+    // start main loop
     xTaskCreatePinnedToCore(main_loop, "main_loop", 2048, NULL, 9, NULL, 1);
 }
