@@ -8,10 +8,9 @@
 #include "freertos/queue.h"
 
 #include "tests.h"
-#include "localization_loop.h"
-#include "debug_prints.h"
+#include "global.h"
 
-// * defines */
+/* defines */
 #define STATIC_FRAME_BUFFER(SIZE) \
     (camera_fb_t) { (uint8_t[SQR(SIZE)]){}, SQR(SIZE), SIZE, SIZE, PIXFORMAT_GRAYSCALE }
 
@@ -20,21 +19,11 @@
 
 #define N_DOUBLE_BUFFERS (sizeof(double_buffers) / sizeof(double_buffers[0]))
 
-/* externals */
-extern const uint64_t MLS_ID;
-extern QueueHandle_t frame_queues[];
-extern QueueHandle_t record_frame_queue;
-extern uint32_t record_frame_count;
-extern int led_duty;
-void set_led_duty(int duty);
-void app_camera_main();
-void app_wifi_main();
-void app_httpd_main();
-void app_record_main();
+/* global data */
+LocalizationContext loc_ctx;
 
 /* static data */
 static const char* TAG = "main_loop";
-static QueueHandle_t side_loop_tick;
 
 static camera_fb_t double_buffers[][2] = {
         STATIC_DOUBLE_BUFFER(64),
@@ -46,10 +35,6 @@ static camera_fb_t* claimed_buffers[N_DOUBLE_BUFFERS + 1];
 static ImageMatrix images[N_DOUBLE_BUFFERS + 1];
 
 static Vector2f correlation_buffers[2][32 * 32];
-
-static char text_buf[512];
-
-LocalizationContext loc_ctx;
 
 /* helper functions */
 
@@ -116,9 +101,9 @@ static void main_loop(void* pvParameters) {
         }
         // record time when new buffer is received
         int64_t frame_time = esp_timer_get_time();
-        // queue raw image for recording
-        if (record_frame_queue) {
-            xQueueSendToBack(record_frame_queue, &claimed_buffers[0], 0);
+        // start recording raw image
+        if (record_task) {
+            xTaskNotify(record_task, (uint32_t) claimed_buffers[0], eSetValueWithOverwrite);
         }
         // assign buffers to localization context
         IMG_SET_SIZE(images[1], 64, 64);
@@ -137,26 +122,18 @@ static void main_loop(void* pvParameters) {
             claimed_buffers[i]->len = IMG_PIXEL_COUNT(images[i]);
             queue_fb_return(i);
         }
-        // tick side loop
-        xQueueSendToBack(side_loop_tick, &frame_time, 0);
+        // record csv log
+        if (csv_log_task) {
+            xTaskNotify(csv_log_task, frame_time >> 10, eSetValueWithOverwrite);
+        }
     }
 }
 
 static void side_loop(void* pvParameters) {
-    uint64_t timestamp = 0;
     uint16_t led_duty_control = 0;
     // print csv header
-    LocalizationMsg_to_csv_header(0, text_buf);
-    printf("timestamp,%s", text_buf);
     while (true) {
-        // wait for tick
-        xQueueReceive(side_loop_tick, &timestamp, portMAX_DELAY);
-        // print csv entry
-        LocalizationMsg msg;
-        write_localization_msg(&msg, &loc_ctx);
-        LocalizationMsg_to_csv_entry(&msg, text_buf);
-        printf("%u,%s\n", (uint32_t) timestamp, text_buf);
-
+#if 0
         // write decoded image to buffer
         bm64_from_axiscodes(loc_ctx.binary_image, loc_ctx.binary_mask,
                 &loc_ctx.scale_match.row_code, &loc_ctx.scale_match.col_code);
@@ -166,6 +143,7 @@ static void side_loop(void* pvParameters) {
         bm64_from_axiscodes(
                 loc_ctx.binary_image, loc_ctx.binary_mask, &loc_ctx.row_code, &loc_ctx.col_code);
         bm64_to_img(&images[3], loc_ctx.binary_image, loc_ctx.binary_mask);
+#endif
 
 #if CONFIG_LED_ILLUMINATOR_ENABLED
         // control LED based on desired threshold
@@ -198,8 +176,6 @@ void app_main() {
     app_wifi_main();
     app_httpd_main();
 
-    // start main and side loops
-    side_loop_tick = xQueueCreate(1, sizeof(uint64_t));
-    xTaskCreatePinnedToCore(side_loop, "side_loop", 2048, NULL, 8, NULL, tskNO_AFFINITY);
-    xTaskCreatePinnedToCore(main_loop, "main_loop", 1024, NULL, 9, NULL, 1);
+    // start main loops
+    xTaskCreatePinnedToCore(main_loop, "main_loop", 2048, NULL, 9, NULL, 1);
 }

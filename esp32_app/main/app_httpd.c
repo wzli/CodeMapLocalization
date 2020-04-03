@@ -6,15 +6,13 @@
 #include "esp_log.h"
 #include "freertos/queue.h"
 
-#include "debug_prints.h"
+#include "global.h"
 
-/* global variables */
-extern LocalizationContext loc_ctx;
-
-#define N_FRAME_QUEUES 4
-QueueHandle_t frame_queues[N_FRAME_QUEUES] = {};
+/* global data */
+QueueHandle_t frame_queues[N_FRAME_QUEUES];
 int led_duty = -1;
 
+/* static data */
 static const char* TAG = "web_ui";
 static char text_buf[1024];
 

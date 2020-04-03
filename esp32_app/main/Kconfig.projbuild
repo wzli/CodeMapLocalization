@@ -1,6 +1,19 @@
 menu "Code Map Localization"
 
 menu "SD Record Settings"
+config RECORD_CSV_LOG_ENABLE
+    bool "Record CSV log"
+    default y
+    help
+    Record data to csv file.
+
+config RECORD_CSV_LOG_FILENAME
+    depends on RECORD_CSV_LOG_ENABLE
+    string "Record Raw Frames Filename"
+    default "data.csv"
+    help
+    Name of the csv file to save data to.
+
 config RECORD_RAW_FRAMES_ENABLE
     bool "Record Raw Frames"
     default n
@@ -10,7 +23,7 @@ config RECORD_RAW_FRAMES_ENABLE
 config RECORD_RAW_FRAMES_FILENAME
     depends on RECORD_RAW_FRAMES_ENABLE
     string "Record Raw Frames Filename"
-    default "raw.mjpeg"
+    default "recording.mjpeg"
     help
     Name of the MJPEG file to save raw frames to.
 
