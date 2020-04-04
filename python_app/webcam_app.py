@@ -11,7 +11,9 @@ cv2.resizeWindow(window_name, (3 * 256, 2 * 256))
 webcam_loc = WebCamLocalization(0)
 while webcam_loc.update():
     # print results
-    webcam_loc.loc_ctx.print()
+    loc_msg = webcam_loc.loc_ctx.get_location_msg()
+    for key in ('odometry', 'location', 'correlation'):
+        print(f'{key.title()}\t{loc_msg[key]}')
     print()
     # display image
     cv2.imshow(window_name, webcam_loc.loc_ctx.get_pipeline_montage())

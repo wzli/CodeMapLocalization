@@ -98,7 +98,9 @@ class CodeMapGui:
         print(
             f'\nGround Truth\t{{\'x\': {self.pos[0] + 25}, \'y\': {self.pos[1] + 25}, \'rot\': {round(radians, 6)}}}'
         )
-        self.loc_ctx.print()
+        loc_msg = self.loc_ctx.get_location_msg()
+        for key in ('odometry', 'location', 'correlation'):
+            print(f'{key.title()}\t{loc_msg[key]}')
 
     def run(self):
         self.update_frame()

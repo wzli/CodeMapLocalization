@@ -203,8 +203,3 @@ class LocalizationContext(ctypes.Structure):
         buf = ctypes.create_string_buffer(512)
         libcodemap.LocalizationContext_to_json(buf, ctypes.byref(self))
         return json.loads(buf.value)
-
-    def print(self):
-        loc_msg = self.get_location_msg()
-        for key in ('odometry', 'location', 'correlation'):
-            print(f'{key.title()}\t{loc_msg[key]}')
