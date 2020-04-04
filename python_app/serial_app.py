@@ -14,4 +14,7 @@ parser.add_argument('-c',
 args = parser.parse_args()
 
 csv_rx_stream = CsvRxStream(args.device, args.csv)
-csv_rx_stream.run(lambda x: print(json.dumps(x, indent=2)))
+while True:
+    msg = csv_rx_stream.read_message()
+    if msg is not None:
+        print(json.dumps(msg, indent=2))

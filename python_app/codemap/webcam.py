@@ -29,8 +29,3 @@ class WebCamLocalization:
         self.loc_ctx.run(frame)
         self.latest_message = self.loc_ctx.get_location_msg()
         return self.latest_message
-
-    def run(self, callback):
-        while True:
-            if self.update():
-                callback(self.latest_message)

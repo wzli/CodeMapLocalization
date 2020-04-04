@@ -25,7 +25,7 @@ class CsvRxStream:
             self.log_file = open(log_file, 'w')
             self.log_file.write(CsvRxStream.CSV_HEADERS_STRING + ',\n')
 
-    def read_line(self):
+    def read_message(self):
         line_bytes = self.serial.readline()
         line_string = line_bytes.decode('ascii', 'ignore')
         try:
@@ -40,8 +40,3 @@ class CsvRxStream:
         for keys, value in zip(CsvRxStream.CSV_HEADERS, csv_values):
             nested_set(self.latest_message, keys, value)
         return self.latest_message
-
-    def run(self, callback):
-        while True:
-            if self.read_line() is not None:
-                callback(self.latest_message)
