@@ -18,7 +18,7 @@ class CsvRxStream:
     ] for header in CSV_HEADERS_STRING.split(',')][:-1]
 
     def __init__(self, serial_device, log_file=None):
-        self.latest_entry = {}
+        self.latest_message = {}
         self.serial = serial.Serial(serial_device, CsvRxStream.BAUD_RATE)
         self.log_file = None
         if log_file:
@@ -38,10 +38,10 @@ class CsvRxStream:
         if self.log_file:
             self.log_file.write(line_string)
         for keys, value in zip(CsvRxStream.CSV_HEADERS, csv_values):
-            nested_set(self.latest_entry, keys, value)
-        return self.latest_entry
+            nested_set(self.latest_message, keys, value)
+        return self.latest_message
 
     def run(self, callback):
         while True:
             if self.read_line() is not None:
-                callback(self.latest_entry)
+                callback(self.latest_message)
