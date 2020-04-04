@@ -96,7 +96,7 @@ class CodeMapGui:
         if radians > np.pi:
             radians -= 2 * np.pi
         print(
-            f'\nGround Truth\t{{\'x\': {self.pos[0] + 24}, \'y\': {self.pos[1] + 24}, \'rot\': {round(radians, 6)}}}'
+            f'\nGround Truth\t{{\'x\': {self.pos[0] + 25}, \'y\': {self.pos[1] + 25}, \'rot\': {round(radians, 6)}}}'
         )
         self.loc_ctx.print()
 
