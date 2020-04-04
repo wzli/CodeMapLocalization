@@ -7,7 +7,7 @@ import json
 def nested_set(dic, keys, value):
     for key in keys[:-1]:
         dic = dic.setdefault(key, {})
-        dic[keys[-1]] = value
+    dic[keys[-1]] = value
 
 
 class CsvRxStream:
@@ -45,7 +45,3 @@ class CsvRxStream:
         while True:
             if self.read_line() is not None:
                 callback(self.latest_entry)
-
-
-csv_rx_stream = CsvRxStream('/dev/ttyUSB0', 'log.csv')
-csv_rx_stream.run(lambda x: print(x))

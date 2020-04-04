@@ -2,7 +2,7 @@ import ctypes
 import json
 import numpy as np
 
-libcodemap = ctypes.CDLL("build/libcodemap.so")
+libcodemap = np.ctypeslib.load_library('libcodemap', 'build')
 
 # bitwise_utils.h
 BitMatrix32 = ctypes.c_uint * 32
