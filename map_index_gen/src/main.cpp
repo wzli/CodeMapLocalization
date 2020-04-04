@@ -25,7 +25,7 @@ enum Error {
 };
 
 static constexpr char HELP_STRING[] =
-        "Usage: map_codec_gen [-w width_limit] [-h height_limit] dmls_yaml";
+        "Usage: map_index_gen [-w width_limit] [-h height_limit] dmls_yaml";
 
 int main(int argc, char** argv) {
     if (argc < 2) {
