@@ -16,10 +16,7 @@ void print_image_matrix(ImageMatrix src);
 void print_axiscode(AxisCode axiscode);
 void print_axis_position(AxisPosition position);
 void print_location(const Location* location);
-void print_location_match(const ScaleMatch* match);
-void print_odometry(const VisualOdometry* odom);
-void print_correlation(const Correlation* corr);
-void print_localization(const LocalizationContext* loc_ctx);
+int LocalizationContext_to_json(char* buf, const LocalizationContext* loc_ctx);
 void bm64_save_to_pgm(BitMatrix64 bit_matrix, BitMatrix64 bit_mask, const char* file_name);
 void generate_pipeline_montage(
         ImageMatrix* dst, const ImageMatrix raw, const LocalizationContext* loc_ctx);

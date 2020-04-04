@@ -1,4 +1,5 @@
 import ctypes
+import json
 import numpy as np
 
 libcodemap = ctypes.CDLL("build/libcodemap.so")
@@ -184,18 +185,26 @@ class LocalizationContext(ctypes.Structure):
 
     def run(self, frame):
         # run loop
+        self.raw_frame = frame
         location_updated = (1 == libcodemap.localization_loop_run(
             ctypes.byref(self), ImageMatrix(frame)))
-        self.pipeline_montage = np.empty((64 * 2, 64 * 3),
-                                         dtype=np.ubyte,
-                                         order='C')
-        libcodemap.generate_pipeline_montage(
-            ctypes.byref(ImageMatrix(self.pipeline_montage)),
-            ImageMatrix(frame), ctypes.byref(self))
         return location_updated
 
+    def get_pipeline_montage(self):
+        pipeline_montage = np.empty((64 * 2, 64 * 3),
+                                    dtype=np.ubyte,
+                                    order='C')
+        libcodemap.generate_pipeline_montage(
+            ctypes.byref(ImageMatrix(pipeline_montage)),
+            ImageMatrix(self.raw_frame), ctypes.byref(self))
+        return pipeline_montage
+
+    def get_location_msg(self):
+        buf = ctypes.create_string_buffer(512)
+        libcodemap.LocalizationContext_to_json(buf, ctypes.byref(self))
+        return json.loads(buf.value)
+
     def print(self):
-        libcodemap.print_odometry(ctypes.byref(self.odom))
-        libcodemap.print_location_match(ctypes.byref(self.scale_match))
-        libcodemap.print_correlation(ctypes.byref(self.odom.correlation))
-        #libcodemap.print_localization(ctypes.byref(self))
+        loc_msg = self.get_location_msg()
+        for key in ('odometry', 'location', 'correlation'):
+            print(f'{key.title()}\t{loc_msg[key]}')

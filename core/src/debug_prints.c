@@ -94,41 +94,6 @@ void bm64_save_to_pgm(BitMatrix64 bit_matrix, BitMatrix64 bit_mask, const char* 
     img_save_to_pgm(image, file_name);
 }
 
-void print_location_match(const ScaleMatch* match) {
-    char buf[256];
-    LocationMatchMsg msg;
-    write_location_match_msg(&msg, match);
-    LocationMatchMsg_to_json(&msg, buf);
-    printf("Location Match\t");
-    puts(buf);
-}
-
-void print_odometry(const VisualOdometry* odom) {
-    char buf[128];
-    OdometryMsg msg;
-    write_odometry_msg(&msg, odom);
-    OdometryMsg_to_json(&msg, buf);
-    printf("Odom Estimate\t");
-    puts(buf);
-}
-
-void print_correlation(const Correlation* corr) {
-    char buf[128];
-    CorrelationMsg msg;
-    write_correlation_msg(&msg, corr);
-    CorrelationMsg_to_json(&msg, buf);
-    printf("Correlation\t");
-    puts(buf);
-}
-
-void print_localization(const LocalizationContext* loc_ctx) {
-    char buf[512];
-    LocalizationMsg msg;
-    write_localization_msg(&msg, loc_ctx);
-    LocalizationMsg_to_json(&msg, buf);
-    puts(buf);
-}
-
 void generate_pipeline_montage(
         ImageMatrix* dst, const ImageMatrix raw, const LocalizationContext* loc_ctx) {
     assert(dst && loc_ctx);
@@ -181,4 +146,10 @@ void generate_pipeline_montage(
     // write sharpened image to top right
     top_left.x += raw.size.x;
     IMG_PASTE(*dst, loc_ctx->sharpened_image, top_left);
+}
+
+int LocalizationContext_to_json(char* buf, const LocalizationContext* loc_ctx) {
+    LocalizationMsg msg;
+    write_localization_msg(&msg, loc_ctx);
+    return LocalizationMsg_to_json(&msg, buf);
 }

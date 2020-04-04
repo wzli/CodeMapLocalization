@@ -96,7 +96,7 @@ class CodeMapGui:
         if radians > np.pi:
             radians -= 2 * np.pi
         print(
-            f'\nGround Truth\t{{\"x\":{self.pos[0] + 24}, \"y\":{self.pos[1] + 24}, \"rot\":{round(radians, 6)}}}'
+            f'\nGround Truth\t{{\'x\': {self.pos[0] + 24}, \'y\': {self.pos[1] + 24}, \'rot\': {round(radians, 6)}}}'
         )
         self.loc_ctx.print()
 
@@ -105,7 +105,7 @@ class CodeMapGui:
         cv2.imshow('CodeMap', self.code_map)
         while (self.key_callback(cv2.waitKey(50))):
             cv2.imshow('Navigate', self.navigate)
-            cv2.imshow('Pipeline', self.loc_ctx.pipeline_montage)
+            cv2.imshow('Pipeline', self.loc_ctx.get_pipeline_montage())
         cv2.destroyAllWindows()
 
     def key_callback(self, key):
