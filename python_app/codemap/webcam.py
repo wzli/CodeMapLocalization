@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import cv2
-import codemap.core
+from . import core
 
 
 class WebCamLocalization:
@@ -9,7 +9,7 @@ class WebCamLocalization:
         self.cam = cv2.VideoCapture(device_num)
         self.cam.set(cv2.CAP_PROP_FRAME_WIDTH, 64)
         self.cam.set(cv2.CAP_PROP_FRAME_HEIGHT, 64)
-        self.loc_ctx = codemap.core.LocalizationContext()
+        self.loc_ctx = core.LocalizationContext()
         self.latest_message = {}
 
     def update(self):

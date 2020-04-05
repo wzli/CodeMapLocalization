@@ -184,7 +184,6 @@ class LocalizationContext(ctypes.Structure):
         self.odom.correlation.squared_magnitude_threshold = 0.01
 
     def run(self, frame):
-        # run loop
         self.raw_frame = frame
         location_updated = (1 == libcodemap.localization_loop_run(
             ctypes.byref(self), ImageMatrix(frame)))

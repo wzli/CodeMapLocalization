@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import cv2
 import numpy as np
-import codemap.core
+from codemap.core import *
 
 
 def rotate_image(image, angle, scale):
@@ -25,7 +25,7 @@ def create_window(name, size, pos=None):
 class CodeMapGui:
     CAMERA_RES = 64
     MAX_SCALE = 0.7
-    MIN_SCALE = (codemap.core.MLS_INDEX.code_length + 2) / 64
+    MIN_SCALE = (MLS_INDEX.code_length + 2) / 64
 
     def __init__(self, code_map_file):
         # initial coordinates
@@ -35,7 +35,7 @@ class CodeMapGui:
         self.tunnel = np.ones((CodeMapGui.CAMERA_RES, CodeMapGui.CAMERA_RES))
         self.noise = 0
         # initialize localization context
-        self.loc_ctx = codemap.core.LocalizationContext()
+        self.loc_ctx = LocalizationContext()
         # load code map
         self.code_map = cv2.imread(code_map_file, cv2.IMREAD_GRAYSCALE)
         if self.code_map is None:
