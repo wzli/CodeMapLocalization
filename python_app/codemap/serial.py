@@ -31,7 +31,7 @@ class CsvRxStream:
         try:
             csv_values = json.loads('[' + line_string + '0]')[:-1]
         except json.decoder.JSONDecodeError as e:
-            print(line_string, e)
+            print(line_string, end='')
             return None
         if len(csv_values) != len(CsvRxStream.CSV_HEADERS):
             return None
