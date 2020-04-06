@@ -3,10 +3,17 @@ from rclpy.node import Node
 from geometry_msgs.msg import PoseStamped
 from code_map_localization_msgs.msg import Localization
 from .convert_message import convert_to_ros_msgs
-from codemap.serial import CsvRxStream
+from codemap.webcam import WebCamLocalization
+import ctypes
+import time
+
+from ament_index_python.packages import get_package_prefix
+libcodemap_path = get_package_prefix(
+    'code_map_localization_core') + '/lib/libcodemap.so'
+libcodemap = ctypes.cdll.LoadLibrary(libcodemap_path)
 
 
-class CodeMapLocalizationSerial(Node):
+class CodeMapLocalizationWebcam(Node):
     def __init__(self):
         super().__init__('code_map_localization')
         # create publisher
@@ -14,26 +21,24 @@ class CodeMapLocalizationSerial(Node):
         self.localization_publisher = self.create_publisher(
             Localization, 'localization', 1)
         # parse serial device
-        serial_device = self.declare_parameter("serial_device")
-        serial_device = serial_device._value if serial_device else '/dev/ttyUSB0'
-        # parse csv file
-        csv_file = self.declare_parameter("csv_file")
-        if csv_file:
-            csv_file = csv_file.value
+        capture_device = self.declare_parameter("capture_device")
+        capture_device = capture_device._value if capture_device else 0
         # parse frame_id
         self.frame_id = self.declare_parameter("frame_id")
         self.frame_id = self.frame_id._value if self.frame_id else 'map'
-        # ceate rx stream
-        self.rx_stream = CsvRxStream(serial_device, csv_file)
+        # ceate webcam stream
+        self.webcam_stream = WebCamLocalization(libcodemap, capture_device)
         # print start message
         self.get_logger().info(
-            f'Serial Rx started on {serial_device} logging to {csv_file}')
+            f'Webcam Localization started on capture device {capture_device}')
         # poll every 10ms
-        self.timer = self.create_timer(0.01, self.rx_timer_callback)
+        self.timer = self.create_timer(0.03, self.rx_timer_callback)
+        self.start_time = time.time()
 
     def rx_timer_callback(self):
-        loc_msg = self.rx_stream.read_message()
+        loc_msg = self.webcam_stream.update()
         if loc_msg is not None:
+            loc_msg['timestamp'] = int((time.time() - self.start_time) * 1000)
             pose_msg, localization_msg = convert_to_ros_msgs(loc_msg)
             pose_msg.header.frame_id = self.frame_id
             self.pose_publisher.publish(pose_msg)
@@ -42,7 +47,7 @@ class CodeMapLocalizationSerial(Node):
 
 def main(args=None):
     rclpy.init(args=args)
-    node = CodeMapLocalizationSerial()
+    node = CodeMapLocalizationWebcam()
     rclpy.spin(node)
 
 
