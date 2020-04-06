@@ -7,10 +7,7 @@ from codemap.webcam import WebCamLocalization
 import ctypes
 import time
 
-from ament_index_python.packages import get_package_prefix
-libcodemap_path = get_package_prefix(
-    'code_map_localization_core') + '/lib/libcodemap.so'
-libcodemap = ctypes.cdll.LoadLibrary(libcodemap_path)
+libcodemap = ctypes.cdll.LoadLibrary('libcodemap.so')
 
 
 class CodeMapLocalizationWebcam(Node):
