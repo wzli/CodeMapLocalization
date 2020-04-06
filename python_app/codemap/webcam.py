@@ -5,11 +5,11 @@ from . import core
 
 
 class WebCamLocalization:
-    def __init__(self, device_num):
+    def __init__(self, libcodemap, device_num):
         self.cam = cv2.VideoCapture(device_num)
         self.cam.set(cv2.CAP_PROP_FRAME_WIDTH, 64)
         self.cam.set(cv2.CAP_PROP_FRAME_HEIGHT, 64)
-        self.loc_ctx = core.LocalizationContext()
+        self.loc_ctx = core.LocalizationContext(libcodemap)
         self.latest_message = {}
 
     def update(self):
