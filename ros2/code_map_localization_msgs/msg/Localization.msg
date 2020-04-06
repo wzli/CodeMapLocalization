@@ -1,0 +1,8 @@
+# mirrors CorrelationMsg in msg_def.h
+
+uint32 timestamp
+uint32 frame
+code_map_localization_msgs/Odometry odometry
+code_map_localization_msgs/Correlation correlation
+code_map_localization_msgs/LocationMatch location
+uint8 threshold
