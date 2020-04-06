@@ -3,6 +3,9 @@ import cv2
 import numpy as np
 from codemap.core import *
 
+libcodemap = np.ctypeslib.load_library('libcodemap', 'build')
+MLS_INDEX = MlsIndex.in_dll(libcodemap, "MLS_INDEX")
+
 
 def rotate_image(image, angle, scale):
     center = tuple(np.array(image.shape[0:2]) / 2)
@@ -35,7 +38,7 @@ class CodeMapGui:
         self.tunnel = np.ones((CodeMapGui.CAMERA_RES, CodeMapGui.CAMERA_RES))
         self.noise = 0
         # initialize localization context
-        self.loc_ctx = LocalizationContext()
+        self.loc_ctx = LocalizationContext(libcodemap)
         # load code map
         self.code_map = cv2.imread(code_map_file, cv2.IMREAD_GRAYSCALE)
         if self.code_map is None:

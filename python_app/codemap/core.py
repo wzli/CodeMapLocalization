@@ -2,8 +2,6 @@ import ctypes
 import json
 import numpy as np
 
-libcodemap = np.ctypeslib.load_library('libcodemap', 'build')
-
 # bitwise_utils.h
 BitMatrix32 = ctypes.c_uint * 32
 BitMatrix64 = ctypes.c_ulonglong * 64
@@ -40,9 +38,6 @@ class MlsIndex(ctypes.Structure):
         ('sequence_length', ctypes.c_ushort),
         ('code_length', ctypes.c_ubyte),
     ]
-
-
-MLS_INDEX = MlsIndex.in_dll(libcodemap, "MLS_INDEX")
 
 
 # code_extraction.h
@@ -154,7 +149,8 @@ class LocalizationContext(ctypes.Structure):
         ('otsu_threshold', ctypes.c_ubyte),
     ]
 
-    def __init__(self):
+    def __init__(self, libcodemap):
+        self.libcodemap = libcodemap
         self.frame_count = 0
         # create buffers
         self.derotated_image_array = np.empty((64, 64),
@@ -185,7 +181,7 @@ class LocalizationContext(ctypes.Structure):
 
     def run(self, frame):
         self.raw_frame = frame
-        location_updated = (1 == libcodemap.localization_loop_run(
+        location_updated = (1 == self.libcodemap.localization_loop_run(
             ctypes.byref(self), ImageMatrix(frame)))
         return location_updated
 
@@ -193,12 +189,12 @@ class LocalizationContext(ctypes.Structure):
         pipeline_montage = np.empty((64 * 2, 64 * 3),
                                     dtype=np.ubyte,
                                     order='C')
-        libcodemap.generate_pipeline_montage(
+        self.libcodemap.generate_pipeline_montage(
             ctypes.byref(ImageMatrix(pipeline_montage)),
             ImageMatrix(self.raw_frame), ctypes.byref(self))
         return pipeline_montage
 
     def get_location_msg(self):
         buf = ctypes.create_string_buffer(512)
-        libcodemap.LocalizationContext_to_json(buf, ctypes.byref(self))
+        self.libcodemap.LocalizationContext_to_json(buf, ctypes.byref(self))
         return json.loads(buf.value)
