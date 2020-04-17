@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 import cv2
 import numpy as np
-import code_map as cm
+from codemap.core import *
+
+libcodemap = np.ctypeslib.load_library('libcodemap', 'build')
+MLS_INDEX = MlsIndex.in_dll(libcodemap, "MLS_INDEX")
 
 
 def rotate_image(image, angle, scale):
@@ -25,9 +28,9 @@ def create_window(name, size, pos=None):
 class CodeMapGui:
     CAMERA_RES = 64
     MAX_SCALE = 0.7
-    MIN_SCALE = (cm.MLS_INDEX.code_length + 2) / 64
+    MIN_SCALE = (MLS_INDEX.code_length + 2) / 64
 
-    def __init__(self):
+    def __init__(self, code_map_file):
         # initial coordinates
         self.pos = np.array([0, 0])
         self.rotation = 0
@@ -35,9 +38,11 @@ class CodeMapGui:
         self.tunnel = np.ones((CodeMapGui.CAMERA_RES, CodeMapGui.CAMERA_RES))
         self.noise = 0
         # initialize localization context
-        self.loc_ctx = cm.LocalizationContext()
+        self.loc_ctx = LocalizationContext(libcodemap)
         # load code map
-        self.code_map = cv2.imread('code_map_0_0.pbm', cv2.IMREAD_GRAYSCALE)
+        self.code_map = cv2.imread(code_map_file, cv2.IMREAD_GRAYSCALE)
+        if self.code_map is None:
+            raise IOError("Could not open code map file " + code_map_file)
         # create code map window
         create_window('CodeMap', (512, 512))
         cv2.setMouseCallback('CodeMap', self.code_map_mouse_callback)
@@ -94,16 +99,18 @@ class CodeMapGui:
         if radians > np.pi:
             radians -= 2 * np.pi
         print(
-            f'\nGround Truth\t{{\"x\":{self.pos[0] + 24}, \"y\":{self.pos[1] + 24}, \"rot\":{round(radians, 6)}}}'
+            f'\nGround Truth\t{{\'x\': {self.pos[0] + 25}, \'y\': {self.pos[1] + 25}, \'rot\': {round(radians, 6)}}}'
         )
-        self.loc_ctx.print()
+        loc_msg = self.loc_ctx.get_location_msg()
+        for key in ('odometry', 'location', 'correlation'):
+            print(f'{key.title()}\t{loc_msg[key]}')
 
     def run(self):
         self.update_frame()
         cv2.imshow('CodeMap', self.code_map)
         while (self.key_callback(cv2.waitKey(50))):
             cv2.imshow('Navigate', self.navigate)
-            cv2.imshow('Pipeline', self.loc_ctx.pipeline_montage)
+            cv2.imshow('Pipeline', self.loc_ctx.get_pipeline_montage())
         cv2.destroyAllWindows()
 
     def key_callback(self, key):
@@ -189,5 +196,5 @@ class CodeMapGui:
 
 
 # create control window
-code_map_gui = CodeMapGui()
+code_map_gui = CodeMapGui('code_map_0_0.pbm')
 code_map_gui.run()

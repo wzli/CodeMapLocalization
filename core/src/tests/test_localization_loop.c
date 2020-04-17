@@ -35,8 +35,8 @@ static int test_localization_loop_run() {
 
             test_assert(ctx->scale_match.row_code.mask.x64 != 0);
             test_assert(ctx->scale_match.col_code.mask.x64 != 0);
-            test_assert(ABS(ctx->scale_match.location.x - (int) src_row_pos) < 10);
-            test_assert(ABS(ctx->scale_match.location.y - (int) src_col_pos) < 10);
+            test_assert(ABS(ctx->scale_match.location.x - (int) src_row_pos) < 12);
+            test_assert(ABS(ctx->scale_match.location.y - (int) src_col_pos) < 12);
             test_assert(ABS(ctx->scale_match.scale - 0.5f) < 0.01f);
             test_assert(ctx->scale_match.location.match_size > SQR(12));
         }

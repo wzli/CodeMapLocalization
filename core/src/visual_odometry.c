@@ -105,7 +105,7 @@ void odom_update(VisualOdometry* odom, ImageMatrix image, Vector2f rotation, flo
     img_estimate_translation(&(odom->correlation), image);
     odom->position.z +=
             odom->correlation.translation.z * QUADRANT_LOOKUP[odom->quadrant_count & 3].z * scale;
-    ++odom->step_count;
+    ++odom->drift_count;
 }
 
 void odom_set_location(VisualOdometry* odom, Location loc) {
@@ -113,7 +113,7 @@ void odom_set_location(VisualOdometry* odom, Location loc) {
     odom->position.xy[1] = loc.y;
     odom->quadrant_count &= ~3u;
     odom->quadrant_count |= loc.direction;
-    odom->step_count = 0;
+    odom->drift_count = 0;
 }
 
 int8_t odom_track_rotation(VisualOdometry* odom, Vector2f quadrant_rotation) {

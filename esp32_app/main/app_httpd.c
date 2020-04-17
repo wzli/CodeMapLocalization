@@ -4,16 +4,15 @@
 #include "img_converters.h"
 #include "sdkconfig.h"
 #include "esp_log.h"
-#include "freertos/queue.h"
+#include "global.h"
 
-/* global variables */
+/* global data */
+QueueHandle_t frame_queues[N_FRAME_QUEUES];
 
-#define N_FRAME_QUEUES 4
-QueueHandle_t frame_queues[N_FRAME_QUEUES] = {};
-int led_duty = -1;
-
+/* static data */
 static const char* TAG = "web_ui";
 static char text_buf[1024];
+static int led_level = 0;
 
 /* helper functions */
 
@@ -32,11 +31,6 @@ static size_t jpg_encode_stream(void* arg, size_t index, const void* data, size_
     }
     j->len += len;
     return len;
-}
-
-void set_led(int duty) {
-    ESP_LOGI(TAG, "Set LED intensity to %d", duty);
-    led_duty = duty;
 }
 
 static int print_heap_info(char* buf, const char* name, uint32_t capabilities) {
@@ -165,12 +159,22 @@ static esp_err_t cam_params_handler(httpd_req_t* req) {
     p += sprintf(p, "\"wpc\":%u,", s->status.wpc);
     p += sprintf(p, "\"hmirror\":%u,", s->status.hmirror);
     p += sprintf(p, "\"vflip\":%u,", s->status.vflip);
-    p += sprintf(p, "\"led_intensity\":%d", led_duty);
+    p += sprintf(p, "\"led_intensity\":%d", led_level);
     *p++ = '}';
     *p++ = 0;
     httpd_resp_set_type(req, "application/json");
     httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*");
     return httpd_resp_send(req, text_buf, strlen(text_buf));
+}
+
+static esp_err_t location_handler(httpd_req_t* req) {
+    LocalizationMsg msg;
+    write_localization_msg(&msg, &loc_ctx);
+    write_location_match_msg(&msg.location, &loc_ctx.outlier_filter.filtered_match);
+    int len = LocalizationMsg_to_json(&msg, text_buf);
+    httpd_resp_set_type(req, "application/json");
+    httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*");
+    return httpd_resp_send(req, text_buf, len);
 }
 
 static esp_err_t set_led_intensity_handler(httpd_req_t* req) {
@@ -179,7 +183,8 @@ static esp_err_t set_led_intensity_handler(httpd_req_t* req) {
         httpd_resp_send_404(req);
         return ESP_FAIL;
     }
-    set_led(val);
+    led_level = val;
+    set_flash_led(val);
     return httpd_resp_send(req, NULL, 0);
 }
 
@@ -213,6 +218,7 @@ void app_httpd_main() {
             {"/capture", HTTP_GET, capture_handler, NULL},
             {"/set_led_intensity", HTTP_GET, set_led_intensity_handler, NULL},
             {"/cam_params", HTTP_GET, cam_params_handler, NULL},
+            {"/location", HTTP_GET, location_handler, NULL},
             // uris for setting camera params
             {"/set_contrast", HTTP_GET, set_cam_param_handler, s->set_contrast},
             {"/set_aec", HTTP_GET, set_cam_param_handler, s->set_exposure_ctrl},
@@ -241,5 +247,4 @@ void app_httpd_main() {
             ESP_LOGI(TAG, "registered URI handler at %s err %d\n", uris[i].uri, err);
         }
     }
-    set_led(0);
 }

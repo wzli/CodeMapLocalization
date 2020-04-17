@@ -1,6 +1,19 @@
 menu "Code Map Localization"
 
 menu "SD Record Settings"
+config RECORD_CSV_LOG_ENABLE
+    bool "Record CSV log"
+    default y
+    help
+    Record data to csv file.
+
+config RECORD_CSV_LOG_FILENAME
+    depends on RECORD_CSV_LOG_ENABLE
+    string "Record Raw Frames Filename"
+    default "data.csv"
+    help
+    Name of the csv file to save data to.
+
 config RECORD_RAW_FRAMES_ENABLE
     bool "Record Raw Frames"
     default n
@@ -10,7 +23,7 @@ config RECORD_RAW_FRAMES_ENABLE
 config RECORD_RAW_FRAMES_FILENAME
     depends on RECORD_RAW_FRAMES_ENABLE
     string "Record Raw Frames Filename"
-    default "raw.mjpeg"
+    default "recording.mjpeg"
     help
     Name of the MJPEG file to save raw frames to.
 
@@ -67,14 +80,6 @@ config LED_ILLUMINATOR_ENABLED
     help
     Enable an LED Flash or IR Illuminator
 
-config LED_LEDC_PIN
-    depends on LED_ILLUMINATOR_ENABLED
-    int "LED Illuminator GPIO Pin"
-    range 0 33
-    default 4
-    help
-    Set a pin to illuminate an onboard LED or IR Illuminator when streaming or taking snapshots.
-
 config LED_MAX_INTENSITY
     depends on LED_ILLUMINATOR_ENABLED
     int "LED Maximum Intensity (0-255)"
@@ -82,6 +87,29 @@ config LED_MAX_INTENSITY
     default 255
     help
     Limit the maximum intensity of the LED while streaming to prevent overheating (0-255).
+
+config LED_DEFAULT_INTENSITY
+    depends on LED_ILLUMINATOR_ENABLED
+    int "LED Default Intensity (0-255)"
+    range 0 255
+    default 0
+    help
+    Initial value of LED intensity.
+
+config LED_AUTO_INTENSITY
+    depends on LED_ILLUMINATOR_ENABLED
+    bool "LED Auto Intensity"
+    default n
+    help
+    Control LED output based on image threshold
+
+config LED_LEDC_PIN
+    depends on LED_ILLUMINATOR_ENABLED
+    int "LED Illuminator GPIO Pin"
+    range 0 33
+    default 4
+    help
+    Set a pin to illuminate an onboard LED or IR Illuminator when streaming or taking snapshots.
 
 choice LED_LEDC_SPEED_MODE
     depends on LED_ILLUMINATOR_ENABLED

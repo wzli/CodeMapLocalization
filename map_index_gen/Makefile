@@ -1,6 +1,6 @@
 include ../common.mk
 
-TARGET_EXEC ?= map_codec_gen
+TARGET_EXEC ?= map_index_gen
 
 LDLIBS += -lstdc++
 

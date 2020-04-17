@@ -1,7 +1,6 @@
 import ctypes
+import json
 import numpy as np
-
-libcodemap = ctypes.CDLL("build/libcodemap.so")
 
 # bitwise_utils.h
 BitMatrix32 = ctypes.c_uint * 32
@@ -39,9 +38,6 @@ class MlsIndex(ctypes.Structure):
         ('sequence_length', ctypes.c_ushort),
         ('code_length', ctypes.c_ubyte),
     ]
-
-
-MLS_INDEX = MlsIndex.in_dll(libcodemap, "MLS_INDEX")
 
 
 # code_extraction.h
@@ -122,7 +118,7 @@ class VisualOdometry(ctypes.Structure):
         ('position', Vector2f),
         ('quadrant_rotation', Vector2f),
         ('quadrant_count', ctypes.c_int),
-        ('step_count', ctypes.c_uint),
+        ('drift_count', ctypes.c_uint),
     ]
 
 
@@ -153,7 +149,8 @@ class LocalizationContext(ctypes.Structure):
         ('otsu_threshold', ctypes.c_ubyte),
     ]
 
-    def __init__(self):
+    def __init__(self, libcodemap):
+        self.libcodemap = libcodemap
         self.frame_count = 0
         # create buffers
         self.derotated_image_array = np.empty((64, 64),
@@ -183,19 +180,21 @@ class LocalizationContext(ctypes.Structure):
         self.odom.correlation.squared_magnitude_threshold = 0.01
 
     def run(self, frame):
-        # run loop
-        location_updated = (1 == libcodemap.localization_loop_run(
+        self.raw_frame = frame
+        location_updated = (1 == self.libcodemap.localization_loop_run(
             ctypes.byref(self), ImageMatrix(frame)))
-        self.pipeline_montage = np.empty((64 * 2, 64 * 3),
-                                         dtype=np.ubyte,
-                                         order='C')
-        libcodemap.generate_pipeline_montage(
-            ctypes.byref(ImageMatrix(self.pipeline_montage)),
-            ImageMatrix(frame), ctypes.byref(self))
         return location_updated
 
-    def print(self):
-        libcodemap.print_odometry(ctypes.byref(self.odom))
-        libcodemap.print_location_match(ctypes.byref(self.scale_match))
-        libcodemap.print_correlation(ctypes.byref(self.odom.correlation))
-        #libcodemap.print_localization(ctypes.byref(self))
+    def get_pipeline_montage(self):
+        pipeline_montage = np.empty((64 * 2, 64 * 3),
+                                    dtype=np.ubyte,
+                                    order='C')
+        self.libcodemap.generate_pipeline_montage(
+            ctypes.byref(ImageMatrix(pipeline_montage)),
+            ImageMatrix(self.raw_frame), ctypes.byref(self))
+        return pipeline_montage
+
+    def get_location_msg(self):
+        buf = ctypes.create_string_buffer(512)
+        self.libcodemap.LocalizationContext_to_json(buf, ctypes.byref(self))
+        return json.loads(buf.value)
