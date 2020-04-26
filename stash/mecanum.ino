@@ -29,10 +29,10 @@ static void set_motor_speed(int motor_index, float motor_speed) {
     Adafruit_DCMotor* motor = AFMS.getMotor(motor_index + 1);
     if (motor_speed < 0) {
         motor->run(BACKWARD);
-        motor->setSpeed(-motor_speed);
+        motor->setSpeed(max(0, min(MAX_SPEED, -motor_speed)));
     } else {
         motor->run(FORWARD);
-        motor->setSpeed(motor_speed);
+        motor->setSpeed(max(0, min(MAX_SPEED, motor_speed)));
     }
 }
 
@@ -42,13 +42,13 @@ static void update_speed() {
     wheel_speeds[TOP_RIGHT] = vx - vy + vw;
     wheel_speeds[BOTTOM_LEFT] = vx - vy - vw;
     wheel_speeds[BOTTOM_RIGHT] = vx + vy + vw;
-    float max_speed_saturation = 0;
+    float max_wheel_speed = 0;
     for (int i = 0; i < 4; ++i) {
-        max_speed_saturation = max(max_speed_saturation, abs(wheel_speeds[i] / MAX_SPEED));
+        max_wheel_speed = max(max_wheel_speed, abs(wheel_speeds[i]));
     }
     for (int i = 0; i < 4; ++i) {
-        set_motor_speed(i, max_speed_saturation > 1 ? wheel_speeds[i] / max_speed_saturation
-                                                    : wheel_speeds[i]);
+        float scale = min(1, MAX_SPEED / max_wheel_speed);
+        set_motor_speed(i, wheel_speeds[i] * scale);
     }
 }
 
