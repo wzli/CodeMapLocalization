@@ -103,8 +103,18 @@ void odom_update(VisualOdometry* odom, ImageMatrix image, Vector2f rotation, flo
         IMG_FILL(odom->correlation.buffer, (Vector2f){0});
     }
     img_estimate_translation(&(odom->correlation), image);
-    odom->position.z +=
-            odom->correlation.translation.z * QUADRANT_LOOKUP[odom->quadrant_count & 3].z * scale;
+    // median filter
+    Vector2f median = odom->correlation.translation;
+    for (uint8_t i = 0; i < 2; ++i) {
+        bool increasing = odom->previous_samples[0].xy[i] > odom->previous_samples[1].xy[i];
+        median.xy[i] = MAX(median.xy[i], odom->previous_samples[increasing].xy[i]);
+        median.xy[i] = MIN(median.xy[i], odom->previous_samples[!increasing].xy[i]);
+    }
+    odom->previous_samples[1] = odom->previous_samples[0];
+    odom->previous_samples[0] = odom->correlation.translation;
+    odom->correlation.translation = median;
+    // integrate in world frame
+    odom->position.z += median.z * QUADRANT_LOOKUP[odom->quadrant_count & 3].z * scale;
     ++odom->drift_count;
 }
 
