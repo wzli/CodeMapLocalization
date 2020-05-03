@@ -312,7 +312,7 @@
                 border-radius: 5px
             }
 
-            .image {
+            .image, .canvas {
                 position: relative;
                 min-width: 320px;
                 image-rendering: optimizeSpeed; 
@@ -456,6 +456,9 @@
                 <Table>
                     <tr>
                         <td>
+                            <Canvas id="decoded_canvas" class="canvas" width="64" height="64"/>
+                        </td>
+                        <td>
                             <figure>
                                 <img id="stream-0" class="image" src="" crossorigin>
                             </figure>
@@ -467,6 +470,9 @@
                         </td>
                     </tr>
                     <tr>
+                        <td>
+                            <Canvas id="extracted_canvas" class="canvas" width="64" height="64"/>
+                        </td>
                         <td>
                             <figure>
                                 <img id="stream-2" class="image" src="" crossorigin>
@@ -580,6 +586,38 @@ document.addEventListener('DOMContentLoaded', function (event) {
 
   const location_status = document.getElementById('location_status')
 
+  // Canvas
+  const extracted_canvas_ctx = document.getElementById('extracted_canvas').getContext('2d')
+  const decoded_canvas_ctx = document.getElementById('decoded_canvas').getContext('2d')
+
+  function updateCanvasQuadrant (canvas_ctx, x_origin, x_code, x_mask, y_origin, y_code, y_mask) {
+    var row_img = canvas_ctx.createImageData(32, 1);
+    var row_img_inverted = canvas_ctx.createImageData(32, 1);
+    for (var i = 0; i < 32; i++) {
+        var pixel_value = (x_mask >> i) & 1 ? 255 * ((x_code >> i) & 1): 127
+        row_img.data[4 * i + 0] = pixel_value
+        row_img.data[4 * i + 1] = pixel_value
+        row_img.data[4 * i + 2] = pixel_value
+        row_img.data[4 * i + 3] = 255
+        var pixel_value = (x_mask >> i) & 1 ? 255 * ((~x_code >> i) & 1): 127
+        row_img_inverted.data[4 * i + 0] = pixel_value
+        row_img_inverted.data[4 * i + 1] = pixel_value
+        row_img_inverted.data[4 * i + 2] = pixel_value
+        row_img_inverted.data[4 * i + 3] = 255
+    }
+    canvas_ctx.fillStyle = 'rgb(127,127,127)'
+    canvas_ctx.fillRect(x_origin, y_origin, 32, 32)
+    for (var i = 0; i < 32; i++) {
+        if((y_mask >> i) & 1) {
+            if((y_code >> i) & 1) {
+                canvas_ctx.putImageData(row_img, x_origin, y_origin + i)
+            } else {
+                canvas_ctx.putImageData(row_img_inverted, x_origin, y_origin + i)
+            }
+        }
+    }
+  }
+
   // read initial values
   fetch(`${baseHost}/cam_params`)
     .then(function (response) {
@@ -601,6 +639,16 @@ document.addEventListener('DOMContentLoaded', function (event) {
         })
         .then(function (body) {
             location_status.innerHTML = JSON.stringify(body, null, 2)
+
+            updateCanvasQuadrant(extracted_canvas_ctx, 0, body.extracted[0], body.extracted[2], 0, body.extracted[4], body.extracted[6])
+            updateCanvasQuadrant(extracted_canvas_ctx, 32, body.extracted[1], body.extracted[3], 0, body.extracted[4], body.extracted[6])
+            updateCanvasQuadrant(extracted_canvas_ctx, 32, body.extracted[1], body.extracted[3], 32, body.extracted[5], body.extracted[7])
+            updateCanvasQuadrant(extracted_canvas_ctx, 0, body.extracted[0], body.extracted[2], 32, body.extracted[5], body.extracted[7])
+
+            updateCanvasQuadrant(decoded_canvas_ctx, 0, body.decoded[0], body.decoded[2], 0, body.decoded[4], body.decoded[6])
+            updateCanvasQuadrant(decoded_canvas_ctx, 32, body.decoded[1], body.decoded[3], 0, body.decoded[4], body.decoded[6])
+            updateCanvasQuadrant(decoded_canvas_ctx, 32, body.decoded[1], body.decoded[3], 32, body.decoded[5], body.decoded[7])
+            updateCanvasQuadrant(decoded_canvas_ctx, 0, body.decoded[0], body.decoded[2], 32, body.decoded[5], body.decoded[7])
         })
   }, 100)
 
