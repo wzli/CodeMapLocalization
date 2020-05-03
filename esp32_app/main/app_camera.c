@@ -180,6 +180,16 @@ static void camera_init() {
     s->set_framesize(s, FRAMESIZE_64x64);
     // set contrast to highest (for better binary seperation)
     s->set_contrast(s, 2);
+
+#ifndef CONFIG_CAMERA_AEC_ENABLE
+    s->set_exposure_ctrl(s, 0);
+    s->set_aec_value(s, CONFIG_CAMERA_DEFAULT_EXPOSURE);
+#endif
+
+#ifndef CONFIG_CAMERA_AGC_ENABLE
+    s->set_gain_ctrl(s, 0);
+    s->set_agc_gain(s, CONFIG_CAMERA_DEFAULT_GAIN);
+#endif
 }
 
 void app_camera_main() {

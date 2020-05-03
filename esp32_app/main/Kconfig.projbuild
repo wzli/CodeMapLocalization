@@ -73,7 +73,7 @@ config ESP_MAXIMUM_RETRY
     Set the Maximum retry to avoid station reconnecting to the AP unlimited when the AP is really inexistent.
 endmenu
 
-menu "LED Illuminator"
+menu "LED Illuminator Settings"
 config LED_ILLUMINATOR_ENABLED
     bool "LED Illuminator Enabled"
     default n
@@ -141,7 +141,8 @@ config LED_LEDC_CHANNEL
     Select the LEDC Channel (0-7)
 endmenu
 
-menu "Camera Pins"
+menu "Camera Settings"
+
 choice CAMERA_MODEL
     bool "Select Camera Pinout"
     default CAMERA_MODEL_WROVER_KIT
@@ -289,6 +290,34 @@ config CAMERA_PIN_Y9
     default 35
     help
         Select Camera Y9 pin.
+
+config CAMERA_AEC_ENABLE
+    bool "Auto Exposure Control Enable"
+    default y
+    help
+    Enable Auto Exposure Control
+
+config CAMERA_DEFAULT_EXPOSURE
+    depends on !CAMERA_AEC_ENABLE
+    int "Default Exposure Value"
+    range 1 1200
+    default 200
+    help
+    Default Manual Exposure Value
+
+config CAMERA_AGC_ENABLE
+    bool "Auto Gain Control Enable"
+    default y
+    help
+    Enable Auto Gain Control
+
+config CAMERA_DEFAULT_GAIN
+    depends on !CAMERA_AGC_ENABLE
+    int "Default Gain Value"
+    range 1 31
+    default 2
+    help
+    Default Manual Gain Value
 
 endmenu
 endmenu
