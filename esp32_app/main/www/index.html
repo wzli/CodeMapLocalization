@@ -363,11 +363,11 @@
                                 <label class="slider" for="aec"></label>
                             </div>
                         </div>
-                        <div class="input-group" id="aec_value-group">
+                        <div class="input-group hidden" id="aec_value-group">
                             <label for="aec_value">Exposure</label>
                             <div class="range-min">0</div>
-                            <input type="range" id="aec_value" min="0" max="1200" value="204" class="default-action">
-                            <div class="range-max">1200</div>
+                            <input type="range" id="aec_value" min="0" max="500" value="204" class="default-action">
+                            <div class="range-max">500</div>
                         </div>
                         <div class="input-group" id="ae_level-group">
                             <label for="ae_level">AE Level</label>
@@ -494,6 +494,13 @@ document.addEventListener('DOMContentLoaded', function (event) {
 
   const updateHidden = (el, value) => {
     if(el.id === "aec"){
+      if (value) {
+        hide(exposure)
+        show(aeLevel)
+      } else {
+        show(exposure)
+        hide(aeLevel)
+      }
       value ? hide(exposure) : show(exposure)
     } else if(el.id === "agc"){
       if (value) {
@@ -553,6 +560,7 @@ document.addEventListener('DOMContentLoaded', function (event) {
   // Exposure
   const aec = document.getElementById('aec')
   const exposure = document.getElementById('aec_value-group')
+  const aeLevel = document.getElementById('ae_level-group')
 
   // Image Streams
   const view0 = document.getElementById('stream-0')
