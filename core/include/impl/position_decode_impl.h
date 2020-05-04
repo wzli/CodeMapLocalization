@@ -130,7 +130,7 @@ void T(ac, WIDTH, _scale_search_location)(
         }
         // calculate location and match quality
         sample.location = deduce_location(row_pos, col_pos);
-        sample.quality = (scaled_bits - sample.bit_errors) / (scaled_bits * max_span);
+        sample.quality = MAX(0, scaled_bits - sample.bit_errors) / (scaled_bits * max_span);
         sample.quality *= sample.quality * sample.location.match_size;
         if (sample.quality >= match->quality) {
             *match = sample;
