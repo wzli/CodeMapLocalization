@@ -118,7 +118,7 @@ void T(ac, WIDTH, _scale_search_location)(
         }
         // decode posiiton
         float scaled_bits = sample.scale * (WIDTH - 4);
-        uint8_t max_span = MAX(scaled_bits - MLS_INDEX.code_length, 2);
+        uint8_t max_span = MAX(scaled_bits - MLS_INDEX.code_length, 3);
         uint8_t decode_stride = MAX(max_span / 2, 2);
         if (prev_row_code != T(sample.row_code.bits.x, WIDTH, )) {
             row_pos = T(ac, WIDTH, _decode_position)(sample.row_code, decode_stride);
