@@ -330,7 +330,7 @@
             #location_status {
                 white-space: pre-wrap;
                 padding-right: 20px;
-                min-width: 300px;
+                min-width: 350px;
             }
 </style>
     </head>
@@ -638,8 +638,6 @@ document.addEventListener('DOMContentLoaded', function (event) {
           return response.json()
         })
         .then(function (body) {
-            location_status.innerHTML = JSON.stringify(body, null, 2)
-
             updateCanvasQuadrant(extracted_canvas_ctx, 0, body.extracted[0], body.extracted[2], 0, body.extracted[4], body.extracted[6])
             updateCanvasQuadrant(extracted_canvas_ctx, 32, body.extracted[1], body.extracted[3], 0, body.extracted[4], body.extracted[6])
             updateCanvasQuadrant(extracted_canvas_ctx, 32, body.extracted[1], body.extracted[3], 32, body.extracted[5], body.extracted[7])
@@ -649,6 +647,11 @@ document.addEventListener('DOMContentLoaded', function (event) {
             updateCanvasQuadrant(decoded_canvas_ctx, 32, body.decoded[1], body.decoded[3], 0, body.decoded[4], body.decoded[6])
             updateCanvasQuadrant(decoded_canvas_ctx, 32, body.decoded[1], body.decoded[3], 32, body.decoded[5], body.decoded[7])
             updateCanvasQuadrant(decoded_canvas_ctx, 0, body.decoded[0], body.decoded[2], 32, body.decoded[5], body.decoded[7])
+
+            delete body.extracted
+            delete body.decoded
+            location_status.innerHTML = JSON.stringify(body, null, 2)
+
         })
   }, 100)
 
