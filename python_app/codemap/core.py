@@ -115,6 +115,7 @@ class Correlation(ctypes.Structure):
 class VisualOdometry(ctypes.Structure):
     _fields_ = [
         ('correlation', Correlation),
+        ('previous_samples', Vector2f * 2),
         ('position', Vector2f),
         ('quadrant_rotation', Vector2f),
         ('quadrant_count', ctypes.c_int),

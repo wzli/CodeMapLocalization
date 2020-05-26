@@ -13,6 +13,7 @@ typedef struct {
 
 typedef struct {
     Correlation correlation;
+    Vector2f previous_samples[2];
     Vector2f position;
     Vector2f quadrant_rotation;
     int32_t quadrant_count;

@@ -103,8 +103,8 @@ void T(ac, WIDTH, _scale_search_location)(
     T(uint, WIDTH, _t) prev_col_code = 0;
     AxisPosition row_pos;
     AxisPosition col_pos;
-    const float min_scale = (MLS_INDEX.code_length + 2.0f) / (WIDTH);
-    for (sample.scale = 0.7f; sample.scale >= min_scale; sample.scale -= scale_step) {
+    for (sample.scale = (MLS_INDEX.code_length + 2.0f) / (WIDTH); sample.scale <= 0.7f;
+            sample.scale += scale_step) {
         // scale and downsample axis codes
         sample.row_code = *row_code;
         sample.col_code = *col_code;
@@ -118,9 +118,8 @@ void T(ac, WIDTH, _scale_search_location)(
         }
         // decode posiiton
         float scaled_bits = sample.scale * (WIDTH - 4);
-        uint8_t max_span = scaled_bits - MLS_INDEX.code_length;
-        uint8_t decode_stride = max_span / 2;
-        decode_stride = MAX(decode_stride, 2);
+        uint8_t max_span = MAX(scaled_bits - MLS_INDEX.code_length, 3);
+        uint8_t decode_stride = MAX(max_span / 2, 2);
         if (prev_row_code != T(sample.row_code.bits.x, WIDTH, )) {
             row_pos = T(ac, WIDTH, _decode_position)(sample.row_code, decode_stride);
             prev_row_code = T(sample.row_code.bits.x, WIDTH, );
@@ -131,7 +130,7 @@ void T(ac, WIDTH, _scale_search_location)(
         }
         // calculate location and match quality
         sample.location = deduce_location(row_pos, col_pos);
-        sample.quality = (scaled_bits - sample.bit_errors) / (scaled_bits * max_span);
+        sample.quality = MAX(0, scaled_bits - sample.bit_errors) / (scaled_bits * max_span);
         sample.quality *= sample.quality * sample.location.match_size;
         if (sample.quality >= match->quality) {
             *match = sample;

@@ -49,23 +49,26 @@ void set_led_duty(int duty) {
 int led_setpoint = CONFIG_LED_DEFAULT_INTENSITY;
 
 static void led_control_loop(void* pvParameters) {
-    int led_duty = CONFIG_LED_DEFAULT_INTENSITY;
-    float feedback_average = led_duty;
+    // set default output and feedback
+    float led_duty = CONFIG_LED_DEFAULT_INTENSITY;
     if (!led_feedback) {
-        led_feedback = &led_duty;
+        led_feedback = &led_setpoint;
     }
     while (true) {
-        // run at 10 Hz
-        vTaskDelay(10);
-        // average feedback for 1s
-        feedback_average *= 0.9f;
-        feedback_average += *led_feedback * 0.1f;
-        // control LED based on desired threshold
-        if (led_duty < CONFIG_LED_MAX_INTENSITY && feedback_average < led_setpoint) {
-            set_led_duty(++led_duty);
-        } else if (led_duty > 0 && feedback_average > led_setpoint) {
-            set_led_duty(--led_duty);
+        // run at 5 Hz
+        vTaskDelay(20);
+        // control LED based on integrated error
+        int error = led_setpoint - *led_feedback;
+        led_duty += error * 0.002f;
+        // clamp output
+        if (led_duty < 0) {
+            led_duty = 0;
         }
+        if (led_duty > CONFIG_LED_MAX_INTENSITY) {
+            led_duty = CONFIG_LED_MAX_INTENSITY;
+        }
+        // set output duty
+        set_led_duty((int) led_duty);
     }
 }
 #endif
@@ -180,6 +183,16 @@ static void camera_init() {
     s->set_framesize(s, FRAMESIZE_64x64);
     // set contrast to highest (for better binary seperation)
     s->set_contrast(s, 2);
+
+#ifndef CONFIG_CAMERA_AEC_ENABLE
+    s->set_exposure_ctrl(s, 0);
+    s->set_aec_value(s, CONFIG_CAMERA_DEFAULT_EXPOSURE);
+#endif
+
+#ifndef CONFIG_CAMERA_AGC_ENABLE
+    s->set_gain_ctrl(s, 0);
+    s->set_agc_gain(s, CONFIG_CAMERA_DEFAULT_GAIN);
+#endif
 }
 
 void app_camera_main() {

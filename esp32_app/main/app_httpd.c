@@ -172,6 +172,22 @@ static esp_err_t location_handler(httpd_req_t* req) {
     write_localization_msg(&msg, &loc_ctx);
     write_location_match_msg(&msg.location, &loc_ctx.outlier_filter.filtered_match);
     int len = LocalizationMsg_to_json(&msg, text_buf);
+    len += sprintf(text_buf + len - 1,
+                   ", \"extracted\":[ %u, %u, %u, %u, %u, %u, %u, %u],"
+                   "\"decoded\":[ %u, %u, %u, %u, %u, %u, %u, %u]}",
+                   loc_ctx.row_code.bits.data[0], loc_ctx.row_code.bits.data[1],
+                   loc_ctx.row_code.mask.data[0], loc_ctx.row_code.mask.data[1],
+                   loc_ctx.col_code.bits.data[0], loc_ctx.col_code.bits.data[1],
+                   loc_ctx.col_code.mask.data[0], loc_ctx.col_code.mask.data[1],
+                   loc_ctx.scale_match.row_code.bits.data[0],
+                   loc_ctx.scale_match.row_code.bits.data[1],
+                   loc_ctx.scale_match.row_code.mask.data[0],
+                   loc_ctx.scale_match.row_code.mask.data[1],
+                   loc_ctx.scale_match.col_code.bits.data[0],
+                   loc_ctx.scale_match.col_code.bits.data[1],
+                   loc_ctx.scale_match.col_code.mask.data[0],
+                   loc_ctx.scale_match.col_code.mask.data[1]) -
+           1;
     httpd_resp_set_type(req, "application/json");
     httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*");
     return httpd_resp_send(req, text_buf, len);

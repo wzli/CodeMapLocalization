@@ -103,7 +103,8 @@ int main(int argc, char** argv) {
         std::cout << "WARNING: sequence hash doesn't match, actual is 0x" << std::hex
                   << std::hash<std::string>{}(s) << std::endl;
     }
-    puts("Generating Map Codec ...");
+
+    puts("Processing Code Sequence ...");
 
     const size_t positions_length = s.size() - word_length + 1;
     const uint16_t sequence_chunks = (s.size() / 32) + ((s.size() % 32) > 0);
@@ -184,6 +185,8 @@ int main(int argc, char** argv) {
         puts("Internal Error: Not all code to position lookups were found");
         return INTERNAL_ERROR_MISSING_CODE_POSITION_ENTRY;
     }
+
+    puts("Code sequence successfully processed\nGenerating Code Index ...");
 
     std::ofstream mlsq_index_file("mls_index.c");
     if (!mlsq_index_file.is_open()) {
