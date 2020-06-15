@@ -28,11 +28,6 @@ static constexpr char HELP_STRING[] =
         "Usage: map_index_gen [-w width_limit] [-h height_limit] dmls_yaml";
 
 int main(int argc, char** argv) {
-    if (argc < 2) {
-        puts(HELP_STRING);
-        return ERROR_INVALID_ARGUMENT;
-    }
-
     int opt;
     int width = 0;
     int height = 0;
@@ -62,6 +57,11 @@ int main(int argc, char** argv) {
                           << std::endl;
                 return ERROR_INVALID_ARGUMENT;
         }
+    }
+
+    if (argc <= optind) {
+        puts(HELP_STRING);
+        return ERROR_INVALID_ARGUMENT;
     }
 
     std::string s;
